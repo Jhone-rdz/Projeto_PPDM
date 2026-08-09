@@ -13,8 +13,9 @@ import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { apiService } from '../_services/api';
 
-const perguntas = [
+const PERGUNTAS_ESTATICAS = [
   {
     id: 1,
     categoria: 'ORIENTAÇÃO DE CURSO',
@@ -109,19 +110,74 @@ const perguntas = [
   },
 ];
 
+interface Option {
+  id: string;
+  icone: string;
+  corIcone: string;
+  label: string;
+  descricao: string;
+}
+
+interface Question {
+  id: number;
+  categoria: string;
+  iconeCategoria: string;
+  pergunta: string;
+  instrucao: string;
+  opcoes: Option[];
+}
+
 export default function QuestionarioScreen() {
   const router = useRouter();
+
+  // Dynamic API state
+  const [perguntas, setPerguntas] = useState<Question[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [perguntaAtual, setPerguntaAtual] = useState(0);
   const [respostas, setRespostas] = useState<{ [key: number]: string }>({});
   const [opcaoSelecionada, setOpcaoSelecionada] = useState<string | undefined>(undefined);
 
+  // Fetch onboarding questions from Django on mount
+  useEffect(() => {
+    const fetchQuestions = async () => {
+      try {
+        setIsLoading(true);
+        const data = await apiService.getQuestions();
+        const mapped = data.map((q: any) => ({
+          id: q.id,
+          categoria: q.categoria,
+          iconeCategoria: q.icone_categoria,
+          pergunta: q.pergunta,
+          instrucao: q.instrucao,
+          opcoes: q.opcoes.map((o: any) => ({
+            id: o.chave,
+            icone: o.icone,
+            corIcone: o.cor_icone,
+            label: o.label,
+            descricao: o.descricao
+          }))
+        }));
+        setPerguntas(mapped);
+      } catch (err) {
+        console.warn('API error, falling back to static questions:', err);
+        setPerguntas(PERGUNTAS_ESTATICAS);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchQuestions();
+  }, []);
+
   // Restore saved answer when current question index changes
   useEffect(() => {
-    const respostaSalva = respostas[perguntas[perguntaAtual].id];
-    setOpcaoSelecionada(respostaSalva || undefined);
-  }, [perguntaAtual, respostas]);
+    if (perguntas.length > 0 && perguntas[perguntaAtual]) {
+      const respostaSalva = respostas[perguntas[perguntaAtual].id];
+      setOpcaoSelecionada(respostaSalva || undefined);
+    }
+  }, [perguntaAtual, respostas, perguntas]);
 
   const handleSelectOption = (opcaoId: string) => {
+    if (perguntas.length === 0 || !perguntas[perguntaAtual]) return;
     setOpcaoSelecionada(opcaoId);
     setRespostas((prev) => ({
       ...prev,
@@ -129,14 +185,34 @@ export default function QuestionarioScreen() {
     }));
   };
 
-  const handleProxima = () => {
+  const handleProxima = async () => {
     if (!opcaoSelecionada) return;
 
     if (perguntaAtual < perguntas.length - 1) {
       setPerguntaAtual((prev) => prev + 1);
     } else {
-      // Completed last question, navigate to home (app/(tabs)/index.tsx)
-      router.replace('/(tabs)');
+      // Completed last question, submit answers to backend
+      setIsLoading(true);
+      try {
+        const payload = Object.keys(respostas).map((qId) => ({
+          pergunta_id: Number(qId),
+          opcao_chave: respostas[Number(qId)],
+        }));
+        
+        // Only run API call if user has authenticated token
+        const isRealBackend = apiService.getSession().access !== null;
+        if (isRealBackend) {
+          await apiService.submitAnswers(payload);
+        }
+        
+        setIsLoading(false);
+        router.replace('/(tabs)');
+      } catch (error: any) {
+        setIsLoading(false);
+        console.error('Failed to submit answers:', error);
+        // Navigate even on failure (graceful degradation)
+        router.replace('/(tabs)');
+      }
     }
   };
 
@@ -145,6 +221,17 @@ export default function QuestionarioScreen() {
       setPerguntaAtual((prev) => prev - 1);
     }
   };
+
+  if (isLoading || perguntas.length === 0) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <StatusBar style="light" />
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingText}>Carregando perguntas...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   const perguntaInfo = perguntas[perguntaAtual];
   const hasSelected = opcaoSelecionada !== undefined;
@@ -684,5 +771,17 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: {
     opacity: 0.4,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#0A0F1E',
+  },
+  loadingText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+    fontFamily: 'System',
   },
 });

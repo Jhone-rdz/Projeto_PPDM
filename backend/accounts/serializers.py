@@ -29,3 +29,62 @@ class RegisterSerializer(serializers.ModelSerializer):
             curso_tecnico=validated_data.get('curso_tecnico', '')
         )
         return user
+
+from django.db import transaction
+from .models import Pergunta, Opcao, RespostaUsuario
+
+class OpcaoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Opcao
+        fields = ['chave', 'icone', 'cor_icone', 'label', 'descricao']
+
+class PerguntaSerializer(serializers.ModelSerializer):
+    opcoes = OpcaoSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Pergunta
+        fields = ['id', 'categoria', 'icone_categoria', 'pergunta', 'instrucao', 'opcoes']
+
+class RespostaItemSerializer(serializers.Serializer):
+    pergunta_id = serializers.IntegerField()
+    opcao_chave = serializers.CharField(max_length=2)
+
+class RespostaQuestionarioSerializer(serializers.Serializer):
+    respostas = RespostaItemSerializer(many=True)
+
+    def validate_respostas(self, value):
+        if not value:
+            raise serializers.ValidationError("A lista de respostas não pode estar vazia.")
+        
+        # Verify that all questions exist
+        for item in value:
+            p_id = item['pergunta_id']
+            o_key = item['opcao_chave']
+            try:
+                pergunta = Pergunta.objects.get(id=p_id)
+            except Pergunta.DoesNotExist:
+                raise serializers.ValidationError(f"Pergunta com ID {p_id} não existe.")
+            
+            if not Opcao.objects.filter(pergunta=pergunta, chave=o_key).exists():
+                raise serializers.ValidationError(f"Opção '{o_key}' inválida para a pergunta {p_id}.")
+        
+        return value
+
+    def save(self, user):
+        respostas_data = self.validated_data['respostas']
+        created_objects = []
+        
+        with transaction.atomic():
+            for item in respostas_data:
+                pergunta = Pergunta.objects.get(id=item['pergunta_id'])
+                opcao = Opcao.objects.get(pergunta=pergunta, chave=item['opcao_chave'])
+                
+                # Update or create answer
+                resposta, created = RespostaUsuario.objects.update_or_create(
+                    user=user,
+                    pergunta=pergunta,
+                    defaults={'opcao': opcao}
+                )
+                created_objects.append(resposta)
+                
+        return created_objects

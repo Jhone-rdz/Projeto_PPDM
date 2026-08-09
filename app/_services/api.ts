@@ -176,4 +176,63 @@ export const apiService = {
       throw error;
     }
   },
+
+  getQuestions: async () => {
+    try {
+      const token = session.access;
+      if (!token) throw new Error('Usuário não autenticado.');
+
+      const response = await fetch(`${API_BASE_URL}/accounts/onboarding/questions/`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.detail || 'Falha ao carregar questionário.');
+      }
+
+      return data;
+    } catch (error: any) {
+      console.error('Get Questions API Error:', error);
+      throw error;
+    }
+  },
+
+  submitAnswers: async (respostas: { pergunta_id: number; opcao_chave: string }[]) => {
+    try {
+      const token = session.access;
+      if (!token) throw new Error('Usuário não autenticado.');
+
+      const response = await fetch(`${API_BASE_URL}/accounts/onboarding/answer/`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ respostas }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.detail || data.message || 'Falha ao salvar respostas.');
+      }
+
+      // Update local profile stats from returned data
+      if (data.user && session.user) {
+        session.user.xp = data.user.xp;
+        session.user.nivel = data.user.nivel;
+      }
+
+      return data;
+    } catch (error: any) {
+      console.error('Submit Answers API Error:', error);
+      throw error;
+    }
+  },
 };
