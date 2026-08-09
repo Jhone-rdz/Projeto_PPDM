@@ -269,4 +269,31 @@ export const apiService = {
       throw error;
     }
   },
+
+  sendChatMessage: async (mensagem: string) => {
+    try {
+      const token = session.access;
+      if (!token) throw new Error('Usuário não autenticado.');
+
+      const response = await fetch(`${API_BASE_URL}/chat/`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ mensagem }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.detail || 'Falha ao enviar mensagem.');
+      }
+
+      return data;
+    } catch (error: any) {
+      console.error('Send Chat Message API Error:', error);
+      throw error;
+    }
+  },
 };

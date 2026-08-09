@@ -16,6 +16,7 @@ import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { apiService } from '../_services/api';
 
 interface Mensagem {
   id: number;
@@ -114,37 +115,69 @@ export default function ChatScreen() {
     router.back();
   };
 
-  const handleEnviar = () => {
-    if (!inputTexto.trim()) return;
+  const handleEnviar = async () => {
+    const textoParaEnviar = inputTexto.trim();
+    if (!textoParaEnviar) return;
 
     const time = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
     const novaMensagem: Mensagem = {
       id: Date.now(),
       tipo: 'usuario',
-      texto: inputTexto.trim(),
+      texto: textoParaEnviar,
       horario: time,
       lido: true,
     };
 
     setMensagens((prev) => [...prev, novaMensagem]);
     setInputTexto('');
+    setIsDigitando(true);
 
-    // Trigger Nexo typing state
-    setTimeout(() => {
-      setIsDigitando(true);
-    }, 500);
+    try {
+      const isRealBackend = apiService.getSession().access !== null;
+      if (isRealBackend) {
+        const data = await apiService.sendChatMessage(textoParaEnviar);
+        setIsDigitando(false);
+        const respostaNexo: Mensagem = {
+          id: Date.now() + 1,
+          tipo: 'nexo',
+          texto: data.resposta,
+          horario: data.horario,
+        };
+        setMensagens((prev) => [...prev, respostaNexo]);
+      } else {
+        // Fallback simulation if no backend token is set (offline mode)
+        setTimeout(() => {
+          setIsDigitando(false);
+          let fallbackText = '';
+          const msgLower = textoParaEnviar.toLowerCase();
+          if (msgLower.includes('salário') || msgLower.includes('ganhar') || msgLower.includes('dinheiro')) {
+            fallbackText = 'No mercado de tecnologia, desenvolvedores juniores começam ganhando de R$ 3.000 a R$ 5.000, subindo rápido com a experiência.';
+          } else if (msgLower.includes('estágio') || msgLower.includes('vaga') || msgLower.includes('emprego')) {
+            fallbackText = 'Mantenha seu GitHub ativo e LinkedIn atualizado! São as melhores formas de conseguir estágio técnico.';
+          } else {
+            fallbackText = 'Excelente reflexão! Integrar seu aprendizado técnico com noções de lógica e negócios te dará um enorme diferencial competitivo.';
+          }
 
-    // Simulate Nexo response
-    setTimeout(() => {
+          const respostaNexo: Mensagem = {
+            id: Date.now() + 1,
+            tipo: 'nexo',
+            texto: fallbackText,
+            horario: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+          };
+          setMensagens((prev) => [...prev, respostaNexo]);
+        }, 1500);
+      }
+    } catch (error: any) {
+      console.warn('API error sending message, using client fallback:', error);
       setIsDigitando(false);
-      const respostaNexo: Mensagem = {
+      const respostaErro: Mensagem = {
         id: Date.now() + 1,
         tipo: 'nexo',
-        texto: 'Entendi! Com base no seu perfil, tenho algumas sugestões para você. Quer explorar a área de Tecnologia ou prefere ver outras opções?',
+        texto: 'Ops, tive um problema ao me conectar com meus servidores de IA. Mas posso te dizer que o mercado técnico está super aquecido. O que mais você gostaria de saber?',
         horario: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
       };
-      setMensagens((prev) => [...prev, respostaNexo]);
-    }, 2000);
+      setMensagens((prev) => [...prev, respostaErro]);
+    }
   };
 
   const renderItem = ({ item }: { item: Mensagem }) => {

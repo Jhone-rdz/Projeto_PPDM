@@ -88,3 +88,27 @@ class CursoListView(generics.ListAPIView):
             )
             
         return queryset
+
+from rest_framework.views import APIView
+from .ai_service import get_ai_response
+from datetime import datetime
+
+class ChatView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        mensagem = request.data.get('mensagem', '').strip()
+        if not mensagem:
+            return Response({"detail": "A mensagem não pode estar vazia."}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = request.user
+        curso_tecnico = user.curso_tecnico or ""
+
+        # Query Gemini or fallback
+        resposta = get_ai_response(mensagem, curso_tecnico)
+        horario = datetime.now().strftime('%H:%M')
+
+        return Response({
+            "resposta": resposta,
+            "horario": horario
+        }, status=status.HTTP_200_OK)
