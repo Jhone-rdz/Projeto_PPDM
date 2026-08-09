@@ -112,3 +112,69 @@ class ChatView(APIView):
             "resposta": resposta,
             "horario": horario
         }, status=status.HTTP_200_OK)
+
+
+from .models import Desafio, DesafioConcluido
+from .serializers import DesafioSerializer
+from datetime import date
+
+
+class ListarDesafiosView(generics.ListAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = DesafioSerializer
+
+    def get_queryset(self):
+        return Desafio.objects.all().order_by('id')
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context
+
+
+class ConcluirDesafioView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, pk, *args, **kwargs):
+        try:
+            desafio = Desafio.objects.get(pk=pk)
+        except Desafio.DoesNotExist:
+            return Response({"detail": "Desafio não encontrado."}, status=status.HTTP_404_NOT_FOUND)
+
+        user = request.user
+        today = date.today()
+
+        # Prevent double-claiming on same day
+        already_done = DesafioConcluido.objects.filter(
+            user=user, desafio=desafio, concluido_em=today
+        ).exists()
+
+        if already_done:
+            return Response({
+                "detail": "Você já concluiu esse desafio hoje!",
+                "xp": user.xp,
+                "nivel": user.nivel,
+                "level_up": False,
+            }, status=status.HTTP_200_OK)
+
+        # Register completion
+        DesafioConcluido.objects.create(user=user, desafio=desafio)
+
+        # Award XP
+        nivel_anterior = user.nivel
+        user.xp += desafio.xp
+
+        # Level-up formula: 1 level per 100 XP
+        novo_nivel = (user.xp // 100) + 1
+        user.nivel = novo_nivel
+        user.save()
+
+        level_up = novo_nivel > nivel_anterior
+
+        return Response({
+            "detail": f"Desafio concluído! +{desafio.xp} XP",
+            "xp": user.xp,
+            "nivel": user.nivel,
+            "level_up": level_up,
+        }, status=status.HTTP_200_OK)
+

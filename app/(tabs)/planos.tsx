@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   StyleSheet,
   View,
@@ -8,11 +8,13 @@ import {
   SafeAreaView,
   Platform,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { apiService } from '../_services/api';
 
 interface Desafio {
   id: number;
@@ -21,20 +23,23 @@ interface Desafio {
   xp: number;
   concluido: boolean;
   icone: keyof typeof Ionicons.glyphMap;
-  corIcone: string;
-  actionText?: string;
-  routeTarget?: string;
+  cor_icone: string;
+  action_text?: string | null;
+  route_target?: string | null;
 }
 
-const DESAFIOS_INICIAIS: Desafio[] = [
+// Local fallback data shown if the server is offline
+const DESAFIOS_FALLBACK: Desafio[] = [
   {
     id: 1,
     titulo: 'Falar com a IA Nexo',
     descricao: 'Tire uma dúvida sobre sua carreira ideal com o mentor inteligente.',
     xp: 20,
-    concluido: true,
+    concluido: false,
     icone: 'chatbubble-ellipses-outline',
-    corIcone: '#8B5CF6',
+    cor_icone: '#8B5CF6',
+    action_text: 'Abrir Chat',
+    route_target: '/(tabs)/chat',
   },
   {
     id: 2,
@@ -43,9 +48,9 @@ const DESAFIOS_INICIAIS: Desafio[] = [
     xp: 30,
     concluido: false,
     icone: 'school-outline',
-    corIcone: '#00D4FF',
-    actionText: 'Ir para Cursos',
-    routeTarget: '/(tabs)/carreiras',
+    cor_icone: '#00D4FF',
+    action_text: 'Ir para Cursos',
+    route_target: '/(tabs)/carreiras',
   },
   {
     id: 3,
@@ -54,31 +59,74 @@ const DESAFIOS_INICIAIS: Desafio[] = [
     xp: 25,
     concluido: false,
     icone: 'hardware-chip-outline',
-    corIcone: '#EC4899',
-    actionText: 'Evoluir Perfil',
-    routeTarget: '/(tabs)/',
+    cor_icone: '#EC4899',
+    action_text: 'Evoluir Perfil',
+    route_target: '/(tabs)/',
   },
 ];
 
 export default function PlanosScreen() {
   const router = useRouter();
-  const [desafios, setDesafios] = useState<Desafio[]>(DESAFIOS_INICIAIS);
+  const [desafios, setDesafios] = useState<Desafio[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [claimingId, setClaimingId] = useState<number | null>(null);
+
+  const carregarDesafios = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const data = await apiService.getChallenges();
+      setDesafios(data);
+    } catch {
+      console.warn('Servidor offline, usando dados locais.');
+      setDesafios(DESAFIOS_FALLBACK);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    carregarDesafios();
+  }, [carregarDesafios]);
 
   const handleBack = () => {
     router.back();
   };
 
   const handleAction = (item: Desafio) => {
-    if (item.routeTarget) {
-      router.push(item.routeTarget as any);
+    if (item.route_target) {
+      router.push(item.route_target as any);
     }
   };
 
-  const handleClaimReward = (id: number) => {
-    setDesafios((prev) =>
-      prev.map((d) => (d.id === id ? { ...d, concluido: true } : d))
-    );
-    Alert.alert('Recompensa Coletada!', 'Você ganhou pontos de XP por completar o desafio!');
+  const handleClaimReward = async (id: number) => {
+    if (claimingId !== null) return;
+    setClaimingId(id);
+    try {
+      const resultado = await apiService.completeChallenge(id);
+      // Mark challenge as completed locally
+      setDesafios((prev) =>
+        prev.map((d) => (d.id === id ? { ...d, concluido: true } : d))
+      );
+      if (resultado.level_up) {
+        Alert.alert(
+          '🎉 Subiu de Nível!',
+          `Parabéns! Você é agora Nível ${resultado.nivel}! Continue assim para conquistar novas conquistas!`
+        );
+      } else {
+        Alert.alert(
+          '⚡ Recompensa Coletada!',
+          `+${resultado.xp - (resultado.xp - (resultado.xp % 1))} XP conquistados! Seu total agora é ${resultado.xp} XP.`
+        );
+      }
+    } catch {
+      // If offline, at least update locally
+      setDesafios((prev) =>
+        prev.map((d) => (d.id === id ? { ...d, concluido: true } : d))
+      );
+      Alert.alert('Recompensa Coletada!', 'Você ganhou pontos de XP por completar o desafio!');
+    } finally {
+      setClaimingId(null);
+    }
   };
 
   const concluidosCount = desafios.filter((d) => d.concluido).length;
@@ -152,7 +200,13 @@ export default function PlanosScreen() {
         <View style={styles.challengesContainer}>
           <Text style={styles.sectionTitle}>Missões do dia</Text>
 
-          {desafios.map((item) => (
+          {isLoading ? (
+            <View style={{ alignItems: 'center', paddingVertical: 40 }}>
+              <ActivityIndicator size="large" color="#6B21A8" />
+              <Text style={{ color: '#64748B', marginTop: 12 }}>Carregando missões...</Text>
+            </View>
+          ) : (
+          desafios.map((item) => (
             <View
               key={item.id}
               style={[
@@ -163,7 +217,7 @@ export default function PlanosScreen() {
               {/* Top part: Icon, texts, XP info */}
               <View style={styles.challengeTop}>
                 <View style={[styles.iconContainer, { backgroundColor: '#1F2937' }]}>
-                  <Ionicons name={item.icone} size={22} color={item.corIcone} />
+                  <Ionicons name={item.icone} size={22} color={item.cor_icone} />
                 </View>
 
                 <View style={styles.challengeTexts}>
@@ -200,20 +254,20 @@ export default function PlanosScreen() {
                   </View>
                 ) : (
                   <View style={styles.actionsRow}>
-                    {item.actionText && (
+                    {item.action_text && item.route_target && (
                       <TouchableOpacity
                         style={styles.actionBtnSecondary}
                         onPress={() => handleAction(item)}
                         activeOpacity={0.7}
                       >
-                        <Text style={styles.actionBtnSecondaryText}>{item.actionText}</Text>
+                        <Text style={styles.actionBtnSecondaryText}>{item.action_text}</Text>
                       </TouchableOpacity>
                     )}
-
                     <TouchableOpacity
-                      style={styles.actionBtnPrimary}
+                      style={[styles.actionBtnPrimary, claimingId === item.id && { opacity: 0.6 }]}
                       onPress={() => handleClaimReward(item.id)}
                       activeOpacity={0.8}
+                      disabled={claimingId === item.id}
                     >
                       <LinearGradient
                         colors={['#6B21A8', '#4F46E5']}
@@ -221,14 +275,19 @@ export default function PlanosScreen() {
                         end={{ x: 1, y: 0 }}
                         style={styles.gradientBtn}
                       >
-                        <Text style={styles.actionBtnPrimaryText}>Concluir</Text>
+                        {claimingId === item.id ? (
+                          <ActivityIndicator size="small" color="#FFFFFF" />
+                        ) : (
+                          <Text style={styles.actionBtnPrimaryText}>Resgatar XP</Text>
+                        )}
                       </LinearGradient>
                     </TouchableOpacity>
                   </View>
                 )}
               </View>
             </View>
-          ))}
+          ))
+          )}
         </View>
       </ScrollView>
     </SafeAreaView>

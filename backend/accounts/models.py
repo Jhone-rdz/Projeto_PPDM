@@ -80,3 +80,34 @@ class Curso(models.Model):
 
     def __str__(self):
         return f"[{self.get_area_display()}] {self.nome}"
+
+
+class Desafio(models.Model):
+    titulo = models.CharField(max_length=150, verbose_name="Título")
+    descricao = models.TextField(verbose_name="Descrição")
+    xp = models.IntegerField(verbose_name="XP Bônus")
+    icone = models.CharField(max_length=100, verbose_name="Ícone Ionicons")
+    cor_icone = models.CharField(max_length=20, verbose_name="Cor do Ícone")
+    action_text = models.CharField(max_length=100, blank=True, null=True, verbose_name="Texto do Botão de Ação")
+    route_target = models.CharField(max_length=100, blank=True, null=True, verbose_name="Rota Alvo Interna")
+
+    class Meta:
+        verbose_name = "Desafio"
+        verbose_name_plural = "Desafios"
+
+    def __str__(self):
+        return f"{self.titulo} (+{self.xp} XP)"
+
+
+class DesafioConcluido(models.Model):
+    user = models.ForeignKey('CustomUser', on_delete=models.CASCADE, related_name='desafios_concluidos', verbose_name="Usuário")
+    desafio = models.ForeignKey(Desafio, on_delete=models.CASCADE, verbose_name="Desafio")
+    concluido_em = models.DateField(auto_now_add=True, verbose_name="Concluído Em")
+
+    class Meta:
+        verbose_name = "Desafio Concluído"
+        verbose_name_plural = "Desafios Concluídos"
+        unique_together = ('user', 'desafio', 'concluido_em')
+
+    def __str__(self):
+        return f"{self.user.username} - {self.desafio.titulo} ({self.concluido_em})"

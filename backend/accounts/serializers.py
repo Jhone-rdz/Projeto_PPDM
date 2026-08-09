@@ -31,7 +31,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         return user
 
 from django.db import transaction
-from .models import Pergunta, Opcao, RespostaUsuario, Curso
+from .models import Pergunta, Opcao, RespostaUsuario, Curso, Desafio
 
 class OpcaoSerializer(serializers.ModelSerializer):
     class Meta:
@@ -99,3 +99,26 @@ class CursoSerializer(serializers.ModelSerializer):
             'area', 'tags', 'match_percent', 'icone', 
             'cor_icone', 'cor_fundo'
         ]
+
+class DesafioSerializer(serializers.ModelSerializer):
+    concluido = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Desafio
+        fields = [
+            'id', 'titulo', 'descricao', 'xp',
+            'icone', 'cor_icone', 'action_text',
+            'route_target', 'concluido'
+        ]
+
+    def get_concluido(self, obj):
+        request = self.context.get('request')
+        if not request or not request.user.is_authenticated:
+            return False
+        from datetime import date
+        from .models import DesafioConcluido
+        return DesafioConcluido.objects.filter(
+            user=request.user,
+            desafio=obj,
+            concluido_em=date.today()
+        ).exists()

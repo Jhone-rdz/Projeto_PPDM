@@ -1,10 +1,3 @@
-🧱 Bloco 3: Integração do Chat com Inteligência Artificial
-Objetivo: Conectar a tela de Chat a uma IA (como a API do Gemini) para responder dúvidas reais de carreira.
-No Backend: Integrar a API do Gemini no Django e criar a rota /api/chat/ que recebe a pergunta do usuário e devolve a resposta gerada pela IA, considerando o curso técnico do usuário.
-No Mobile: Enviar as mensagens digitadas para a rota da API e exibir as respostas geradas.
-🧱 Bloco 4: Persistência de Sessão (Auto-Login)
-Objetivo: Fazer com que o usuário continue logado quando fechar e abrir o aplicativo.
-No Mobile: Integrar o @react-native-async-storage/async-storage no Expo para salvar o token JWT localmente, pulando a tela de login nas próximas inicializações se o token for válido.
 🧱 Bloco 5: Motor de Gamificação (Desafios Diários)
 Objetivo: Tornar a tela de Desafios Diários dinâmica.
 No Backend: Criar tabelas de Desafio e rotas de conclusão para gerenciar quais tarefas o usuário concluiu hoje.

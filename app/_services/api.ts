@@ -369,4 +369,59 @@ export const apiService = {
       throw error;
     }
   },
+
+  getChallenges: async () => {
+    try {
+      const token = session.access;
+      if (!token) throw new Error('Usuário não autenticado.');
+
+      const response = await fetch(`${API_BASE_URL}/desafios/`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.detail || 'Falha ao carregar desafios.');
+      }
+      return data;
+    } catch (error: any) {
+      console.error('Get Challenges API Error:', error);
+      throw error;
+    }
+  },
+
+  completeChallenge: async (id: number) => {
+    try {
+      const token = session.access;
+      if (!token) throw new Error('Usuário não autenticado.');
+
+      const response = await fetch(`${API_BASE_URL}/desafios/${id}/concluir/`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.detail || 'Falha ao concluir desafio.');
+      }
+
+      // Update in-memory session XP and level
+      if (session.user) {
+        session.user.xp = data.xp;
+        session.user.nivel = data.nivel;
+      }
+
+      return data;
+    } catch (error: any) {
+      console.error('Complete Challenge API Error:', error);
+      throw error;
+    }
+  },
 };
