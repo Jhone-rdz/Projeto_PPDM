@@ -209,7 +209,7 @@ export default function ChatScreen() {
 
         <View style={styles.headerRightCard}>
           <Image
-            source={require('../../assets/images/nexo-avatar.png')}
+            source={require('../../assets/images/nivel 1 despertado.png')}
             style={styles.headerAvatar}
           />
           <View style={styles.headerLevelColumn}>

@@ -50,6 +50,21 @@ export default function PerfilScreen() {
     return `${valor}%` as any;
   };
 
+  const getLevelImage = (nivel: number) => {
+    switch (nivel) {
+      case 0:
+        return require('../../assets/images/nivel 0 iniciante.png');
+      case 1:
+        return require('../../assets/images/nivel 1 despertado.png');
+      case 2:
+        return require('../../assets/images/nivel 2 super nexo 1.png');
+      case 3:
+        return require('../../assets/images/nivel 3 super nexo 2.png');
+      default:
+        return require('../../assets/images/icone tela de cadastro e home.png');
+    }
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar style="light" backgroundColor="#0A0F1E" />
@@ -72,7 +87,7 @@ export default function PerfilScreen() {
 
         <View style={styles.headerRightCard}>
           <Image
-            source={require('../../assets/images/nexo-avatar.png')}
+            source={require('../../assets/images/nivel 1 despertado.png')}
             style={styles.headerAvatar}
           />
           <View style={styles.headerLevelColumn}>
@@ -103,7 +118,7 @@ export default function PerfilScreen() {
                   <View key={index} style={styles.levelCardActive}>
                     <View style={styles.imageWrapper}>
                       <Image
-                        source={require('../../assets/images/nivel 1 despertado.png')}
+                        source={getLevelImage(nv.nivel)}
                         style={styles.levelImage}
                         resizeMode="cover"
                       />
@@ -125,7 +140,7 @@ export default function PerfilScreen() {
                   <View key={index} style={styles.levelCardUnlocked}>
                     <View style={styles.imageWrapper}>
                       <Image
-                        source={require('../../assets/images/nivel 0 iniciante.png')}
+                        source={getLevelImage(nv.nivel)}
                         style={styles.levelImage}
                         resizeMode="cover"
                       />
@@ -146,7 +161,7 @@ export default function PerfilScreen() {
                 <View key={index} style={styles.levelCardLocked}>
                   <View style={styles.imageWrapper}>
                     <Image
-                      source={require('../../assets/images/icone tela de cadastro e home.png')}
+                      source={getLevelImage(nv.nivel)}
                       style={[styles.levelImage, styles.levelImageLocked]}
                       resizeMode="cover"
                     />

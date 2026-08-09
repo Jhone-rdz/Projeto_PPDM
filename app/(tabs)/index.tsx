@@ -157,7 +157,7 @@ export default function HomeScreen() {
         >
           <View style={styles.levelCardLeft}>
             <Image
-              source={require('../../assets/images/nexo-avatar.png')}
+              source={require('../../assets/images/nivel 1 despertado.png')}
               style={styles.levelAvatar}
             />
           </View>
@@ -416,7 +416,7 @@ export default function HomeScreen() {
             <View style={styles.drawerProfileHeader}>
               <View style={styles.drawerProfileAvatarContainer}>
                 <Image
-                  source={require('../../assets/images/nexo-avatar.png')}
+                  source={require('../../assets/images/nivel 1 despertado.png')}
                   style={styles.drawerAvatar}
                 />
               </View>
