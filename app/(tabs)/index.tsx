@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   StyleSheet,
   View,
@@ -8,6 +8,9 @@ import {
   SafeAreaView,
   Image,
   Platform,
+  Modal,
+  Alert,
+  Animated,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -21,12 +24,41 @@ const CURSOS_COMPATIVEIS = [
   { match: '86%', icone: 'phone-portrait-outline', cor: '#F59E0B', nome: 'Análise e Desenvolvimento de Sistemas', tipo: 'MATCH BOM' },
 ];
 
+const QUIZ_OPTIONS = [
+  { id: 'a', label: 'Cloud Computing (Nuvem)' },
+  { id: 'b', label: 'Cyber Security (Segurança)' }, // Correct answer
+  { id: 'c', label: 'Web Development (Web)' },
+  { id: 'd', label: 'Database Administration (Banco de Dados)' },
+];
+
 export default function HomeScreen() {
   const router = useRouter();
 
-  const handleNavigateQuestionario = () => {
-    router.push('/onboarding/questionario');
-  };
+  // Drawer and Quiz states
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isQuizOpen, setIsQuizOpen] = useState(false);
+  const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
+  const [quizSubmitted, setQuizSubmitted] = useState(false);
+  const [isCorrectAnswer, setIsCorrectAnswer] = useState(false);
+
+  // Animated drawer slide-in value
+  const drawerSlideAnim = useRef(new Animated.Value(-300)).current;
+
+  useEffect(() => {
+    if (isDrawerOpen) {
+      Animated.timing(drawerSlideAnim, {
+        toValue: 0,
+        duration: 250,
+        useNativeDriver: true,
+      }).start();
+    } else {
+      Animated.timing(drawerSlideAnim, {
+        toValue: -300,
+        duration: 220,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [isDrawerOpen, drawerSlideAnim]);
 
   const handleNavigateCarreiras = () => {
     router.push('/(tabs)/carreiras');
@@ -44,13 +76,56 @@ export default function HomeScreen() {
     router.push('/(tabs)/perfil');
   };
 
+  const handleOpenQuiz = () => {
+    setSelectedAnswer(null);
+    setQuizSubmitted(false);
+    setIsCorrectAnswer(false);
+    setIsQuizOpen(true);
+  };
+
+  const handleCloseQuiz = () => {
+    setIsQuizOpen(false);
+  };
+
+  const handleSubmitQuiz = () => {
+    if (!selectedAnswer) return;
+
+    const correct = selectedAnswer === 'b';
+    setIsCorrectAnswer(correct);
+    setQuizSubmitted(true);
+
+    if (correct) {
+      // Award XP
+      Alert.alert(
+        'Resposta Correta! 🎉',
+        '+15 XP obtido! Seu perfil lógico e forças de segurança cibernética subiram de nível.',
+        [{ text: 'Ver Evolução', onPress: () => { setIsQuizOpen(false); router.push('/(tabs)/perfil'); } }]
+      );
+    } else {
+      Alert.alert(
+        'Quase lá!',
+        'Essa não é a resposta correta. Tente novamente para ganhar o XP de evolução!',
+        [{ text: 'Tentar Novamente', onPress: () => setQuizSubmitted(false) }]
+      );
+    }
+  };
+
+  const handleLogout = () => {
+    setIsDrawerOpen(false);
+    router.replace('/auth/login');
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar style="light" backgroundColor="#0A0F1E" />
 
       {/* CABEÇALHO (Fixo no topo) */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.headerButton} activeOpacity={0.7}>
+        <TouchableOpacity
+          style={styles.headerButton}
+          onPress={() => setIsDrawerOpen(true)}
+          activeOpacity={0.7}
+        >
           <Ionicons name="menu-outline" size={24} color="#FFFFFF" />
         </TouchableOpacity>
 
@@ -59,7 +134,11 @@ export default function HomeScreen() {
           <Text style={styles.headerSubtitle}>Pronto para evoluir hoje?</Text>
         </View>
 
-        <TouchableOpacity style={styles.headerButton} activeOpacity={0.7}>
+        <TouchableOpacity
+          style={styles.headerButton}
+          onPress={() => Alert.alert('Notificações', 'Sem notificações pendentes.')}
+          activeOpacity={0.7}
+        >
           <Ionicons name="notifications-outline" size={22} color="#FFFFFF" />
         </TouchableOpacity>
       </View>
@@ -142,7 +221,7 @@ export default function HomeScreen() {
             {/* Shortcut 1 */}
             <TouchableOpacity
               style={styles.shortcutCard}
-              onPress={handleNavigateQuestionario}
+              onPress={handleOpenQuiz}
               activeOpacity={0.8}
             >
               <Ionicons name="hardware-chip-outline" size={28} color="#8B5CF6" />
@@ -314,6 +393,203 @@ export default function HomeScreen() {
           </View>
         </View>
       </ScrollView>
+
+      {/* MODAL SIDE DRAWER (Menu Hambúrguer) */}
+      <Modal
+        visible={isDrawerOpen}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setIsDrawerOpen(false)}
+      >
+        <TouchableOpacity
+          style={styles.drawerOverlay}
+          activeOpacity={1}
+          onPress={() => setIsDrawerOpen(false)}
+        >
+          <Animated.View
+            style={[
+              styles.drawerContent,
+              { transform: [{ translateX: drawerSlideAnim }] },
+            ]}
+          >
+            {/* Drawer profile Header */}
+            <View style={styles.drawerProfileHeader}>
+              <View style={styles.drawerProfileAvatarContainer}>
+                <Image
+                  source={require('../../assets/images/nexo-avatar.png')}
+                  style={styles.drawerAvatar}
+                />
+              </View>
+              <Text style={styles.drawerProfileName}>Francisco</Text>
+              <Text style={styles.drawerProfileLevel}>Nível 1 • Despertado</Text>
+            </View>
+
+            {/* Drawer Menu links */}
+            <View style={styles.drawerLinksContainer}>
+              <TouchableOpacity
+                style={styles.drawerLinkRow}
+                onPress={() => {
+                  setIsDrawerOpen(false);
+                  router.push('/(tabs)/perfil');
+                }}
+              >
+                <Ionicons name="person-outline" size={20} color="#94A3B8" />
+                <Text style={styles.drawerLinkLabel}>Meu Perfil</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.drawerLinkRow}
+                onPress={() => {
+                  setIsDrawerOpen(false);
+                  router.push('/(tabs)/carreiras');
+                }}
+              >
+                <Ionicons name="school-outline" size={20} color="#94A3B8" />
+                <Text style={styles.drawerLinkLabel}>Cursos Compatíveis</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.drawerLinkRow}
+                onPress={() => {
+                  setIsDrawerOpen(false);
+                  router.push('/(tabs)/chat');
+                }}
+              >
+                <Ionicons name="chatbubble-ellipses-outline" size={20} color="#94A3B8" />
+                <Text style={styles.drawerLinkLabel}>Mentoria IA</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.drawerLinkRow}
+                onPress={() => {
+                  setIsDrawerOpen(false);
+                  router.push('/(tabs)/planos');
+                }}
+              >
+                <Ionicons name="trophy-outline" size={20} color="#94A3B8" />
+                <Text style={styles.drawerLinkLabel}>Desafios Diários</Text>
+              </TouchableOpacity>
+
+              <View style={styles.drawerDivider} />
+
+              <TouchableOpacity
+                style={styles.drawerLinkRow}
+                onPress={() => {
+                  setIsDrawerOpen(false);
+                  Alert.alert('Configurações', 'Área de configurações simulada!');
+                }}
+              >
+                <Ionicons name="settings-outline" size={20} color="#94A3B8" />
+                <Text style={styles.drawerLinkLabel}>Configurações</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.drawerLinkRow, styles.drawerLinkRowExit]}
+                onPress={handleLogout}
+              >
+                <Ionicons name="log-out-outline" size={20} color="#EF4444" />
+                <Text style={styles.drawerLinkLabelExit}>Sair da Conta</Text>
+              </TouchableOpacity>
+            </View>
+          </Animated.View>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* MODAL INTERATIVO QUIZ DIÁRIO (Evolução de Perfil) */}
+      <Modal
+        visible={isQuizOpen}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={handleCloseQuiz}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={handleCloseQuiz}
+        >
+          <View style={styles.quizCard}>
+            {/* Header */}
+            <View style={styles.quizHeaderRow}>
+              <View style={styles.quizTitleBadge}>
+                <Ionicons name="hardware-chip-outline" size={16} color="#8B5CF6" />
+                <Text style={styles.quizTitleBadgeText}>EVOLUA SEU PERFIL</Text>
+              </View>
+              <TouchableOpacity onPress={handleCloseQuiz} style={styles.quizCloseBtn}>
+                <Ionicons name="close" size={22} color="#94A3B8" />
+              </TouchableOpacity>
+            </View>
+
+            {/* Content */}
+            <Text style={styles.quizSubtitle}>Questão Diária de Lógica & Tech</Text>
+            <Text style={styles.quizQuestion}>
+              Qual das seguintes áreas de tecnologia foca principalmente na proteção de sistemas, redes e dados contra ataques digitais?
+            </Text>
+
+            {/* Options */}
+            <View style={styles.quizOptionsList}>
+              {QUIZ_OPTIONS.map((opt) => {
+                const isSelected = selectedAnswer === opt.id;
+                return (
+                  <TouchableOpacity
+                    key={opt.id}
+                    style={[
+                      styles.quizOptionRow,
+                      isSelected && styles.quizOptionRowSelected,
+                    ]}
+                    onPress={() => {
+                      if (!quizSubmitted) setSelectedAnswer(opt.id);
+                    }}
+                    disabled={quizSubmitted && isCorrectAnswer}
+                    activeOpacity={0.8}
+                  >
+                    <View
+                      style={[
+                        styles.quizRadioCircle,
+                        isSelected && styles.quizRadioCircleSelected,
+                      ]}
+                    >
+                      {isSelected && <View style={styles.quizRadioInnerCircle} />}
+                    </View>
+                    <Text
+                      style={[
+                        styles.quizOptionLabel,
+                        isSelected && styles.quizOptionLabelSelected,
+                      ]}
+                    >
+                      {opt.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
+            {/* Bottom Button */}
+            <TouchableOpacity
+              style={[styles.quizSubmitBtn, !selectedAnswer && styles.quizSubmitBtnDisabled]}
+              onPress={handleSubmitQuiz}
+              disabled={!selectedAnswer || (quizSubmitted && isCorrectAnswer)}
+              activeOpacity={0.8}
+            >
+              {selectedAnswer && !(quizSubmitted && isCorrectAnswer) ? (
+                <LinearGradient
+                  colors={['#6B21A8', '#4F46E5']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.quizSubmitGradient}
+                >
+                  <Text style={styles.quizSubmitBtnText}>Enviar Resposta</Text>
+                </LinearGradient>
+              ) : (
+                <View style={styles.quizSubmitDisabledContent}>
+                  <Text style={styles.quizSubmitBtnTextDisabled}>
+                    {quizSubmitted && isCorrectAnswer ? 'Correto ✓' : 'Enviar Resposta'}
+                  </Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -689,5 +965,212 @@ const styles = StyleSheet.create({
     width: 1,
     backgroundColor: '#1F2937',
     marginHorizontal: 8,
+  },
+  // DRAWER MENU STYLES
+  drawerOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    justifyContent: 'flex-start',
+  },
+  drawerContent: {
+    width: '75%',
+    height: '100%',
+    backgroundColor: '#0A0F1E',
+    borderRightWidth: 1,
+    borderRightColor: '#1F2937',
+    paddingTop: Platform.OS === 'ios' ? 60 : 40,
+    paddingHorizontal: 20,
+  },
+  drawerProfileHeader: {
+    alignItems: 'center',
+    marginBottom: 30,
+    paddingBottom: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#1F2937',
+  },
+  drawerProfileAvatarContainer: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    borderWidth: 2,
+    borderColor: '#4F46E5',
+    overflow: 'hidden',
+    marginBottom: 12,
+  },
+  drawerAvatar: {
+    width: '100%',
+    height: '100%',
+  },
+  drawerProfileName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    fontFamily: 'System',
+  },
+  drawerProfileLevel: {
+    fontSize: 12,
+    color: '#94A3B8',
+    marginTop: 4,
+    fontFamily: 'System',
+  },
+  drawerLinksContainer: {
+    flex: 1,
+  },
+  drawerLinkRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 14,
+    gap: 12,
+  },
+  drawerLinkLabel: {
+    fontSize: 15,
+    color: '#94A3B8',
+    fontWeight: '600',
+    fontFamily: 'System',
+  },
+  drawerDivider: {
+    height: 1,
+    backgroundColor: '#1F2937',
+    marginVertical: 16,
+  },
+  drawerLinkRowExit: {
+    marginTop: 'auto',
+    marginBottom: Platform.OS === 'ios' ? 40 : 20,
+  },
+  drawerLinkLabelExit: {
+    fontSize: 15,
+    color: '#EF4444',
+    fontWeight: 'bold',
+    fontFamily: 'System',
+  },
+  // QUIZ MODAL STYLES
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.65)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  quizCard: {
+    width: '90%',
+    backgroundColor: '#111827',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#1F2937',
+    padding: 20,
+  },
+  quizHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  quizTitleBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(139, 92, 246, 0.12)',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 8,
+    gap: 6,
+  },
+  quizTitleBadgeText: {
+    fontSize: 11,
+    fontWeight: '900',
+    color: '#8B5CF6',
+    fontFamily: 'System',
+  },
+  quizCloseBtn: {
+    padding: 4,
+  },
+  quizSubtitle: {
+    fontSize: 12,
+    color: '#94A3B8',
+    marginBottom: 8,
+    fontFamily: 'System',
+  },
+  quizQuestion: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    lineHeight: 22,
+    marginBottom: 20,
+    fontFamily: 'System',
+  },
+  quizOptionsList: {
+    gap: 10,
+    marginBottom: 24,
+  },
+  quizOptionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#1F2937',
+    borderWidth: 1.5,
+    borderColor: 'transparent',
+    borderRadius: 12,
+    padding: 14,
+    gap: 10,
+  },
+  quizOptionRowSelected: {
+    borderColor: '#6B21A8',
+    backgroundColor: '#2D1B69',
+  },
+  quizRadioCircle: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    borderWidth: 1.5,
+    borderColor: '#64748B',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  quizRadioCircleSelected: {
+    borderColor: '#00D4FF',
+  },
+  quizRadioInnerCircle: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#00D4FF',
+  },
+  quizOptionLabel: {
+    fontSize: 14,
+    color: '#94A3B8',
+    fontWeight: '500',
+    fontFamily: 'System',
+  },
+  quizOptionLabelSelected: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+  },
+  quizSubmitBtn: {
+    borderRadius: 14,
+    overflow: 'hidden',
+    height: 52,
+  },
+  quizSubmitBtnDisabled: {
+    opacity: 0.5,
+  },
+  quizSubmitGradient: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  quizSubmitDisabledContent: {
+    flex: 1,
+    backgroundColor: '#1F2937',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  quizSubmitBtnText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: 'bold',
+    fontFamily: 'System',
+  },
+  quizSubmitBtnTextDisabled: {
+    color: '#64748B',
+    fontSize: 15,
+    fontWeight: 'bold',
+    fontFamily: 'System',
   },
 });
