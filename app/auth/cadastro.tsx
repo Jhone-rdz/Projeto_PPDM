@@ -101,13 +101,13 @@ export default function CadastroScreen() {
       await apiService.register(nome, email, senha, curso);
       setIsLoading(false);
       
-      const msg = 'Cadastro realizado com sucesso!';
+      const msg = 'Cadastro realizado com sucesso! Vamos iniciar o seu questionário de perfil.';
       if (Platform.OS === 'web') {
         alert(msg);
-        router.push('/auth/login?fromCadastro=true');
+        router.replace('/onboarding/questionario');
       } else {
         Alert.alert('Sucesso', msg, [
-          { text: 'OK', onPress: () => router.push('/auth/login?fromCadastro=true') }
+          { text: 'OK', onPress: () => router.replace('/onboarding/questionario') }
         ]);
       }
     } catch (error: any) {

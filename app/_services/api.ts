@@ -1,4 +1,5 @@
 import { Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Dynamically sets backend URL:
 // - Android Emulator uses 10.0.2.2 to access the host loopback.
@@ -34,18 +35,90 @@ let session: Session = {
 
 export const apiService = {
   // Session Accessors
-  setSession: (access: string, refresh: string, user: UserProfile) => {
+  setSession: async (access: string, refresh: string, user: UserProfile) => {
     session.access = access;
     session.refresh = refresh;
     session.user = user;
+    try {
+      await AsyncStorage.setItem('nexo_access', access);
+      await AsyncStorage.setItem('nexo_refresh', refresh);
+    } catch (err) {
+      console.error('Failed to save tokens to storage:', err);
+    }
   },
 
   getSession: () => session,
 
-  clearSession: () => {
+  clearSession: async () => {
     session.access = null;
     session.refresh = null;
     session.user = null;
+    try {
+      await AsyncStorage.removeItem('nexo_access');
+      await AsyncStorage.removeItem('nexo_refresh');
+    } catch (err) {
+      console.error('Failed to clear tokens from storage:', err);
+    }
+  },
+
+  tryRestoreSession: async () => {
+    try {
+      const access = await AsyncStorage.getItem('nexo_access');
+      const refresh = await AsyncStorage.getItem('nexo_refresh');
+
+      if (!access) return false;
+
+      // Try to fetch user profile with this token
+      try {
+        const profile = await apiService.getProfile(access);
+        session.access = access;
+        session.refresh = refresh;
+        session.user = profile;
+        return true;
+      } catch {
+        // Access token might be expired. Try to refresh it.
+        if (refresh) {
+          try {
+            const response = await fetch(`${API_BASE_URL}/accounts/token/refresh/`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ refresh }),
+            });
+
+            const data = await response.json();
+            if (response.ok && data.access) {
+              const newAccess = data.access;
+              await AsyncStorage.setItem('nexo_access', newAccess);
+              
+              const profile = await apiService.getProfile(newAccess);
+              session.access = newAccess;
+              session.refresh = refresh;
+              session.user = profile;
+              return true;
+            }
+          } catch (refreshErr) {
+            console.error('Token refresh failed:', refreshErr);
+          }
+        }
+      }
+
+      // Clean up if restoration fails
+      session.access = null;
+      session.refresh = null;
+      session.user = null;
+      try {
+        await AsyncStorage.removeItem('nexo_access');
+        await AsyncStorage.removeItem('nexo_refresh');
+      } catch (cleanErr) {
+        console.error('Failed to clear tokens on failed restore:', cleanErr);
+      }
+      return false;
+    } catch (error) {
+      console.error('Restore session error:', error);
+      return false;
+    }
   },
 
   // API Request calls
@@ -71,7 +144,7 @@ export const apiService = {
       }
 
       // Automatically store in session
-      apiService.setSession(data.access, data.refresh, data.user);
+      await apiService.setSession(data.access, data.refresh, data.user);
       return data;
     } catch (error: any) {
       console.error('Registration API Error:', error);
@@ -100,7 +173,7 @@ export const apiService = {
 
       // Once tokens are received, retrieve user profile details
       const profile = await apiService.getProfile(data.access);
-      apiService.setSession(data.access, data.refresh, profile);
+      await apiService.setSession(data.access, data.refresh, profile);
       
       return {
         access: data.access,

@@ -139,8 +139,9 @@ export default function HomeScreen() {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     setIsDrawerOpen(false);
+    await apiService.clearSession();
     router.replace('/auth/login');
   };
 
