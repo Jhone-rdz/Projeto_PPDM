@@ -177,30 +177,16 @@ export default function ChatScreen() {
     setIsDigitando(true);
 
     try {
-      const isRealBackend = apiService.getSession().access !== null;
-      if (isRealBackend) {
-        const data = await apiService.sendChatMessage(textoParaEnviar);
-        setIsDigitando(false);
-        const respostaNexo: Mensagem = {
-          id: Date.now() + 1,
-          tipo: 'nexo',
-          texto: data.resposta,
-          horario: data.horario,
-        };
-        setMensagens((prev) => [...prev, respostaNexo]);
-      } else {
-        // Client-side fallback (offline / no token)
-        setTimeout(() => {
-          setIsDigitando(false);
-          const respostaNexo: Mensagem = {
-            id: Date.now() + 1,
-            tipo: 'nexo',
-            texto: clientFallback(textoParaEnviar),
-            horario: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-          };
-          setMensagens((prev) => [...prev, respostaNexo]);
-        }, 1200);
-      }
+      const data = await apiService.sendChatMessage(textoParaEnviar);
+      setIsDigitando(false);
+      const respostaNexo: Mensagem = {
+        id: Date.now() + 1,
+        tipo: 'nexo',
+        texto: data.resposta,
+        horario: data.horario,
+      };
+      setMensagens((prev) => [...prev, respostaNexo]);
+
     } catch {
       console.warn('API error sending message, using client fallback.');
       setIsDigitando(false);

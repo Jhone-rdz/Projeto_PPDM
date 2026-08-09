@@ -33,6 +33,25 @@ let session: Session = {
   user: null,
 };
 
+/**
+ * Retrieves the access token from in-memory session first,
+ * then falls back to AsyncStorage (handles hot-reload / cold-start scenarios).
+ */
+const getToken = async (): Promise<string> => {
+  if (session.access) return session.access;
+  // Try restoring from AsyncStorage before giving up
+  try {
+    const stored = await AsyncStorage.getItem('nexo_access');
+    if (stored) {
+      session.access = stored;
+      return stored;
+    }
+  } catch {
+    // ignore storage errors
+  }
+  throw new Error('Usuário não autenticado. Faça login novamente.');
+};
+
 export const apiService = {
   // Session Accessors
   setSession: async (access: string, refresh: string, user: UserProfile) => {
@@ -345,8 +364,7 @@ export const apiService = {
 
   sendChatMessage: async (mensagem: string) => {
     try {
-      const token = session.access;
-      if (!token) throw new Error('Usuário não autenticado.');
+      const token = await getToken();
 
       const response = await fetch(`${API_BASE_URL}/chat/`, {
         method: 'POST',
@@ -372,8 +390,7 @@ export const apiService = {
 
   getChallenges: async () => {
     try {
-      const token = session.access;
-      if (!token) throw new Error('Usuário não autenticado.');
+      const token = await getToken();
 
       const response = await fetch(`${API_BASE_URL}/desafios/`, {
         method: 'GET',
@@ -396,8 +413,7 @@ export const apiService = {
 
   completeChallenge: async (id: number) => {
     try {
-      const token = session.access;
-      if (!token) throw new Error('Usuário não autenticado.');
+      const token = await getToken();
 
       const response = await fetch(`${API_BASE_URL}/desafios/${id}/concluir/`, {
         method: 'POST',
