@@ -15,6 +15,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import CustomInput from '../_components/CustomInput';
 import BotaoCustom from '../_components/BotaoCustom';
+import { apiService } from '../_services/api';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -49,17 +50,18 @@ export default function LoginScreen() {
     return valid;
   };
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (!validate()) return;
 
     setIsLoading(true);
-    // Simulating authentication
-    setTimeout(() => {
+    try {
+      await apiService.login(email, password);
       setIsLoading(false);
+
       const targetRoute = fromCadastro ? '/onboarding/questionario' : '/(tabs)';
       const msg = fromCadastro
         ? 'Login realizado! Vamos responder ao questionário inicial.'
-        : 'Login realizado com sucesso (simulado)!';
+        : 'Login realizado com sucesso!';
 
       if (Platform.OS === 'web') {
         alert(msg);
@@ -71,7 +73,15 @@ export default function LoginScreen() {
           [{ text: 'OK', onPress: () => router.replace(targetRoute) }]
         );
       }
-    }, 1500);
+    } catch (error: any) {
+      setIsLoading(false);
+      const errorMsg = error.message || 'E-mail ou senha incorretos. Tente novamente.';
+      if (Platform.OS === 'web') {
+        alert(errorMsg);
+      } else {
+        Alert.alert('Erro', errorMsg);
+      }
+    }
   };
 
   const handleGoogleLogin = () => {

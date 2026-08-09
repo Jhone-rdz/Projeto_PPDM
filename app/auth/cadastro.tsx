@@ -17,6 +17,7 @@ import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import CustomInput from '../_components/CustomInput';
 import BotaoCustom from '../_components/BotaoCustom';
+import { apiService } from '../_services/api';
 
 const CURSOS_TECNICOS = [
   'Desenvolvimento de Sistemas',
@@ -92,22 +93,32 @@ export default function CadastroScreen() {
     return valid;
   };
 
-  const handleCadastro = () => {
+  const handleCadastro = async () => {
     if (!validate()) return;
 
     setIsLoading(true);
-    // Simulating registration
-    setTimeout(() => {
+    try {
+      await apiService.register(nome, email, senha, curso);
       setIsLoading(false);
+      
+      const msg = 'Cadastro realizado com sucesso!';
       if (Platform.OS === 'web') {
-        alert('Cadastro realizado com sucesso (simulado)!');
+        alert(msg);
         router.push('/auth/login?fromCadastro=true');
       } else {
-        Alert.alert('Sucesso', 'Cadastro realizado com sucesso (simulado)!', [
+        Alert.alert('Sucesso', msg, [
           { text: 'OK', onPress: () => router.push('/auth/login?fromCadastro=true') }
         ]);
       }
-    }, 1500);
+    } catch (error: any) {
+      setIsLoading(false);
+      const errorMsg = error.message || 'Falha ao realizar cadastro. Verifique os dados e tente novamente.';
+      if (Platform.OS === 'web') {
+        alert(errorMsg);
+      } else {
+        Alert.alert('Erro', errorMsg);
+      }
+    }
   };
 
   const handleGoogleCadastro = () => {

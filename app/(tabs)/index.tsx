@@ -16,6 +16,7 @@ import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { apiService } from '../_services/api';
 
 const CURSOS_COMPATIVEIS = [
   { match: '94%', icone: 'hardware-chip-outline', cor: '#8B5CF6', nome: 'Engenharia de Inteligência Artificial', tipo: 'MATCH ALTO' },
@@ -33,6 +34,26 @@ const QUIZ_OPTIONS = [
 
 export default function HomeScreen() {
   const router = useRouter();
+
+  // Load session statistics dynamically
+  const session = apiService.getSession();
+  const user = session.user;
+  const userName = user ? user.username.split('@')[0] : 'Francisco';
+  const userLevel = user ? user.nivel : 1;
+  const userXp = user ? user.xp : 40; // Default placeholder
+
+  const getLevelLabelName = (level: number) => {
+    switch (level) {
+      case 0: return 'Iniciante';
+      case 1: return 'Despertado';
+      case 2: return 'Super Nexo 1';
+      case 3: return 'Super Nexo 2';
+      case 4: return 'Super Nexo Blue';
+      default: return 'Além do Limite';
+    }
+  };
+
+  const levelName = getLevelLabelName(userLevel);
 
   // Drawer and Quiz states
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -87,7 +108,7 @@ export default function HomeScreen() {
     setIsQuizOpen(false);
   };
 
-  const handleSubmitQuiz = () => {
+  const handleSubmitQuiz = async () => {
     if (!selectedAnswer) return;
 
     const correct = selectedAnswer === 'b';
@@ -95,7 +116,15 @@ export default function HomeScreen() {
     setQuizSubmitted(true);
 
     if (correct) {
-      // Award XP
+      // Award XP on Django Backend
+      try {
+        if (session.user) {
+          await apiService.updateProfile(15);
+        }
+      } catch (err) {
+        console.error('Failed to sync XP with backend:', err);
+      }
+
       Alert.alert(
         'Resposta Correta! 🎉',
         '+15 XP obtido! Seu perfil lógico e forças de segurança cibernética subiram de nível.',
@@ -130,7 +159,7 @@ export default function HomeScreen() {
         </TouchableOpacity>
 
         <View style={styles.headerCenter}>
-          <Text style={styles.headerGreeting}>Olá, Francisco!</Text>
+          <Text style={styles.headerGreeting}>Olá, {userName}!</Text>
           <Text style={styles.headerSubtitle}>Pronto para evoluir hoje?</Text>
         </View>
 
@@ -163,17 +192,17 @@ export default function HomeScreen() {
           </View>
 
           <View style={styles.levelCardCenter}>
-            <Text style={styles.levelLabel}>NÍVEL 1</Text>
-            <Text style={styles.levelName}>Despertado</Text>
+            <Text style={styles.levelLabel}>NÍVEL {userLevel}</Text>
+            <Text style={styles.levelName}>{levelName}</Text>
             <View style={styles.levelProgressBg}>
               <LinearGradient
                 colors={['#4F46E5', '#00D4FF']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
-                style={styles.levelProgressFill}
+                style={[styles.levelProgressFill, { width: `${userXp % 100 || 40}%` }]}
               />
             </View>
-            <Text style={styles.levelProgressText}>Progresso 40% ⚡</Text>
+            <Text style={styles.levelProgressText}>Progresso {userXp % 100 || 40}% ⚡</Text>
           </View>
 
           <View style={styles.levelCardRight}>
@@ -420,8 +449,8 @@ export default function HomeScreen() {
                   style={styles.drawerAvatar}
                 />
               </View>
-              <Text style={styles.drawerProfileName}>Francisco</Text>
-              <Text style={styles.drawerProfileLevel}>Nível 1 • Despertado</Text>
+              <Text style={styles.drawerProfileName}>{userName}</Text>
+              <Text style={styles.drawerProfileLevel}>Nível {userLevel} • {levelName}</Text>
             </View>
 
             {/* Drawer Menu links */}
