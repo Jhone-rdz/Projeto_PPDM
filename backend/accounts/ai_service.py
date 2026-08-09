@@ -66,13 +66,64 @@ def fallback_chat(mensagem: str, curso_tecnico: str) -> str:
                 f"Qual o principal assunto ou disciplina que você está estudando esta semana?"
             )
             
+    # Career area / compatibility
+    elif any(k in msg for k in ["área", "atuação", "atuar", "compatível", "compativel", "campo", "segmento"]):
+        if "desenvolvimento" in curso.lower() or "sistemas" in curso.lower():
+            return (
+                f"Com o curso de *{curso}*, as áreas de atuação mais promissoras são:\n\n"
+                f"- **Desenvolvimento Web/Mobile**: Criação de sistemas, aplicativos e plataformas digitais usando frameworks como React, Node.js ou Flutter.\n"
+                f"- **Análise de Dados e IA**: Processamento de dados com Python, automações e integração com APIs de inteligência artificial.\n"
+                f"- **DevOps e Cloud**: Infraestrutura em nuvem (AWS, Azure, GCP), CI/CD e monitoramento de sistemas.\n"
+                f"- **Segurança da Informação**: Proteção de sistemas e redes, análise de vulnerabilidades e conformidade.\n\n"
+                f"Qual dessas áreas mais desperta seu interesse? Posso detalhar o caminho de carreira de cada uma!"
+            )
+        elif "administração" in curso.lower() or "negócios" in curso.lower():
+            return (
+                f"Com o curso de *{curso}*, você pode atuar em diversas frentes:\n\n"
+                f"- **Gestão de Projetos**: Coordenação de equipes usando metodologias ágeis (Scrum/Kanban).\n"
+                f"- **Marketing Digital**: Estratégias de crescimento, SEO, mídias sociais e análise de métricas.\n"
+                f"- **Finanças e Controladoria**: Análise financeira, planejamento orçamentário e auditoria.\n"
+                f"- **Empreendedorismo**: Criação e gestão de startups ou negócios próprios.\n\n"
+                f"Qual área combina mais com seu perfil pessoal?"
+            )
+        else:
+            return (
+                f"Com o curso de *{curso}*, as principais áreas de atuação incluem:\n\n"
+                f"- Assistência técnica e suporte especializado.\n"
+                f"- Consultoria e prestação de serviços na sua área.\n"
+                f"- Setor público ou privado em funções operacionais e de gestão.\n\n"
+                f"Gostaria que eu listasse as certificações mais valorizadas no mercado para seu curso?"
+            )
+
+    # Job market / opportunities
+    elif any(k in msg for k in ["mercado", "mercado de trabalho", "oportunidade", "futuro", "tendência", "tendencia", "demanda"]):
+        if "desenvolvimento" in curso.lower() or "sistemas" in curso.lower():
+            return (
+                f"O mercado de tecnologia para profissionais de *{curso}* está em plena expansão! Alguns dados relevantes:\n\n"
+                f"- O Brasil tem um déficit de mais de **500 mil profissionais de TI** por ano, criando enorme demanda.\n"
+                f"- Áreas como **Inteligência Artificial**, **Cloud Computing** e **Segurança Cibernética** lideram as contratações.\n"
+                f"- Desenvolvedores com experiência em projetos reais têm taxas de empregabilidade acima de 90%.\n\n"
+                f"Minha dica: construa um portfólio no GitHub com 2 ou 3 projetos completos. Isso vale mais que qualquer certificado no processo seletivo!"
+            )
+        else:
+            return (
+                f"O mercado para profissionais de *{curso}* está aquecido e com boas perspectivas:\n\n"
+                f"- Empresas buscam cada vez mais profissionais com formação técnica sólida combinada com habilidades digitais.\n"
+                f"- Setores como saúde, tecnologia e serviços são os maiores empregadores da atualidade.\n"
+                f"- A capacidade de trabalhar com dados e ferramentas digitais é um grande diferencial competitivo.\n\n"
+                f"O que mais você gostaria de saber sobre as tendências da sua área?"
+            )
+
     # Default intelligent mentoring
     else:
         return (
-            f"Excelente reflexão! Como estudante de *{curso}*, você está em um caminho promissor. "
-            f"Integrar sua dedicação técnica com as habilidades de comunicação e raciocínio lógico é a chave "
-            f"para se destacar profissionalmente. "
-            f"Gostaria de falar mais sobre as áreas de atuação mais compatíveis com seu perfil ou planejar uma rotina de estudos?"
+            f"Boa pergunta! Como estudante de *{curso}*, você tem um caminho muito promissor pela frente. "
+            f"Posso te ajudar com:\n\n"
+            f"- **Áreas de atuação** compatíveis com seu curso\n"
+            f"- **Salários** e remuneração no mercado\n"
+            f"- **Dicas de estudo** e certificações valorizadas\n"
+            f"- **Vagas de estágio** e como montar um portfólio\n\n"
+            f"Sobre qual desses temas você gostaria de conversar?"
         )
 
 def get_ai_response(mensagem: str, curso_tecnico: str) -> str:
@@ -83,7 +134,7 @@ def get_ai_response(mensagem: str, curso_tecnico: str) -> str:
         return fallback_chat(mensagem, curso_tecnico)
         
     try:
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={api_key}"
         headers = {
             "Content-Type": "application/json"
         }
