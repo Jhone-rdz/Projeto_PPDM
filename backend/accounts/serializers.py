@@ -31,7 +31,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         return user
 
 from django.db import transaction
-from .models import Pergunta, Opcao, RespostaUsuario
+from .models import Pergunta, Opcao, RespostaUsuario, Curso
 
 class OpcaoSerializer(serializers.ModelSerializer):
     class Meta:
@@ -88,3 +88,14 @@ class RespostaQuestionarioSerializer(serializers.Serializer):
                 created_objects.append(resposta)
                 
         return created_objects
+
+class CursoSerializer(serializers.ModelSerializer):
+    tags = serializers.ReadOnlyField()
+
+    class Meta:
+        model = Curso
+        fields = [
+            'id', 'nome', 'tipo', 'duracao', 'descricao', 
+            'area', 'tags', 'match_percent', 'icone', 
+            'cor_icone', 'cor_fundo'
+        ]

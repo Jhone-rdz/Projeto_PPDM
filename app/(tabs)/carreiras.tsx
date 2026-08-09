@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   View,
@@ -14,6 +14,7 @@ import {
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
+import { apiService } from '../_services/api';
 
 const DADOS_CURSOS = [
   {
@@ -68,10 +69,51 @@ const DADOS_CURSOS = [
 
 type AreaType = 'tecnologia' | 'saude' | 'negocios';
 
+interface CursoItem {
+  id: number;
+  tipo: string;
+  duracao: string;
+  nome: string;
+  descricao: string;
+  tags: string[];
+  match: string;
+  icone: string;
+  corIcone: string;
+  corFundo: string;
+}
+
 export default function CarreirasScreen() {
   const router = useRouter();
   const [areaAtiva, setAreaAtiva] = useState<AreaType>('tecnologia');
   const [busca, setBusca] = useState('');
+  const [cursos, setCursos] = useState<CursoItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Load session statistics dynamically
+  const session = apiService.getSession();
+  const user = session.user;
+  const userLevel = user ? user.nivel : 1;
+  const getLevelLabelName = (level: number) => {
+    switch (level) {
+      case 0: return 'Iniciante';
+      case 1: return 'Despertado';
+      case 2: return 'Super Nexo 1';
+      case 3: return 'Super Nexo 2';
+      case 4: return 'Super Nexo Blue';
+      default: return 'Além do Limite';
+    }
+  };
+  const levelName = getLevelLabelName(userLevel);
+
+  const getLevelImage = (lvl: number) => {
+    switch (lvl) {
+      case 0: return require('../../assets/images/nivel 0 iniciante.png');
+      case 1: return require('../../assets/images/nivel 1 despertado.png');
+      case 2: return require('../../assets/images/nivel 2 super nexo 1.png');
+      case 3: return require('../../assets/images/nivel 3 super nexo 2.png');
+      default: return require('../../assets/images/nivel 1 despertado.png');
+    }
+  };
 
   const handleBack = () => {
     router.back();
@@ -81,12 +123,41 @@ export default function CarreirasScreen() {
     Alert.alert('Saiba mais', `Informações sobre o curso: ${nomeCurso}`);
   };
 
-  // Filter courses based on search query
-  const cursosFiltrados = DADOS_CURSOS.filter((curso) =>
-    curso.nome.toLowerCase().includes(busca.toLowerCase()) ||
-    curso.descricao.toLowerCase().includes(busca.toLowerCase()) ||
-    curso.tags.some((tag) => tag.toLowerCase().includes(busca.toLowerCase()))
-  );
+  // Fetch courses from Django backend with area and search params (debounced)
+  useEffect(() => {
+    const delayDebounce = setTimeout(async () => {
+      setIsLoading(true);
+      try {
+        const data = await apiService.getCourses(areaAtiva, busca);
+        const mapped = data.map((c: any) => ({
+          id: c.id,
+          tipo: c.tipo,
+          duracao: c.duracao,
+          nome: c.nome,
+          descricao: c.descricao,
+          tags: c.tags,
+          match: `${c.match_percent}%`,
+          icone: c.icone,
+          corIcone: c.cor_icone,
+          corFundo: c.cor_fundo,
+        }));
+        setCursos(mapped);
+      } catch (err) {
+        console.warn('Failed to load courses from API:', err);
+        // Fallback to static mock filter (Teconolgia only)
+        const filtered = DADOS_CURSOS.filter((curso) =>
+          curso.nome.toLowerCase().includes(busca.toLowerCase()) ||
+          curso.descricao.toLowerCase().includes(busca.toLowerCase()) ||
+          curso.tags.some((tag) => tag.toLowerCase().includes(busca.toLowerCase()))
+        );
+        setCursos(filtered);
+      } finally {
+        setIsLoading(false);
+      }
+    }, 300); // 300ms search debounce
+
+    return () => clearTimeout(delayDebounce);
+  }, [areaAtiva, busca]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -110,12 +181,12 @@ export default function CarreirasScreen() {
 
         <View style={styles.headerRightCard}>
           <Image
-            source={require('../../assets/images/nivel 1 despertado.png')}
+            source={getLevelImage(userLevel)}
             style={styles.headerAvatar}
           />
           <View style={styles.headerLevelColumn}>
-            <Text style={styles.headerLevelLabel}>NÍVEL 1</Text>
-            <Text style={styles.headerLevelName}>Despertado</Text>
+            <Text style={styles.headerLevelLabel}>NÍVEL {userLevel}</Text>
+            <Text style={styles.headerLevelName}>{levelName}</Text>
           </View>
         </View>
       </View>
@@ -222,8 +293,12 @@ export default function CarreirasScreen() {
 
         {/* SEÇÃO 4 — LISTA DE CURSOS */}
         <View style={styles.coursesListContainer}>
-          {cursosFiltrados.length > 0 ? (
-            cursosFiltrados.map((curso) => (
+          {isLoading ? (
+            <View style={styles.loadingContainer}>
+              <Text style={styles.loadingText}>Carregando cursos...</Text>
+            </View>
+          ) : cursos.length > 0 ? (
+            cursos.map((curso) => (
               <View key={curso.id} style={styles.courseCard}>
                 {/* LINHA 1 — Topo do card */}
                 <View style={styles.courseCardHeader}>
@@ -277,8 +352,8 @@ export default function CarreirasScreen() {
             ))
           ) : (
             <View style={styles.emptyContainer}>
-              <Ionicons name="alert-circle-outline" size={48} color="#64748B" />
-              <Text style={styles.emptyText}>Nenhum curso compatível encontrado.</Text>
+              <Ionicons name="alert-circle-outline" size={48} color="#4B5563" />
+              <Text style={styles.emptyText}>Nenhum curso encontrado para &quot;{busca}&quot;.</Text>
             </View>
           )}
         </View>
@@ -630,5 +705,16 @@ const styles = StyleSheet.create({
     marginTop: 12,
     textAlign: 'center',
     fontFamily: 'System',
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 50,
+  },
+  loadingText: {
+    color: '#94A3B8',
+    fontSize: 14,
+    fontFamily: 'System',
+    fontWeight: '600',
   },
 });

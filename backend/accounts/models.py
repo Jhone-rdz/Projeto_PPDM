@@ -52,3 +52,31 @@ class RespostaUsuario(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - P{self.pergunta.id}: {self.opcao.chave}"
+
+class Curso(models.Model):
+    AREA_CHOICES = [
+        ('tecnologia', 'Tecnologia'),
+        ('saude', 'Saúde'),
+        ('negocios', 'Negócios'),
+    ]
+    
+    nome = models.CharField(max_length=200, verbose_name="Nome do Curso")
+    tipo = models.CharField(max_length=100, verbose_name="Tipo (e.g. Bacharelado, Tecnólogo)")
+    duracao = models.CharField(max_length=50, verbose_name="Duração (e.g. 4 anos)")
+    descricao = models.TextField(verbose_name="Descrição")
+    area = models.CharField(max_length=20, choices=AREA_CHOICES, default='tecnologia', verbose_name="Área do Curso")
+    
+    # Tags stored as a comma-separated string
+    tags_raw = models.CharField(max_length=500, verbose_name="Tags (separadas por vírgula)")
+    
+    match_percent = models.IntegerField(default=85, verbose_name="Percentual de Match")
+    icone = models.CharField(max_length=100, default='school-outline', verbose_name="Ícone Ionicons")
+    cor_icone = models.CharField(max_length=20, default='#6B21A8', verbose_name="Cor do Ícone")
+    cor_fundo = models.CharField(max_length=20, default='#111827', verbose_name="Cor de Fundo da Caixa de Ícone")
+
+    @property
+    def tags(self):
+        return [t.strip() for t in self.tags_raw.split(',') if t.strip()]
+
+    def __str__(self):
+        return f"[{self.get_area_display()}] {self.nome}"

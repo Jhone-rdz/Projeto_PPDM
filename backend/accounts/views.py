@@ -62,3 +62,29 @@ class SalvarRespostasView(generics.GenericAPIView):
             "user": user_serializer.data,
             "message": "Respostas do questionário salvas e bônus de +50 XP concedido!"
         }, status=status.HTTP_200_OK)
+
+from django.db.models import Q
+from .models import Curso
+from .serializers import CursoSerializer
+
+class CursoListView(generics.ListAPIView):
+    serializer_class = CursoSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        queryset = Curso.objects.all().order_by('-match_percent')
+        
+        area = self.request.query_params.get('area', None)
+        busca = self.request.query_params.get('busca', None)
+        
+        if area:
+            queryset = queryset.filter(area__iexact=area.strip())
+            
+        if busca:
+            queryset = queryset.filter(
+                Q(nome__icontains=busca) | 
+                Q(descricao__icontains=busca) |
+                Q(tags_raw__icontains=busca)
+            )
+            
+        return queryset

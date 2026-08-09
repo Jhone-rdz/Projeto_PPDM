@@ -235,4 +235,38 @@ export const apiService = {
       throw error;
     }
   },
+
+  getCourses: async (area?: string, busca?: string) => {
+    try {
+      const token = session.access;
+      if (!token) throw new Error('Usuário não autenticado.');
+
+      let url = `${API_BASE_URL}/cursos/`;
+      const params = [];
+      if (area) params.push(`area=${encodeURIComponent(area)}`);
+      if (busca) params.push(`busca=${encodeURIComponent(busca)}`);
+      if (params.length > 0) {
+        url += `?${params.join('&')}`;
+      }
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.detail || 'Falha ao carregar cursos.');
+      }
+
+      return data;
+    } catch (error: any) {
+      console.error('Get Courses API Error:', error);
+      throw error;
+    }
+  },
 };
