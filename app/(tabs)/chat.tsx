@@ -248,7 +248,7 @@ export default function ChatScreen() {
                 <View style={styles.bannerLeftSection}>
                   <View style={styles.glowEffect} />
                   <Image
-                    source={require('../../assets/images/nexo-cadastro.png')}
+                    source={require('../../assets/images/icone tela de cadastro e home.png')}
                     style={styles.bannerCharacterImage}
                     resizeMode="contain"
                   />

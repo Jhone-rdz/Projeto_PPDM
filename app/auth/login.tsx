@@ -8,12 +8,11 @@ import {
   Platform,
   ScrollView,
   Alert,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import CustomInput from '../_components/CustomInput';
 import BotaoCustom from '../_components/BotaoCustom';
 
@@ -112,14 +111,11 @@ export default function LoginScreen() {
           {/* Logo Section */}
           <View style={styles.headerContainer}>
             <View style={styles.logoBadgeContainer}>
-              <LinearGradient
-                colors={['#6B21A8', '#4F46E5']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.logoGradient}
-              >
-                <Ionicons name="trending-up" size={28} color="#FFFFFF" />
-              </LinearGradient>
+              <Image
+                source={require('../../assets/images/Icone tela de login.png')}
+                style={styles.logoImage}
+                resizeMode="cover"
+              />
             </View>
             <Text style={styles.logoText}>NexoCareer</Text>
             <Text style={styles.tagline}>Descubra. Desenvolva. Conquiste.</Text>
@@ -225,6 +221,10 @@ const styles = StyleSheet.create({
     height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  logoImage: {
+    width: '100%',
+    height: '100%',
   },
   logoText: {
     fontSize: 32,

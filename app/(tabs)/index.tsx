@@ -206,7 +206,7 @@ export default function HomeScreen() {
             </View>
 
             <Image
-              source={require('../../assets/images/nexo-cadastro.png')}
+              source={require('../../assets/images/icone tela de cadastro e home.png')}
               style={styles.objectiveImage}
               resizeMode="contain"
             />

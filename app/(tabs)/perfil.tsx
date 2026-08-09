@@ -103,7 +103,7 @@ export default function PerfilScreen() {
                   <View key={index} style={styles.levelCardActive}>
                     <View style={styles.imageWrapper}>
                       <Image
-                        source={require('../../assets/images/nexo-cadastro.png')}
+                        source={require('../../assets/images/nivel 1 despertado.png')}
                         style={styles.levelImage}
                         resizeMode="cover"
                       />
@@ -125,7 +125,7 @@ export default function PerfilScreen() {
                   <View key={index} style={styles.levelCardUnlocked}>
                     <View style={styles.imageWrapper}>
                       <Image
-                        source={require('../../assets/images/nexo-cadastro.png')}
+                        source={require('../../assets/images/nivel 0 iniciante.png')}
                         style={styles.levelImage}
                         resizeMode="cover"
                       />
@@ -146,7 +146,7 @@ export default function PerfilScreen() {
                 <View key={index} style={styles.levelCardLocked}>
                   <View style={styles.imageWrapper}>
                     <Image
-                      source={require('../../assets/images/nexo-cadastro.png')}
+                      source={require('../../assets/images/icone tela de cadastro e home.png')}
                       style={[styles.levelImage, styles.levelImageLocked]}
                       resizeMode="cover"
                     />
@@ -172,7 +172,7 @@ export default function PerfilScreen() {
           <View style={styles.currentLevelCard}>
             <View style={styles.currentLevelImageContainer}>
               <Image
-                source={require('../../assets/images/nexo-cadastro.png')}
+                source={require('../../assets/images/nivel 1 despertado.png')}
                 style={styles.currentLevelImage}
                 resizeMode="contain"
               />
