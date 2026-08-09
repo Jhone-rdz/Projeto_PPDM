@@ -10,7 +10,7 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -19,6 +19,8 @@ import BotaoCustom from '../_components/BotaoCustom';
 
 export default function LoginScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams();
+  const fromCadastro = params.fromCadastro === 'true';
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
@@ -55,14 +57,19 @@ export default function LoginScreen() {
     // Simulating authentication
     setTimeout(() => {
       setIsLoading(false);
+      const targetRoute = fromCadastro ? '/onboarding/questionario' : '/(tabs)';
+      const msg = fromCadastro
+        ? 'Login realizado! Vamos responder ao questionário inicial.'
+        : 'Login realizado com sucesso (simulado)!';
+
       if (Platform.OS === 'web') {
-        alert('Login realizado com sucesso (simulado)!');
-        router.replace('/(tabs)');
+        alert(msg);
+        router.replace(targetRoute);
       } else {
         Alert.alert(
           'Sucesso',
-          'Login realizado com sucesso (simulado)!',
-          [{ text: 'OK', onPress: () => router.replace('/(tabs)') }]
+          msg,
+          [{ text: 'OK', onPress: () => router.replace(targetRoute) }]
         );
       }
     }, 1500);
@@ -72,14 +79,19 @@ export default function LoginScreen() {
     setIsLoading(true);
     setTimeout(() => {
       setIsLoading(false);
+      const targetRoute = fromCadastro ? '/onboarding/questionario' : '/(tabs)';
+      const msg = fromCadastro
+        ? 'Login com Google realizado! Vamos responder ao questionário inicial.'
+        : 'Login com Google realizado (simulado)!';
+
       if (Platform.OS === 'web') {
-        alert('Login com Google realizado (simulado)!');
-        router.replace('/(tabs)');
+        alert(msg);
+        router.replace(targetRoute);
       } else {
         Alert.alert(
           'Google Login',
-          'Login com Google realizado (simulado)!',
-          [{ text: 'OK', onPress: () => router.replace('/(tabs)') }]
+          msg,
+          [{ text: 'OK', onPress: () => router.replace(targetRoute) }]
         );
       }
     }, 1000);

@@ -101,10 +101,10 @@ export default function CadastroScreen() {
       setIsLoading(false);
       if (Platform.OS === 'web') {
         alert('Cadastro realizado com sucesso (simulado)!');
-        router.push('/auth/login');
+        router.push('/auth/login?fromCadastro=true');
       } else {
         Alert.alert('Sucesso', 'Cadastro realizado com sucesso (simulado)!', [
-          { text: 'OK', onPress: () => router.push('/auth/login') }
+          { text: 'OK', onPress: () => router.push('/auth/login?fromCadastro=true') }
         ]);
       }
     }, 1500);
@@ -116,10 +116,10 @@ export default function CadastroScreen() {
       setIsLoading(false);
       if (Platform.OS === 'web') {
         alert('Cadastro com Google realizado (simulado)!');
-        router.push('/auth/login');
+        router.push('/auth/login?fromCadastro=true');
       } else {
         Alert.alert('Google Signup', 'Cadastro com Google realizado (simulado)!', [
-          { text: 'OK', onPress: () => router.push('/auth/login') }
+          { text: 'OK', onPress: () => router.push('/auth/login?fromCadastro=true') }
         ]);
       }
     }, 1000);
