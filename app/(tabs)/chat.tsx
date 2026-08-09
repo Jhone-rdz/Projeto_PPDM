@@ -48,6 +48,50 @@ const MENSAGENS_INICIAIS: Mensagem[] = [
   },
 ];
 
+// Client-side keyword engine (mirrors the Django backend fallback_chat)
+// Used when the server is offline or throws an error.
+const clientFallback = (mensagem: string): string => {
+  const msg = mensagem.toLowerCase();
+
+  // Greeting
+  if (['olá', 'oi', 'boa tarde', 'bom dia', 'boa noite', 'hey', 'eai', 'e ai'].some(k => msg.includes(k))) {
+    return 'Olá! 👋 Sou o Nexo, seu mentor de carreira com Inteligência Artificial. Estou aqui para te ajudar a decolar sua jornada profissional! Sobre o que você gostaria de conversar hoje?\n\n- 💰 Salários e remuneração\n- 🎓 Áreas de atuação\n- 📚 Dicas de estudo\n- 💼 Vagas e estágio';
+  }
+
+  // What to do / next step
+  if (['oque faço', 'o que faço', 'o que fazer', 'por onde começar', 'começo', 'inicio', 'início', 'próximo passo', 'agora'].some(k => msg.includes(k))) {
+    return 'Ótima pergunta! Aqui estão os primeiros passos para alavancar sua carreira técnica:\n\n1. **Monte um portfólio no GitHub** com 2 ou 3 projetos completos — isso vale mais que muitos certificados.\n2. **Atualize seu LinkedIn** com seu curso, habilidades e projetos.\n3. **Busque uma certificação rápida** na sua área (Coursera, Alura ou Sebrae oferecem gratuitas).\n4. **Candidate-se a estágios** nas plataformas Gupy, LinkedIn e Cia de Talentos.\n\nQuer que eu detalhe algum desses passos?';
+  }
+
+  // Salary / money
+  if (['salário', 'salario', 'ganhar', 'dinheiro', 'remuneração', 'remuneracao', 'quanto ganha', 'pagar'].some(k => msg.includes(k))) {
+    return 'Na área de tecnologia os salários são muito atrativos! 💰\n\n- **Júnior**: R$ 3.000 — R$ 5.000\n- **Pleno**: R$ 6.000 — R$ 9.000\n- **Sênior**: R$ 12.000 — R$ 20.000+\n\nEspecializar-se em áreas como Inteligência Artificial, Cloud ou Segurança da Informação acelera muito esse crescimento. Quer saber como chegar lá?';
+  }
+
+  // Internship / jobs
+  if (['estágio', 'estagio', 'vaga', 'emprego', 'trabalhar', 'contratar', 'currículo', 'curriculo', 'portfólio', 'portfolio'].some(k => msg.includes(k))) {
+    return 'Para conquistar as melhores oportunidades, foque nesses 3 pilares:\n\n1. **LinkedIn atualizado** com foto profissional, habilidades e projetos descritos.\n2. **GitHub ativo** com repositórios comentados e um README bem escrito.\n3. **Candidatura direcionada** em plataformas como Gupy, Cia de Talentos e LinkedIn Jobs.\n\nGostaria que eu te ajudasse a estruturar seu currículo?';
+  }
+
+  // Study / skills / courses
+  if (['estudar', 'aprender', 'estudo', 'dica', 'tecnologia', 'linguagem', 'certificado', 'certificação', 'habilidade'].some(k => msg.includes(k))) {
+    return 'Excelente foco em aprendizado! 📚 Para se destacar em tecnologia recomendo:\n\n- **Python** ou **JavaScript/TypeScript** como linguagem principal.\n- **Banco de Dados**: SQL (PostgreSQL) + noções de NoSQL.\n- **Controle de versão**: Git e GitHub são indispensáveis.\n- **Certificações gratuitas**: Google, Microsoft e AWS têm cursos com certificado sem custo.\n\nQual dessas áreas você quer aprofundar primeiro?';
+  }
+
+  // Career areas / compatibility
+  if (['área', 'area', 'atuação', 'atuacao', 'atuar', 'compatível', 'compativel', 'campo', 'segmento', 'ramo'].some(k => msg.includes(k))) {
+    return 'Com um curso técnico em tecnologia, as áreas mais promissoras são:\n\n- 🌐 **Desenvolvimento Web/Mobile** — apps, sistemas e plataformas digitais\n- 🤖 **Inteligência Artificial e Dados** — análise, automação e machine learning\n- ☁️ **DevOps e Cloud** — infraestrutura, AWS, Azure e GCP\n- 🔒 **Segurança da Informação** — proteção de sistemas e redes\n\nQual dessas áreas mais desperta seu interesse? Posso detalhar o caminho de carreira!';
+  }
+
+  // Market / opportunities / future
+  if (['mercado', 'oportunidade', 'futuro', 'tendência', 'tendencia', 'demanda', 'crescimento'].some(k => msg.includes(k))) {
+    return 'O mercado de tecnologia está aquecidíssimo! 🚀\n\n- O Brasil tem déficit de mais de **500 mil profissionais de TI** por ano.\n- Empresas de todos os setores precisam de desenvolvedores.\n- Trabalho remoto e salários em dólar são cada vez mais acessíveis.\n\nMinha dica: construa um portfólio sólido e candidate-se mesmo sem experiência formal. Muitas empresas contratam pelo potencial demonstrado!';
+  }
+
+  // Default — show menu
+  return 'Boa pergunta! Posso te ajudar com:\n\n- 💰 **Salários** na sua área\n- 🎯 **Áreas de atuação** compatíveis\n- 📚 **O que estudar** e quais certificações fazer\n- 💼 **Como conseguir estágio** ou emprego\n- 🚀 **Mercado de trabalho** e tendências\n\nSobre qual desses temas você quer conversar?';
+};
+
 export default function ChatScreen() {
   const router = useRouter();
   const flatListRef = useRef<FlatList>(null);
@@ -145,35 +189,25 @@ export default function ChatScreen() {
         };
         setMensagens((prev) => [...prev, respostaNexo]);
       } else {
-        // Fallback simulation if no backend token is set (offline mode)
+        // Client-side fallback (offline / no token)
         setTimeout(() => {
           setIsDigitando(false);
-          let fallbackText = '';
-          const msgLower = textoParaEnviar.toLowerCase();
-          if (msgLower.includes('salário') || msgLower.includes('ganhar') || msgLower.includes('dinheiro')) {
-            fallbackText = 'No mercado de tecnologia, desenvolvedores juniores começam ganhando de R$ 3.000 a R$ 5.000, subindo rápido com a experiência.';
-          } else if (msgLower.includes('estágio') || msgLower.includes('vaga') || msgLower.includes('emprego')) {
-            fallbackText = 'Mantenha seu GitHub ativo e LinkedIn atualizado! São as melhores formas de conseguir estágio técnico.';
-          } else {
-            fallbackText = 'Excelente reflexão! Integrar seu aprendizado técnico com noções de lógica e negócios te dará um enorme diferencial competitivo.';
-          }
-
           const respostaNexo: Mensagem = {
             id: Date.now() + 1,
             tipo: 'nexo',
-            texto: fallbackText,
+            texto: clientFallback(textoParaEnviar),
             horario: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
           };
           setMensagens((prev) => [...prev, respostaNexo]);
-        }, 1500);
+        }, 1200);
       }
-    } catch (error: any) {
-      console.warn('API error sending message, using client fallback:', error);
+    } catch {
+      console.warn('API error sending message, using client fallback.');
       setIsDigitando(false);
       const respostaErro: Mensagem = {
         id: Date.now() + 1,
         tipo: 'nexo',
-        texto: 'Ops, tive um problema ao me conectar com meus servidores de IA. Mas posso te dizer que o mercado técnico está super aquecido. O que mais você gostaria de saber?',
+        texto: clientFallback(textoParaEnviar),
         horario: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
       };
       setMensagens((prev) => [...prev, respostaErro]);
