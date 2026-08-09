@@ -134,7 +134,7 @@ def get_ai_response(mensagem: str, curso_tecnico: str) -> str:
         return fallback_chat(mensagem, curso_tecnico)
         
     try:
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={api_key}"
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
         headers = {
             "Content-Type": "application/json"
         }
