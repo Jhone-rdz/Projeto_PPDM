@@ -132,40 +132,53 @@ def get_ai_response(mensagem: str, curso_tecnico: str) -> str:
     
     if not api_key:
         return fallback_chat(mensagem, curso_tecnico)
-        
-    try:
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
-        headers = {
-            "Content-Type": "application/json"
-        }
-        prompt = (
-            f"Você é o Nexo, um mentor de carreira inteligente, atencioso e empático para estudantes de cursos técnicos. "
-            f"Seu objetivo é ajudar a traçar planos de estudo e conectar o aprendizado técnico com oportunidades reais. "
-            f"O curso técnico atual do usuário é: '{curso_tecnico}'. O usuário enviou a seguinte mensagem: '{mensagem}'. "
-            f"Dê conselhos práticos de carreira relacionados a esse curso. Responda em português de forma clara, amigável e motivadora. "
-            f"Limite sua resposta a 2 ou 3 parágrafos."
-        )
-        
-        payload = {
-            "contents": [{
-                "parts": [{
-                    "text": prompt
-                }]
-            }]
-        }
-        
-        response = requests.post(url, headers=headers, json=payload, timeout=15)
-        if response.status_code == 200:
-            res_data = response.json()
-            candidates = res_data.get("candidates", [])
-            if candidates:
-                parts = candidates[0].get("content", {}).get("parts", [])
-                if parts:
-                    return parts[0].get("text", "").strip()
-                    
-        # Log status code and response for debugging
-        print(f"Gemini API returned status code {response.status_code}: {response.text}")
-        return fallback_chat(mensagem, curso_tecnico)
-    except Exception as e:
-        print(f"Exception during Gemini API request: {e}")
-        return fallback_chat(mensagem, curso_tecnico)
+
+    # Try models in order of preference — first one that answers wins.
+    # Prioritises flash-lite variants (cheapest quota) → mid-tier → full flash.
+    CANDIDATE_MODELS = [
+        "gemini-2.0-flash-lite",
+        "gemini-2.0-flash",
+        "gemini-2.5-flash-lite",
+        "gemini-2.5-flash",
+    ]
+
+    prompt = (
+        f"Você é o Nexo, um mentor de carreira inteligente, atencioso e empático para estudantes de cursos técnicos. "
+        f"Seu objetivo é ajudar a traçar planos de estudo e conectar o aprendizado técnico com oportunidades reais. "
+        f"O curso técnico atual do usuário é: '{curso_tecnico}'. O usuário enviou a seguinte mensagem: '{mensagem}'. "
+        f"Dê conselhos práticos de carreira relacionados a esse curso. Responda em português de forma clara, amigável e motivadora. "
+        f"Limite sua resposta a 2 ou 3 parágrafos."
+    )
+
+    payload = {
+        "contents": [{
+            "parts": [{"text": prompt}]
+        }]
+    }
+    headers = {"Content-Type": "application/json"}
+
+    for model in CANDIDATE_MODELS:
+        try:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
+            response = requests.post(url, headers=headers, json=payload, timeout=15)
+
+            if response.status_code == 200:
+                res_data = response.json()
+                candidates = res_data.get("candidates", [])
+                if candidates:
+                    parts = candidates[0].get("content", {}).get("parts", [])
+                    if parts:
+                        text = parts[0].get("text", "").strip()
+                        if text:
+                            return text
+
+            # 429 = quota exhausted → try next model
+            # 404 = model not available → try next model
+            # anything else → log and try next
+            print(f"Gemini [{model}] returned {response.status_code}: {response.text[:200]}")
+
+        except Exception as e:
+            print(f"Exception calling Gemini [{model}]: {e}")
+
+    # All models failed — use local intelligent fallback
+    return fallback_chat(mensagem, curso_tecnico)
