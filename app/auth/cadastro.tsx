@@ -10,6 +10,7 @@ import {
   Alert,
   Modal,
   FlatList,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -162,6 +163,11 @@ export default function CadastroScreen() {
         >
           {/* Header Title Section */}
           <View style={styles.headerTitleContainer}>
+            <Image
+              source={require('../../assets/images/nexo-cadastro.png')}
+              style={styles.cadastroHeaderImage}
+              resizeMode="contain"
+            />
             <Text style={styles.welcomeText}>
               Bem-vindo ao <Text style={styles.highlightText}>NexoCareer</Text>
             </Text>
@@ -361,7 +367,14 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   headerTitleContainer: {
+    alignItems: 'center',
     marginBottom: 28,
+  },
+  cadastroHeaderImage: {
+    width: '100%',
+    height: 120,
+    marginBottom: 16,
+    alignSelf: 'center',
   },
   welcomeText: {
     fontSize: 26,
@@ -369,6 +382,7 @@ const styles = StyleSheet.create({
     color: '#1F2937',
     letterSpacing: -0.5,
     fontFamily: 'System',
+    textAlign: 'center',
   },
   highlightText: {
     color: '#6B21A8',
@@ -378,6 +392,7 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     marginTop: 6,
     fontFamily: 'System',
+    textAlign: 'center',
   },
   formContainer: {
     width: '100%',

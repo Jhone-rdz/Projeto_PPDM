@@ -120,18 +120,13 @@ export default function LoginScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Logo Section */}
+          {/* Header Image Section */}
           <View style={styles.headerContainer}>
-            <View style={styles.logoBadgeContainer}>
-              <Image
-                source={require('../../assets/images/Icone tela de login.png')}
-                style={styles.logoImage}
-                resizeMode="cover"
-              />
-            </View>
-            <Text style={styles.logoText}>NexoCareer</Text>
-            <Text style={styles.tagline}>Descubra. Desenvolva. Conquiste.</Text>
-            <Text style={styles.subtitle}>Descubra seu futuro profissional</Text>
+            <Image
+              source={require('../../assets/images/tela de login.png')}
+              style={styles.loginHeaderImage}
+              resizeMode="contain"
+            />
           </View>
 
           {/* Form Section */}
@@ -219,44 +214,13 @@ const styles = StyleSheet.create({
   },
   headerContainer: {
     alignItems: 'center',
-    marginBottom: 36,
-  },
-  logoBadgeContainer: {
-    width: 64,
-    height: 64,
-    borderRadius: 18,
-    overflow: 'hidden',
-    marginBottom: 12,
-  },
-  logoGradient: {
+    marginBottom: 24,
     width: '100%',
-    height: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
   },
-  logoImage: {
+  loginHeaderImage: {
     width: '100%',
-    height: '100%',
-  },
-  logoText: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#6B21A8',
-    letterSpacing: -0.5,
-  },
-  tagline: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#4F46E5',
-    marginTop: 6,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
-  subtitle: {
-    fontSize: 15,
-    color: '#6B7280',
-    marginTop: 8,
-    textAlign: 'center',
+    height: 180,
+    alignSelf: 'center',
   },
   formContainer: {
     width: '100%',
