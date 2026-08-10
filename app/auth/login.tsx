@@ -125,7 +125,7 @@ export default function LoginScreen() {
             <Image
               source={require('../../assets/images/tela de login.png')}
               style={styles.loginHeaderImage}
-              resizeMode="contain"
+              resizeMode="cover"
             />
           </View>
 
@@ -208,22 +208,19 @@ const styles = StyleSheet.create({
   },
   scrollContainer: {
     flexGrow: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 24,
-    paddingVertical: 32,
+    paddingBottom: 32,
   },
   headerContainer: {
-    alignItems: 'center',
-    marginBottom: 24,
     width: '100%',
+    marginBottom: 20,
   },
   loginHeaderImage: {
     width: '100%',
-    height: 180,
-    alignSelf: 'center',
+    height: 240,
   },
   formContainer: {
     width: '100%',
+    paddingHorizontal: 24,
     marginBottom: 24,
   },
   forgotPasswordContainer: {
@@ -258,6 +255,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: 24,
     marginTop: 16,
   },
   footerText: {
