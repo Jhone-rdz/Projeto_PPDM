@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   View,
@@ -8,39 +8,41 @@ import {
   SafeAreaView,
   Image,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-
-const DADOS_NIVEIS = [
-  { nivel: 0, nome: 'Iniciante', progresso: '20%', bloqueado: false },
-  { nivel: 1, nome: 'Despertado', progresso: '40%', bloqueado: false, ativo: true },
-  { nivel: 2, nome: 'Super Nexo 1', progresso: '60%', bloqueado: true },
-  { nivel: 3, nome: 'Super Nexo 2', progresso: '80%', bloqueado: true },
-  { nivel: 4, nome: 'Super Nexo Blue', progresso: '100%', bloqueado: true },
-  { nivel: 5, nome: 'Além do Limite', progresso: '100%+', bloqueado: true },
-];
-
-const DADOS_FORCAS = [
-  { icone: 'calculator-outline', nome: 'Lógica', valor: 80 },
-  { icone: 'color-palette-outline', nome: 'Criatividade', valor: 70 },
-  { icone: 'eye-outline', nome: 'Foco', valor: 65 },
-  { icone: 'chatbubble-outline', nome: 'Comunicação', valor: 40 },
-  { icone: 'star-outline', nome: 'Liderança', valor: 30 },
-];
-
-const DADOS_DISCIPLINAS = [
-  { icone: 'grid-outline', nome: 'Matemática', valor: 72 },
-  { icone: 'flask-outline', nome: 'Física', valor: 45 },
-  { icone: 'code-slash-outline', nome: 'Programação', valor: 60 },
-  { icone: 'pencil-outline', nome: 'Desenho', valor: 68 },
-  { icone: 'book-outline', nome: 'Português', valor: 35 },
-];
+import { apiService } from '../_services/api';
 
 export default function PerfilScreen() {
   const router = useRouter();
+  const [isSyncing, setIsSyncing] = useState(true);
+
+  // Sync profile details on mount
+  useEffect(() => {
+    const syncProfile = async () => {
+      try {
+        setIsSyncing(true);
+        const token = apiService.getSession().access;
+        if (token) {
+          await apiService.getProfile(token);
+        }
+      } catch (err) {
+        console.warn('Failed to sync profile details on perfil mount:', err);
+      } finally {
+        setIsSyncing(false);
+      }
+    };
+    syncProfile();
+  }, []);
+
+  const session = apiService.getSession();
+  const user = session.user;
+  const userLevel = user ? user.nivel : 1;
+  const userXp = user ? user.xp : 0;
+  const progressoGeral = user ? user.progresso_geral : 0;
 
   const handleBack = () => {
     router.back();
@@ -49,6 +51,32 @@ export default function PerfilScreen() {
   const calcLargura = (valor: number) => {
     return `${valor}%` as any;
   };
+
+  const getLevelLabelName = (level: number) => {
+    switch (level) {
+      case 0: return 'Iniciante';
+      case 1: return 'Despertado';
+      case 2: return 'Super Nexo 1';
+      case 3: return 'Super Nexo 2';
+      case 4: return 'Super Nexo Blue';
+      default: return 'Além do Limite';
+    }
+  };
+
+  const levelName = getLevelLabelName(userLevel);
+
+  const getLevelDescription = (level: number) => {
+    switch (level) {
+      case 0: return 'Você está dando seus primeiros passos na sua jornada profissional.';
+      case 1: return 'Você começa a entender seu potencial e as áreas mais compatíveis.';
+      case 2: return 'Você está evoluindo rápido e acumulando forças técnicas.';
+      case 3: return 'Seu conhecimento está se consolidando e você se aproxima do mercado.';
+      case 4: return 'Você já domina as principais habilidades e está pronto para voar alto.';
+      default: return 'Você superou todos os limites e é um mentor de carreira Nexo!';
+    }
+  };
+
+  const levelDesc = getLevelDescription(userLevel);
 
   const getLevelImage = (nivel: number) => {
     switch (nivel) {
@@ -64,6 +92,57 @@ export default function PerfilScreen() {
         return require('../../assets/images/icone tela de cadastro e home.png');
     }
   };
+
+  // Map forces dynamically
+  const forces = user?.forcas || [
+    { nome: 'Lógica', valor: 30 },
+    { nome: 'Criatividade', valor: 30 },
+    { nome: 'Foco', valor: 30 },
+    { nome: 'Comunicação', valor: 30 },
+    { nome: 'Liderança', valor: 30 },
+  ];
+
+  const getForcaIcon = (nome: string) => {
+    switch (nome) {
+      case 'Lógica': return 'calculator-outline';
+      case 'Criatividade': return 'color-palette-outline';
+      case 'Foco': return 'eye-outline';
+      case 'Comunicação': return 'chatbubble-outline';
+      case 'Liderança': return 'star-outline';
+      default: return 'help-circle-outline';
+    }
+  };
+
+  // Map disciplines dynamically
+  const disciplines = user?.disciplinas || [
+    { nome: 'Matemática', valor: 30 },
+    { nome: 'Física', valor: 30 },
+    { nome: 'Programação', valor: 30 },
+    { nome: 'Desenho', valor: 30 },
+    { nome: 'Português', valor: 30 },
+  ];
+
+  const getDisciplinaIcon = (nome: string) => {
+    switch (nome) {
+      case 'Matemática': return 'grid-outline';
+      case 'Física': return 'flask-outline';
+      case 'Programação': return 'code-slash-outline';
+      case 'Desenho': return 'pencil-outline';
+      case 'Português': return 'book-outline';
+      default: return 'help-circle-outline';
+    }
+  };
+
+  // Map levels progression carousel dynamically
+  const dynamicNiveis = [
+    { nivel: 0, nome: 'Iniciante', progresso: userLevel > 0 ? '100%' : (userLevel === 0 ? `${userXp % 100}%` : '0%'), bloqueado: userLevel < 0, ativo: userLevel === 0 },
+    { nivel: 1, nome: 'Despertado', progresso: userLevel > 1 ? '100%' : (userLevel === 1 ? `${userXp % 100}%` : '0%'), bloqueado: userLevel < 1, ativo: userLevel === 1 },
+    { nivel: 2, nome: 'Super Nexo 1', progresso: userLevel > 2 ? '100%' : (userLevel === 2 ? `${userXp % 100}%` : '0%'), bloqueado: userLevel < 2, ativo: userLevel === 2 },
+    { nivel: 3, nome: 'Super Nexo 2', progresso: userLevel > 3 ? '100%' : (userLevel === 3 ? `${userXp % 100}%` : '0%'), bloqueado: userLevel < 3, ativo: userLevel === 3 },
+    { nivel: 4, nome: 'Super Nexo Blue', progresso: userLevel > 4 ? '100%' : (userLevel === 4 ? `${userXp % 100}%` : '0%'), bloqueado: userLevel < 4, ativo: userLevel === 4 },
+    { nivel: 5, nome: 'Além do Limite', progresso: userLevel > 5 ? '100%' : (userLevel === 5 ? `${userXp % 100}%` : '0%'), bloqueado: userLevel < 5, ativo: userLevel === 5 },
+  ];
+
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -87,12 +166,12 @@ export default function PerfilScreen() {
 
         <View style={styles.headerRightCard}>
           <Image
-            source={require('../../assets/images/nivel 1 despertado.png')}
+            source={getLevelImage(userLevel)}
             style={styles.headerAvatar}
           />
           <View style={styles.headerLevelColumn}>
-            <Text style={styles.headerLevelLabel}>NÍVEL 1</Text>
-            <Text style={styles.headerLevelName}>Despertado</Text>
+            <Text style={styles.headerLevelLabel}>NÍVEL {userLevel}</Text>
+            <Text style={styles.headerLevelName}>{levelName}</Text>
           </View>
         </View>
       </View>
@@ -111,7 +190,7 @@ export default function PerfilScreen() {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.levelsCarouselScroll}
           >
-            {DADOS_NIVEIS.map((nv, index) => {
+            {dynamicNiveis.map((nv, index) => {
               if (nv.ativo) {
                 // Active Card (Level 1)
                 return (
@@ -187,22 +266,22 @@ export default function PerfilScreen() {
           <View style={styles.currentLevelCard}>
             <View style={styles.currentLevelImageContainer}>
               <Image
-                source={require('../../assets/images/nivel 1 despertado.png')}
+                source={getLevelImage(userLevel)}
                 style={styles.currentLevelImage}
                 resizeMode="contain"
               />
             </View>
 
             <View style={styles.currentLevelTextsContainer}>
-              <Text style={styles.currentLevelTag}>NÍVEL 1</Text>
-              <Text style={styles.currentLevelName}>Despertado</Text>
+              <Text style={styles.currentLevelTag}>NÍVEL {userLevel}</Text>
+              <Text style={styles.currentLevelName}>{levelName}</Text>
               <Text style={styles.currentLevelDesc}>
-                Você começa a entender seu potencial.
+                {levelDesc}
               </Text>
 
               <View style={styles.currentLevelProgressBadge}>
                 <Ionicons name="flash" size={14} color="#F59E0B" />
-                <Text style={styles.currentLevelProgressText}>Progresso 40%</Text>
+                <Text style={styles.currentLevelProgressText}>Progresso {userXp % 100}%</Text>
               </View>
             </View>
           </View>
@@ -213,7 +292,7 @@ export default function PerfilScreen() {
           <View style={styles.overallProgressCard}>
             <View style={styles.overallProgressHeader}>
               <Text style={styles.overallProgressTitle}>SEU PROGRESSO GERAL</Text>
-              <Text style={styles.overallProgressValue}>58% concluído</Text>
+              <Text style={styles.overallProgressValue}>{progressoGeral}% concluído</Text>
             </View>
 
             <View style={styles.overallProgressBg}>
@@ -221,7 +300,7 @@ export default function PerfilScreen() {
                 colors={['#4F46E5', '#00D4FF']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
-                style={[styles.overallProgressFill, { width: calcLargura(58) }]}
+                style={[styles.overallProgressFill, { width: calcLargura(progressoGeral) }]}
               />
             </View>
           </View>
@@ -229,55 +308,62 @@ export default function PerfilScreen() {
 
         {/* SEÇÃO 4 — FORÇAS E DISCIPLINAS */}
         <View style={styles.statsSection}>
-          <View style={styles.statsGridRow}>
-            {/* Card SUAS FORÇAS */}
-            <View style={styles.statCard}>
-              <Text style={styles.statCardTitlePurple}>SUAS FORÇAS</Text>
-              <View style={styles.statItemsList}>
-                {DADOS_FORCAS.map((item, index) => (
-                  <View key={index} style={styles.statItemRow}>
-                    <Ionicons name={item.icone as any} size={16} color="#94A3B8" style={styles.statIcon} />
-                    <Text style={styles.statName} numberOfLines={1}>
-                      {item.nome}
-                    </Text>
-                    <View style={styles.miniBarBg}>
-                      <LinearGradient
-                        colors={['#4F46E5', '#00D4FF']}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 0 }}
-                        style={[styles.miniBarFill, { width: calcLargura(item.valor) }]}
-                      />
-                    </View>
-                    <Text style={styles.statValueText}>{item.valor}%</Text>
-                  </View>
-                ))}
-              </View>
+          {isSyncing ? (
+            <View style={{ height: 200, justifyContent: 'center', alignItems: 'center' }}>
+              <ActivityIndicator size="large" color="#6B21A8" />
+              <Text style={{ color: '#94A3B8', marginTop: 10 }}>Carregando estatísticas...</Text>
             </View>
+          ) : (
+            <View style={styles.statsGridRow}>
+              {/* Card SUAS FORÇAS */}
+              <View style={styles.statCard}>
+                <Text style={styles.statCardTitlePurple}>SUAS FORÇAS</Text>
+                <View style={styles.statItemsList}>
+                  {forces.map((item, index) => (
+                    <View key={index} style={styles.statItemRow}>
+                      <Ionicons name={getForcaIcon(item.nome) as any} size={16} color="#94A3B8" style={styles.statIcon} />
+                      <Text style={styles.statName} numberOfLines={1}>
+                        {item.nome}
+                      </Text>
+                      <View style={styles.miniBarBg}>
+                        <LinearGradient
+                          colors={['#4F46E5', '#00D4FF']}
+                          start={{ x: 0, y: 0 }}
+                          end={{ x: 1, y: 0 }}
+                          style={[styles.miniBarFill, { width: calcLargura(item.valor) }]}
+                        />
+                      </View>
+                      <Text style={styles.statValueText}>{item.valor}%</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
 
-            {/* Card DISCIPLINAS EM FOCO */}
-            <View style={styles.statCard}>
-              <Text style={styles.statCardTitleCyan}>DISCIPLINAS EM FOCO</Text>
-              <View style={styles.statItemsList}>
-                {DADOS_DISCIPLINAS.map((item, index) => (
-                  <View key={index} style={styles.statItemRow}>
-                    <Ionicons name={item.icone as any} size={16} color="#94A3B8" style={styles.statIcon} />
-                    <Text style={styles.statName} numberOfLines={1}>
-                      {item.nome}
-                    </Text>
-                    <View style={styles.miniBarBg}>
-                      <LinearGradient
-                        colors={['#4F46E5', '#00D4FF']}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 0 }}
-                        style={[styles.miniBarFill, { width: calcLargura(item.valor) }]}
-                      />
+              {/* Card DISCIPLINAS EM FOCO */}
+              <View style={styles.statCard}>
+                <Text style={styles.statCardTitleCyan}>DISCIPLINAS EM FOCO</Text>
+                <View style={styles.statItemsList}>
+                  {disciplines.map((item, index) => (
+                    <View key={index} style={styles.statItemRow}>
+                      <Ionicons name={getDisciplinaIcon(item.nome) as any} size={16} color="#94A3B8" style={styles.statIcon} />
+                      <Text style={styles.statName} numberOfLines={1}>
+                        {item.nome}
+                      </Text>
+                      <View style={styles.miniBarBg}>
+                        <LinearGradient
+                          colors={['#4F46E5', '#00D4FF']}
+                          start={{ x: 0, y: 0 }}
+                          end={{ x: 1, y: 0 }}
+                          style={[styles.miniBarFill, { width: calcLargura(item.valor) }]}
+                        />
+                      </View>
+                      <Text style={styles.statValueText}>{item.valor}%</Text>
                     </View>
-                    <Text style={styles.statValueText}>{item.valor}%</Text>
-                  </View>
-                ))}
+                  ))}
+                </View>
               </View>
             </View>
-          </View>
+          )}
         </View>
       </ScrollView>
     </SafeAreaView>

@@ -23,6 +23,9 @@ export interface UserProfile {
   streak: number;
   xp_hoje: number;
   respostas_hoje: number;
+  forcas: { nome: string; valor: number }[];
+  disciplinas: { nome: string; valor: number }[];
+  progresso_geral: number;
 }
 
 interface Session {
