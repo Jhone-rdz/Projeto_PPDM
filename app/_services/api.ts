@@ -18,6 +18,7 @@ export interface UserProfile {
   curso_tecnico: string;
   nivel: number;
   xp: number;
+  onboarding_completo: boolean;
 }
 
 interface Session {
@@ -230,8 +231,7 @@ export const apiService = {
 
   updateProfile: async (xpGain: number, levelGain = 0) => {
     try {
-      const token = session.access;
-      if (!token) throw new Error('Usuário não autenticado.');
+      const token = await getToken();
 
       // Fetch current profile first to calculate new XP and level
       const currentProfile = await apiService.getProfile(token);
@@ -271,8 +271,7 @@ export const apiService = {
 
   getQuestions: async () => {
     try {
-      const token = session.access;
-      if (!token) throw new Error('Usuário não autenticado.');
+      const token = await getToken();
 
       const response = await fetch(`${API_BASE_URL}/accounts/onboarding/questions/`, {
         method: 'GET',
@@ -297,8 +296,7 @@ export const apiService = {
 
   submitAnswers: async (respostas: { pergunta_id: number; opcao_chave: string }[]) => {
     try {
-      const token = session.access;
-      if (!token) throw new Error('Usuário não autenticado.');
+      const token = await getToken();
 
       const response = await fetch(`${API_BASE_URL}/accounts/onboarding/answer/`, {
         method: 'POST',
@@ -319,6 +317,7 @@ export const apiService = {
       if (data.user && session.user) {
         session.user.xp = data.user.xp;
         session.user.nivel = data.user.nivel;
+        session.user.onboarding_completo = data.user.onboarding_completo;
       }
 
       return data;
@@ -330,8 +329,7 @@ export const apiService = {
 
   getCourses: async (area?: string, busca?: string) => {
     try {
-      const token = session.access;
-      if (!token) throw new Error('Usuário não autenticado.');
+      const token = await getToken();
 
       let url = `${API_BASE_URL}/cursos/`;
       const params = [];

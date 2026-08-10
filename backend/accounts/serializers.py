@@ -4,10 +4,19 @@ from django.contrib.auth import get_user_model
 User = get_user_model()
 
 class CustomUserSerializer(serializers.ModelSerializer):
+    onboarding_completo = serializers.SerializerMethodField()
+
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'curso_tecnico', 'nivel', 'xp']
-        read_only_fields = ['id', 'nivel', 'xp']
+        fields = ['id', 'username', 'email', 'curso_tecnico', 'nivel', 'xp', 'onboarding_completo']
+        read_only_fields = ['id', 'nivel', 'xp', 'onboarding_completo']
+
+    def get_onboarding_completo(self, obj):
+        from .models import Pergunta
+        perguntas_count = Pergunta.objects.count()
+        if perguntas_count == 0:
+            return False
+        return obj.respostas.count() >= perguntas_count
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)

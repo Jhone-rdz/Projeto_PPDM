@@ -12,7 +12,12 @@ export default function Index() {
       try {
         const success = await apiService.tryRestoreSession();
         if (success) {
-          router.replace('/(tabs)');
+          const user = apiService.getSession().user;
+          if (user && !user.onboarding_completo) {
+            router.replace('/onboarding/questionario');
+          } else {
+            router.replace('/(tabs)');
+          }
         } else {
           router.replace('/auth/login');
         }

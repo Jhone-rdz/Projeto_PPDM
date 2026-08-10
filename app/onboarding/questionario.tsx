@@ -200,10 +200,7 @@ export default function QuestionarioScreen() {
         }));
         
         // Only run API call if user has authenticated token
-        const isRealBackend = apiService.getSession().access !== null;
-        if (isRealBackend) {
-          await apiService.submitAnswers(payload);
-        }
+        await apiService.submitAnswers(payload);
         
         setIsLoading(false);
         router.replace('/(tabs)');

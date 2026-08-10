@@ -58,10 +58,12 @@ export default function LoginScreen() {
       await apiService.login(email, password);
       setIsLoading(false);
 
-      const targetRoute = fromCadastro ? '/onboarding/questionario' : '/(tabs)';
-      const msg = fromCadastro
-        ? 'Login realizado! Vamos responder ao questionário inicial.'
-        : 'Login realizado com sucesso!';
+      const user = apiService.getSession().user;
+      const isComplete = user?.onboarding_completo ?? false;
+      const targetRoute = isComplete ? '/(tabs)' : '/onboarding/questionario';
+      const msg = isComplete
+        ? 'Login realizado com sucesso!'
+        : 'Login realizado! Vamos responder ao questionário inicial.';
 
       if (Platform.OS === 'web') {
         alert(msg);
