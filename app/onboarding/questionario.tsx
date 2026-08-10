@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   ScrollView,
   SafeAreaView,
-  Image,
   Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -159,23 +158,7 @@ export default function QuestionarioScreen() {
             </Text>
           </View>
 
-          {/* Level Badge Card */}
-          <View style={styles.levelCard}>
-            <View style={styles.avatarRow}>
-              <Image
-                source={require('../../assets/images/nexo-avatar.png')}
-                style={styles.avatar}
-              />
-              <View style={styles.levelTexts}>
-                <Text style={styles.levelLabel}>NÍVEL 1</Text>
-                <Text style={styles.levelName}>Despertado</Text>
-              </View>
-            </View>
-            <View style={styles.progressBarBackground}>
-              <View style={styles.progressBarFill} />
-            </View>
-            <Text style={styles.progressPercentage}>40%</Text>
-          </View>
+
         </View>
 
         {/* Barra de Progresso da Pergunta */}
