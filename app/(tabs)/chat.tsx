@@ -30,21 +30,8 @@ const MENSAGENS_INICIAIS: Mensagem[] = [
   {
     id: 1,
     tipo: 'nexo',
-    texto: 'Olá! 👋 Sou o Nexo. Vamos descobrir o melhor caminho para sua carreira?',
-    horario: '09:41',
-  },
-  {
-    id: 2,
-    tipo: 'usuario',
-    texto: 'Quero descobrir qual curso combina comigo.',
-    horario: '09:42',
-    lido: true,
-  },
-  {
-    id: 3,
-    tipo: 'nexo',
-    texto: 'Ótima escolha! Vou fazer algumas perguntas rápidas para entender seu perfil.',
-    horario: '09:42',
+    texto: 'Olá! 👋 Eu sou o Nexo, seu mentor de carreira com Inteligência Artificial. Estou aqui para te ajudar a planejar seu futuro profissional! Sobre o que você gostaria de conversar hoje?',
+    horario: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
   },
 ];
 
