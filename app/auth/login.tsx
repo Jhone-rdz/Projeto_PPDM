@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
   },
   loginHeaderImage: {
     width: '100%',
-    height: 240,
+    aspectRatio: 1728 / 2474,
   },
   formContainer: {
     width: '100%',
