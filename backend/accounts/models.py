@@ -10,6 +10,22 @@ class CustomUser(AbstractUser):
     )
     nivel = models.IntegerField(default=1, verbose_name="Nível")
     xp = models.IntegerField(default=0, verbose_name="Experiência (XP)")
+    objetivo_carreira = models.CharField(
+        max_length=150,
+        default="Tecnologia",
+        blank=True,
+        null=True,
+        verbose_name="Objetivo de Carreira"
+    )
+    ultimo_login_dia = models.DateField(
+        null=True,
+        blank=True,
+        verbose_name="Último login no dia"
+    )
+    streak = models.IntegerField(
+        default=1,
+        verbose_name="Sequência de dias logado"
+    )
 
     def __str__(self):
         return f"{self.username} (Nível {self.nivel})"

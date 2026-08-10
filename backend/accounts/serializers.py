@@ -5,11 +5,16 @@ User = get_user_model()
 
 class CustomUserSerializer(serializers.ModelSerializer):
     onboarding_completo = serializers.SerializerMethodField()
+    xp_hoje = serializers.SerializerMethodField()
+    respostas_hoje = serializers.SerializerMethodField()
 
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'curso_tecnico', 'nivel', 'xp', 'onboarding_completo']
-        read_only_fields = ['id', 'nivel', 'xp', 'onboarding_completo']
+        fields = [
+            'id', 'username', 'email', 'curso_tecnico', 'nivel', 'xp', 
+            'onboarding_completo', 'objetivo_carreira', 'streak', 'xp_hoje', 'respostas_hoje'
+        ]
+        read_only_fields = ['id', 'nivel', 'xp', 'onboarding_completo', 'xp_hoje', 'respostas_hoje']
 
     def get_onboarding_completo(self, obj):
         from .models import Pergunta
@@ -17,6 +22,20 @@ class CustomUserSerializer(serializers.ModelSerializer):
         if perguntas_count == 0:
             return False
         return obj.respostas.count() >= perguntas_count
+
+    def get_xp_hoje(self, obj):
+        from datetime import date
+        from django.db.models import Sum
+        from .models import DesafioConcluido
+        total_xp = DesafioConcluido.objects.filter(
+            user=obj,
+            concluido_em=date.today()
+        ).aggregate(total=Sum('desafio__xp'))['total']
+        return total_xp or 0
+
+    def get_respostas_hoje(self, obj):
+        from datetime import date
+        return obj.respostas.filter(created_at__date=date.today()).count()
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)

@@ -19,6 +19,10 @@ export interface UserProfile {
   nivel: number;
   xp: number;
   onboarding_completo: boolean;
+  objetivo_carreira: string | null;
+  streak: number;
+  xp_hoje: number;
+  respostas_hoje: number;
 }
 
 interface Session {
@@ -430,6 +434,7 @@ export const apiService = {
       if (session.user) {
         session.user.xp = data.xp;
         session.user.nivel = data.nivel;
+        session.user.xp_hoje = data.xp_hoje;
       }
 
       return data;

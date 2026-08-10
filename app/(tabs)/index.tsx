@@ -11,6 +11,7 @@ import {
   Modal,
   Alert,
   Animated,
+  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -61,6 +62,45 @@ export default function HomeScreen() {
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [quizSubmitted, setQuizSubmitted] = useState(false);
   const [isCorrectAnswer, setIsCorrectAnswer] = useState(false);
+
+  // Dynamic courses and loading states
+  const [cursos, setCursos] = useState<any[]>([]);
+  const [isLoadingCursos, setIsLoadingCursos] = useState(true);
+
+  // Sync profile details and courses on mount
+  useEffect(() => {
+    const syncProfileAndCourses = async () => {
+      try {
+        const token = apiService.getSession().access;
+        if (token) {
+          await apiService.getProfile(token);
+        }
+      } catch (err) {
+        console.warn('Failed to sync profile details on home mount:', err);
+      }
+
+      try {
+        setIsLoadingCursos(true);
+        const data = await apiService.getCourses();
+        // Show top 4 courses
+        setCursos(data.slice(0, 4));
+      } catch (err) {
+        console.warn('Failed to fetch courses, falling back to static lists:', err);
+        // Fallback mapping matching standard course card shapes
+        setCursos(CURSOS_COMPATIVEIS.map((c, i) => ({
+          id: i + 1,
+          nome: c.nome,
+          match_percent: parseInt(c.match),
+          icone: c.icone,
+          cor_icone: c.cor,
+        })));
+      } finally {
+        setIsLoadingCursos(false);
+      }
+    };
+
+    syncProfileAndCourses();
+  }, []);
 
   // Animated drawer slide-in value
   const drawerSlideAnim = useRef(new Animated.Value(-300)).current;
@@ -222,7 +262,7 @@ export default function HomeScreen() {
             <View style={styles.objectiveLeft}>
               <Text style={styles.objectiveTag}>Seu objetivo atual</Text>
               <Text style={styles.objectiveLabel}>Quero trabalhar com</Text>
-              <Text style={styles.objectiveTitle}>Inteligência Artificial</Text>
+              <Text style={styles.objectiveTitle}>{user?.objetivo_carreira || 'Tecnologia'}</Text>
               <Text style={styles.objectiveDesc}>
                 Continue aprendendo e evoluindo para alcançar seu objetivo.
               </Text>
@@ -309,49 +349,61 @@ export default function HomeScreen() {
             </TouchableOpacity>
           </View>
 
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.coursesCarousel}
-          >
-            {CURSOS_COMPATIVEIS.map((curso, index) => {
-              const isHighMatch = curso.tipo === 'MATCH ALTO';
-              return (
-                <View key={index} style={styles.courseCard}>
-                  <View
-                    style={[
-                      styles.matchBadge,
-                      { backgroundColor: isHighMatch ? '#6B21A8' : '#1F2937' },
-                    ]}
-                  >
-                    <Text style={styles.matchBadgeText}>{curso.match}</Text>
-                  </View>
+          {isLoadingCursos ? (
+            <View style={{ height: 160, justifyContent: 'center', alignItems: 'center' }}>
+              <ActivityIndicator size="large" color="#6B21A8" />
+              <Text style={{ color: '#94A3B8', marginTop: 10 }}>Calculando matches...</Text>
+            </View>
+          ) : (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.coursesCarousel}
+            >
+              {cursos.map((curso, index) => {
+                const matchVal = curso.match_percent || parseInt(curso.match || '50');
+                const isHighMatch = matchVal >= 85;
+                const typeLabel = isHighMatch ? 'MATCH ALTO' : 'MATCH BOM';
+                const iconeName = curso.icone || 'school-outline';
+                const iconColor = curso.cor_icone || '#8B5CF6';
 
-                  <View style={styles.courseIconContainer}>
-                    <Ionicons name={curso.icone as any} size={36} color={curso.cor} />
-                  </View>
-
-                  <Text style={styles.courseName}>{curso.nome}</Text>
-
-                  <View
-                    style={[
-                      styles.matchTypeBadge,
-                      { backgroundColor: isHighMatch ? '#1a2a4a' : '#2a1f00' },
-                    ]}
-                  >
-                    <Text
+                return (
+                  <View key={index} style={styles.courseCard}>
+                    <View
                       style={[
-                        styles.matchTypeText,
-                        { color: isHighMatch ? '#00D4FF' : '#F59E0B' },
+                        styles.matchBadge,
+                        { backgroundColor: isHighMatch ? '#6B21A8' : '#1F2937' },
                       ]}
                     >
-                      {curso.tipo}
-                    </Text>
+                      <Text style={styles.matchBadgeText}>{matchVal}%</Text>
+                    </View>
+
+                    <View style={styles.courseIconContainer}>
+                      <Ionicons name={iconeName as any} size={36} color={iconColor} />
+                    </View>
+
+                    <Text style={styles.courseName}>{curso.nome}</Text>
+
+                    <View
+                      style={[
+                        styles.matchTypeBadge,
+                        { backgroundColor: isHighMatch ? '#1a2a4a' : '#2a1f00' },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.matchTypeText,
+                          { color: isHighMatch ? '#00D4FF' : '#F59E0B' },
+                        ]}
+                      >
+                        {typeLabel}
+                      </Text>
+                    </View>
                   </View>
-                </View>
-              );
-            })}
-          </ScrollView>
+                );
+              })}
+            </ScrollView>
+          )}
 
           {/* Paginação */}
           <View style={styles.paginationDots}>
@@ -377,18 +429,18 @@ export default function HomeScreen() {
             <View style={styles.summaryColumn}>
               <View style={styles.summaryLabelRow}>
                 <Ionicons name="flash" size={14} color="#F59E0B" style={styles.summaryLabelIcon} />
-                <Text style={styles.summaryLabel}>XP ganho</Text>
+                <Text style={styles.summaryLabel}>XP ganho hoje</Text>
               </View>
-              <Text style={styles.summaryValue}>120 XP</Text>
+              <Text style={styles.summaryValue}>{user?.xp_hoje ?? 0} XP</Text>
               <View style={styles.summaryProgressBg}>
                 <LinearGradient
                   colors={['#4F46E5', '#00D4FF']}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
-                  style={[styles.summaryProgressFill, { width: '60%' }]}
+                  style={[styles.summaryProgressFill, { width: `${Math.min(100, ((user?.xp_hoje ?? 0) / 50) * 100)}%` }]}
                 />
               </View>
-              <Text style={styles.summarySubtext}>Falta 80 XP para o próximo nível</Text>
+              <Text style={styles.summarySubtext}>Falta {100 - (userXp % 100)} XP para o próximo nível</Text>
             </View>
 
             <View style={styles.verticalDivider} />
@@ -399,11 +451,11 @@ export default function HomeScreen() {
                 <Ionicons name="document-text-outline" size={14} color="#4F46E5" style={styles.summaryLabelIcon} />
                 <Text style={styles.summaryLabel}>Respostas</Text>
               </View>
-              <Text style={styles.summaryValue}>12</Text>
+              <Text style={styles.summaryValue}>{user?.respostas_hoje ?? 0}</Text>
               <View style={styles.summaryProgressBg}>
-                <View style={[styles.summaryProgressFillText, { width: '70%', backgroundColor: '#4F46E5' }]} />
+                <View style={[styles.summaryProgressFillText, { width: `${Math.min(100, ((user?.respostas_hoje ?? 0) / 7) * 100)}%`, backgroundColor: '#4F46E5' }]} />
               </View>
-              <Text style={styles.summarySubtext}>Mais 8 para a meta de hoje</Text>
+              <Text style={styles.summarySubtext}>Mais {Math.max(0, 7 - (user?.respostas_hoje ?? 0))} para a meta</Text>
             </View>
 
             <View style={styles.verticalDivider} />
@@ -414,9 +466,9 @@ export default function HomeScreen() {
                 <Ionicons name="flame" size={14} color="#F97316" style={styles.summaryLabelIcon} />
                 <Text style={styles.summaryLabel}>Sequência</Text>
               </View>
-              <Text style={styles.summaryValue}>3 dias</Text>
+              <Text style={styles.summaryValue}>{user?.streak ?? 1} {user?.streak === 1 ? 'dia' : 'dias'}</Text>
               <View style={styles.summaryProgressBg}>
-                <View style={[styles.summaryProgressFillText, { width: '40%', backgroundColor: '#F97316' }]} />
+                <View style={[styles.summaryProgressFillText, { width: `${Math.min(100, ((user?.streak ?? 1) / 7) * 100)}%`, backgroundColor: '#F97316' }]} />
               </View>
               <Text style={styles.summarySubtext}>Continue assim!</Text>
             </View>

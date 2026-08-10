@@ -32,7 +32,26 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_object(self):
-        return self.request.user
+        user = self.request.user
+        from datetime import date
+        today = date.today()
+        
+        if user.ultimo_login_dia is None:
+            user.ultimo_login_dia = today
+            user.streak = 1
+            user.save(update_fields=['ultimo_login_dia', 'streak'])
+        else:
+            diff = today - user.ultimo_login_dia
+            if diff.days == 1:
+                user.streak += 1
+                user.ultimo_login_dia = today
+                user.save(update_fields=['ultimo_login_dia', 'streak'])
+            elif diff.days > 1:
+                user.streak = 1
+                user.ultimo_login_dia = today
+                user.save(update_fields=['ultimo_login_dia', 'streak'])
+                
+        return user
 
 from .models import Pergunta
 from .serializers import PerguntaSerializer, RespostaQuestionarioSerializer
@@ -150,11 +169,16 @@ class ConcluirDesafioView(APIView):
         ).exists()
 
         if already_done:
+            from django.db.models import Sum
+            total_xp_hoje = DesafioConcluido.objects.filter(
+                user=user, concluido_em=today
+            ).aggregate(total=Sum('desafio__xp'))['total'] or 0
             return Response({
                 "detail": "Você já concluiu esse desafio hoje!",
                 "xp": user.xp,
                 "nivel": user.nivel,
                 "level_up": False,
+                "xp_hoje": total_xp_hoje,
             }, status=status.HTTP_200_OK)
 
         # Register completion
@@ -171,10 +195,17 @@ class ConcluirDesafioView(APIView):
 
         level_up = novo_nivel > nivel_anterior
 
+        # Get xp_hoje
+        from django.db.models import Sum
+        total_xp_hoje = DesafioConcluido.objects.filter(
+            user=user, concluido_em=today
+        ).aggregate(total=Sum('desafio__xp'))['total'] or 0
+
         return Response({
             "detail": f"Desafio concluído! +{desafio.xp} XP",
             "xp": user.xp,
             "nivel": user.nivel,
             "level_up": level_up,
+            "xp_hoje": total_xp_hoje,
         }, status=status.HTTP_200_OK)
 
