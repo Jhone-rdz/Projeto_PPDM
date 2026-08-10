@@ -134,12 +134,14 @@ def get_ai_response(mensagem: str, curso_tecnico: str) -> str:
         return fallback_chat(mensagem, curso_tecnico)
 
     # Try models in order of preference — first one that answers wins.
-    # Prioritises flash-lite variants (cheapest quota) → mid-tier → full flash.
+    # Prioritizes Gemini 3.x models (active with quota in 2026) followed by 2.x fallbacks.
     CANDIDATE_MODELS = [
+        "gemini-3.5-flash-lite",
+        "gemini-3.5-flash",
+        "gemini-3.1-flash-lite",
+        "gemini-3.6-flash",
         "gemini-2.0-flash-lite",
         "gemini-2.0-flash",
-        "gemini-2.5-flash-lite",
-        "gemini-2.5-flash",
     ]
 
     prompt = (
