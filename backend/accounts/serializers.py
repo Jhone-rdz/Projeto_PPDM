@@ -46,181 +46,260 @@ class CustomUserSerializer(serializers.ModelSerializer):
 
     def get_forcas(self, obj):
         respostas = obj.respostas.select_related('pergunta', 'opcao').all()
-        forcas = {
-            'Lógica': 30,
-            'Criatividade': 30,
-            'Foco': 30,
-            'Comunicação': 30,
-            'Liderança': 30,
+        forcas_totais = {
+            'logica': 0, 'criatividade': 0, 'foco': 0, 'comunicacao': 0, 'lideranca': 0
         }
-        if not respostas.exists():
-            return [{"nome": k, "valor": v} for k, v in forcas.items()]
+        
+        WEIGHTS = {
+            1: {
+                'a': {'tecnologia': 3, 'logica': 2, 'programacao': 2},
+                'b': {'saude': 3, 'biologia': 2, 'foco': 1},
+                'c': {'negocios': 3, 'comunicacao': 2, 'lideranca': 1},
+                'd': {'artes': 3, 'criatividade': 3, 'desenho': 2},
+                'e': {'direito': 3, 'comunicacao': 2, 'portugues': 2},
+                'f': {'agronomia': 3, 'biologia': 2, 'quimica': 1},
+                'g': {}
+            },
+            2: {
+                'a': {'tecnologia': 2, 'logica': 2, 'programacao': 2},
+                'b': {'artes': 2, 'criatividade': 3, 'desenho': 2},
+                'c': {'foco': 2, 'portugues': 2, 'historia': 1},
+                'd': {'saude': 2, 'comunicacao': 2, 'lideranca': 1},
+                'e': {'negocios': 2, 'comunicacao': 2, 'lideranca': 2},
+                'f': {'agronomia': 2, 'biologia': 1, 'foco': 1}
+            },
+            3: {
+                'a': {'foco': 2},
+                'b': {},
+                'c': {'criatividade': 1}
+            },
+            4: {
+                'a': {'logica': 3, 'matematica': 2, 'foco': 1},
+                'b': {'criatividade': 3, 'logica': 1},
+                'c': {'comunicacao': 3, 'lideranca': 1},
+                'd': {'foco': 3, 'logica': 1, 'programacao': 1}
+            },
+            5: {
+                'a': {'criatividade': 3, 'desenho': 3, 'artes': 2},
+                'b': {'logica': 3, 'matematica': 3, 'fisica': 1},
+                'c': {'comunicacao': 3, 'portugues': 3, 'criatividade': 1},
+                'd': {'logica': 2, 'foco': 3, 'lideranca': 1}
+            },
+            6: {
+                'a': {'foco': 3, 'lideranca': 1, 'logica': 1},
+                'b': {'foco': 2, 'criatividade': 1},
+                'c': {'criatividade': 2},
+                'd': {'foco': 1, 'comunicacao': 1}
+            },
+            7: {
+                'a': {'comunicacao': 3, 'lideranca': 2, 'portugues': 1},
+                'b': {'comunicacao': 2, 'foco': 1},
+                'c': {'logica': 2, 'criatividade': 2, 'programacao': 1},
+                'd': {'foco': 2, 'portugues': 1}
+            },
+            8: {
+                'a': {'lideranca': 3, 'comunicacao': 2, 'foco': 1},
+                'b': {'foco': 3, 'logica': 2},
+                'c': {'criatividade': 3, 'lideranca': 1},
+                'd': {'comunicacao': 3, 'lideranca': 2}
+            },
+            9: {
+                'a': {'matematica': 3, 'logica': 2, 'fisica': 1},
+                'b': {'matematica': 2, 'foco': 2},
+                'c': {'matematica': 1, 'logica': 1},
+                'd': {'criatividade': 1, 'portugues': 1}
+            },
+            10: {
+                'a': {'fisica': 3, 'matematica': 2, 'logica': 1},
+                'b': {'quimica': 3, 'logica': 1, 'foco': 1},
+                'c': {'biologia': 3, 'saude': 1, 'agronomia': 1},
+                'd': {'portugues': 1, 'criatividade': 1}
+            },
+            11: {
+                'a': {'programacao': 3, 'logica': 2, 'tecnologia': 2},
+                'b': {'tecnologia': 2, 'foco': 1},
+                'c': {'comunicacao': 1},
+                'd': {'criatividade': 1, 'desenho': 1}
+            },
+            12: {
+                'a': {'portugues': 3, 'comunicacao': 2, 'criatividade': 1},
+                'b': {'desenho': 3, 'criatividade': 3, 'artes': 2},
+                'c': {'logica': 2, 'foco': 1, 'programacao': 1},
+                'd': {'matematica': 1, 'logica': 1}
+            },
+            13: {
+                'a': {'historia': 3, 'comunicacao': 1, 'portugues': 1},
+                'b': {'historia': 1, 'portugues': 1},
+                'c': {'logica': 2, 'matematica': 1},
+                'd': {'programacao': 1, 'tecnologia': 1}
+            },
+            14: {
+                'a': {'negocios': 1, 'foco': 2, 'lideranca': 1},
+                'b': {'saude': 2, 'comunicacao': 2, 'lideranca': 1},
+                'c': {'tecnologia': 2, 'criatividade': 3, 'programacao': 1},
+                'd': {'foco': 2, 'logica': 1, 'historia': 1}
+            },
+            15: {
+                'a': {'logica': 3, 'matematica': 1, 'foco': 1},
+                'b': {'criatividade': 3, 'desenho': 1, 'artes': 1},
+                'c': {'comunicacao': 3, 'lideranca': 1, 'portugues': 1},
+                'd': {'foco': 3, 'lideranca': 2}
+            }
+        }
 
         for resp in respostas:
             p_id = resp.pergunta.id
             chave = resp.opcao.chave
+            if p_id in WEIGHTS and chave in WEIGHTS[p_id]:
+                peso = WEIGHTS[p_id][chave]
+                for k, v in peso.items():
+                    if k in forcas_totais:
+                        forcas_totais[k] += v
 
-            if p_id == 1:
-                if chave == 'a':
-                    forcas['Lógica'] += 25
-                    forcas['Foco'] += 10
-                elif chave == 'b':
-                    forcas['Foco'] += 20
-                    forcas['Liderança'] += 10
-                elif chave == 'c':
-                    forcas['Comunicação'] += 30
-                    forcas['Criatividade'] += 10
-                elif chave == 'd':
-                    forcas['Foco'] += 20
-                elif chave == 'e':
-                    forcas['Lógica'] += 20
-                elif chave == 'f':
-                    forcas['Comunicação'] += 25
-                    forcas['Liderança'] += 20
-                elif chave == 'g':
-                    forcas['Criatividade'] += 15
-                    forcas['Comunicação'] += 15
-            elif p_id == 2:
-                if chave == 'a':
-                    forcas['Comunicação'] += 20
-                    forcas['Liderança'] += 25
-                elif chave == 'b':
-                    forcas['Foco'] += 35
-                    forcas['Lógica'] += 10
-                elif chave == 'c':
-                    forcas['Foco'] += 20
-                    forcas['Comunicação'] += 15
-                    forcas['Liderança'] += 10
-            elif p_id == 3:
-                if chave == 'a':
-                    forcas['Lógica'] += 35
-                elif chave == 'b':
-                    forcas['Criatividade'] += 45
-                elif chave == 'c':
-                    forcas['Comunicação'] += 45
-                    forcas['Liderança'] += 25
-                elif chave == 'd':
-                    forcas['Foco'] += 25
-            elif p_id == 4:
-                if chave == 'a':
-                    forcas['Lógica'] += 15
-                    forcas['Foco'] += 15
-                elif chave == 'b':
-                    forcas['Comunicação'] += 20
-                    forcas['Liderança'] += 15
-                elif chave == 'c':
-                    forcas['Criatividade'] += 35
-                elif chave == 'd':
-                    forcas['Foco'] += 20
-                    forcas['Lógica'] += 15
-            elif p_id == 5:
-                if chave == 'a':
-                    forcas['Foco'] += 25
-                elif chave == 'b':
-                    forcas['Comunicação'] += 15
-                    forcas['Liderança'] += 10
-                elif chave == 'c':
-                    forcas['Foco'] += 15
-                elif chave == 'd':
-                    forcas['Criatividade'] += 15
-            elif p_id == 6:
-                if chave == 'a':
-                    forcas['Lógica'] += 10
-                    forcas['Liderança'] += 10
-                elif chave == 'b':
-                    forcas['Criatividade'] += 10
-                elif chave == 'c':
-                    forcas['Criatividade'] += 15
-            elif p_id == 7:
-                if chave == 'a':
-                    forcas['Criatividade'] += 45
-                elif chave == 'b':
-                    forcas['Lógica'] += 45
-                elif chave == 'c':
-                    forcas['Comunicação'] += 45
-                    forcas['Liderança'] += 25
-                elif chave == 'd':
-                    forcas['Foco'] += 35
-
+        max_forcas = 15
         result = []
-        for k, v in forcas.items():
-            valor_normalizado = min(95, max(30, v))
-            result.append({"nome": k, "valor": valor_normalizado})
+        display_names = {
+            'logica': 'Lógica',
+            'criatividade': 'Criatividade',
+            'foco': 'Foco',
+            'comunicacao': 'Comunicação',
+            'lideranca': 'Liderança'
+        }
+        for k, v in forcas_totais.items():
+            pct = min(100, round((v / max_forcas) * 100))
+            val_norm = min(95, max(30, pct))
+            result.append({"nome": display_names[k], "valor": val_norm})
         return result
 
     def get_disciplinas(self, obj):
         respostas = obj.respostas.select_related('pergunta', 'opcao').all()
-        disciplinas = {
-            'Matemática': 30,
-            'Física': 30,
-            'Programação': 30,
-            'Desenho': 30,
-            'Português': 30,
+        disciplinas_totais = {
+            'matematica': 0, 'fisica': 0, 'programacao': 0, 'desenho': 0, 'portugues': 0,
+            'biologia': 0, 'quimica': 0, 'historia': 0
         }
-        if not respostas.exists():
-            return [{"nome": k, "valor": v} for k, v in disciplinas.items()]
+        
+        WEIGHTS = {
+            1: {
+                'a': {'tecnologia': 3, 'logica': 2, 'programacao': 2},
+                'b': {'saude': 3, 'biologia': 2, 'foco': 1},
+                'c': {'negocios': 3, 'comunicacao': 2, 'lideranca': 1},
+                'd': {'artes': 3, 'criatividade': 3, 'desenho': 2},
+                'e': {'direito': 3, 'comunicacao': 2, 'portugues': 2},
+                'f': {'agronomia': 3, 'biologia': 2, 'quimica': 1},
+                'g': {}
+            },
+            2: {
+                'a': {'tecnologia': 2, 'logica': 2, 'programacao': 2},
+                'b': {'artes': 2, 'criatividade': 3, 'desenho': 2},
+                'c': {'foco': 2, 'portugues': 2, 'historia': 1},
+                'd': {'saude': 2, 'comunicacao': 2, 'lideranca': 1},
+                'e': {'negocios': 2, 'comunicacao': 2, 'lideranca': 2},
+                'f': {'agronomia': 2, 'biologia': 1, 'foco': 1}
+            },
+            3: {
+                'a': {'foco': 2},
+                'b': {},
+                'c': {'criatividade': 1}
+            },
+            4: {
+                'a': {'logica': 3, 'matematica': 2, 'foco': 1},
+                'b': {'criatividade': 3, 'logica': 1},
+                'c': {'comunicacao': 3, 'lideranca': 1},
+                'd': {'foco': 3, 'logica': 1, 'programacao': 1}
+            },
+            5: {
+                'a': {'criatividade': 3, 'desenho': 3, 'artes': 2},
+                'b': {'logica': 3, 'matematica': 3, 'fisica': 1},
+                'c': {'comunicacao': 3, 'portugues': 3, 'criatividade': 1},
+                'd': {'logica': 2, 'foco': 3, 'lideranca': 1}
+            },
+            6: {
+                'a': {'foco': 3, 'lideranca': 1, 'logica': 1},
+                'b': {'foco': 2, 'criatividade': 1},
+                'c': {'criatividade': 2},
+                'd': {'foco': 1, 'comunicacao': 1}
+            },
+            7: {
+                'a': {'comunicacao': 3, 'lideranca': 2, 'portugues': 1},
+                'b': {'comunicacao': 2, 'foco': 1},
+                'c': {'logica': 2, 'criatividade': 2, 'programacao': 1},
+                'd': {'foco': 2, 'portugues': 1}
+            },
+            8: {
+                'a': {'lideranca': 3, 'comunicacao': 2, 'foco': 1},
+                'b': {'foco': 3, 'logica': 2},
+                'c': {'criatividade': 3, 'lideranca': 1},
+                'd': {'comunicacao': 3, 'lideranca': 2}
+            },
+            9: {
+                'a': {'matematica': 3, 'logica': 2, 'fisica': 1},
+                'b': {'matematica': 2, 'foco': 2},
+                'c': {'matematica': 1, 'logica': 1},
+                'd': {'criatividade': 1, 'portugues': 1}
+            },
+            10: {
+                'a': {'fisica': 3, 'matematica': 2, 'logica': 1},
+                'b': {'quimica': 3, 'logica': 1, 'foco': 1},
+                'c': {'biologia': 3, 'saude': 1, 'agronomia': 1},
+                'd': {'portugues': 1, 'criatividade': 1}
+            },
+            11: {
+                'a': {'programacao': 3, 'logica': 2, 'tecnologia': 2},
+                'b': {'tecnologia': 2, 'foco': 1},
+                'c': {'comunicacao': 1},
+                'd': {'criatividade': 1, 'desenho': 1}
+            },
+            12: {
+                'a': {'portugues': 3, 'comunicacao': 2, 'criatividade': 1},
+                'b': {'desenho': 3, 'criatividade': 3, 'artes': 2},
+                'c': {'logica': 2, 'foco': 1, 'programacao': 1},
+                'd': {'matematica': 1, 'logica': 1}
+            },
+            13: {
+                'a': {'historia': 3, 'comunicacao': 1, 'portugues': 1},
+                'b': {'historia': 1, 'portugues': 1},
+                'c': {'logica': 2, 'matematica': 1},
+                'd': {'programacao': 1, 'tecnologia': 1}
+            },
+            14: {
+                'a': {'negocios': 1, 'foco': 2, 'lideranca': 1},
+                'b': {'saude': 2, 'comunicacao': 2, 'lideranca': 1},
+                'c': {'tecnologia': 2, 'criatividade': 3, 'programacao': 1},
+                'd': {'foco': 2, 'logica': 1, 'historia': 1}
+            },
+            15: {
+                'a': {'logica': 3, 'matematica': 1, 'foco': 1},
+                'b': {'criatividade': 3, 'desenho': 1, 'artes': 1},
+                'c': {'comunicacao': 3, 'lideranca': 1, 'portugues': 1},
+                'd': {'foco': 3, 'lideranca': 2}
+            }
+        }
 
         for resp in respostas:
             p_id = resp.pergunta.id
             chave = resp.opcao.chave
+            if p_id in WEIGHTS and chave in WEIGHTS[p_id]:
+                peso = WEIGHTS[p_id][chave]
+                for k, v in peso.items():
+                    if k in disciplinas_totais:
+                        disciplinas_totais[k] += v
 
-            if p_id == 1:
-                if chave == 'a':
-                    disciplinas['Programação'] += 40
-                    disciplinas['Matemática'] += 15
-                elif chave == 'b':
-                    disciplinas['Física'] += 20
-                elif chave == 'c':
-                    disciplinas['Português'] += 50
-                elif chave == 'd':
-                    disciplinas['Matemática'] += 15
-                    disciplinas['Física'] += 15
-                    disciplinas['Desenho'] += 10
-                elif chave == 'e':
-                    disciplinas['Física'] += 30
-                    disciplinas['Matemática'] += 10
-                elif chave == 'f':
-                    disciplinas['Português'] += 35
-            elif p_id == 3:
-                if chave == 'a':
-                    disciplinas['Matemática'] += 45
-                    disciplinas['Programação'] += 15
-                elif chave == 'b':
-                    disciplinas['Desenho'] += 50
-                elif chave == 'c':
-                    disciplinas['Português'] += 25
-                elif chave == 'd':
-                    disciplinas['Física'] += 35
-                    disciplinas['Desenho'] += 15
-            elif p_id == 4:
-                if chave == 'c':
-                    disciplinas['Programação'] += 25
-                    disciplinas['Desenho'] += 15
-                elif chave == 'd':
-                    disciplinas['Matemática'] += 10
-                    disciplinas['Português'] += 10
-            elif p_id == 5:
-                if chave == 'a':
-                    disciplinas['Programação'] += 20
-                elif chave == 'c':
-                    disciplinas['Física'] += 15
-                elif chave == 'd':
-                    disciplinas['Desenho'] += 15
-            elif p_id == 7:
-                if chave == 'a':
-                    disciplinas['Desenho'] += 20
-                elif chave == 'b':
-                    disciplinas['Matemática'] += 25
-                    disciplinas['Programação'] += 20
-                elif chave == 'c':
-                    disciplinas['Português'] += 20
-                elif chave == 'd':
-                    disciplinas['Física'] += 20
-
+        max_disciplinas = 12
         result = []
-        for k, v in disciplinas.items():
-            valor_normalizado = min(95, max(30, v))
-            result.append({"nome": k, "valor": valor_normalizado})
+        display_names = {
+            'matematica': 'Matemática',
+            'fisica': 'Física',
+            'programacao': 'Programação',
+            'desenho': 'Desenho',
+            'portugues': 'Português',
+            'biologia': 'Biologia',
+            'quimica': 'Química',
+            'historia': 'História'
+        }
+        for k, v in disciplinas_totais.items():
+            pct = min(100, round((v / max_disciplinas) * 100))
+            val_norm = min(95, max(30, pct))
+            result.append({"nome": display_names[k], "valor": val_norm})
         return result
 
     def get_progresso_geral(self, obj):
