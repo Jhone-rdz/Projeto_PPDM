@@ -7,6 +7,7 @@ import {
   ScrollView,
   SafeAreaView,
   Platform,
+  Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -97,24 +98,18 @@ export default function QuestionarioScreen() {
     if (perguntaAtual < perguntas.length - 1) {
       setPerguntaAtual((prev) => prev + 1);
     } else {
-      // Completed last question, submit answers to backend
       setIsLoading(true);
       try {
-        const payload = Object.keys(respostas).map((qId) => ({
-          pergunta_id: Number(qId),
-          opcao_chave: respostas[Number(qId)],
-        }));
-        
-        // Only run API call if user has authenticated token
-        await apiService.submitAnswers(payload);
-        
+        await apiService.salvarRespostas(respostas);
         setIsLoading(false);
         router.replace('/(tabs)');
       } catch (error: any) {
         setIsLoading(false);
         console.error('Failed to submit answers:', error);
-        // Navigate even on failure (graceful degradation)
-        router.replace('/(tabs)');
+        Alert.alert(
+          'Erro ao salvar respostas',
+          'Não foi possível salvar suas respostas no servidor. Por favor, verifique sua conexão de internet e tente novamente.'
+        );
       }
     }
   };

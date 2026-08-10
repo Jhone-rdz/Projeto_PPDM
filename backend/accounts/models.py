@@ -74,13 +74,16 @@ class Curso(models.Model):
         ('tecnologia', 'Tecnologia'),
         ('saude', 'Saúde'),
         ('negocios', 'Negócios'),
+        ('artes', 'Artes'),
+        ('direito', 'Direito'),
+        ('agronomia', 'Agronomia'),
     ]
     
     nome = models.CharField(max_length=200, verbose_name="Nome do Curso")
     tipo = models.CharField(max_length=100, verbose_name="Tipo (e.g. Bacharelado, Tecnólogo)")
     duracao = models.CharField(max_length=50, verbose_name="Duração (e.g. 4 anos)")
     descricao = models.TextField(verbose_name="Descrição")
-    area = models.CharField(max_length=20, choices=AREA_CHOICES, default='tecnologia', verbose_name="Área do Curso")
+    area = models.CharField(max_length=30, choices=AREA_CHOICES, default='tecnologia', verbose_name="Área do Curso")
     
     # Tags stored as a comma-separated string
     tags_raw = models.CharField(max_length=500, verbose_name="Tags (separadas por vírgula)")
@@ -127,3 +130,40 @@ class DesafioConcluido(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.desafio.titulo} ({self.concluido_em})"
+
+
+class PerfilUsuario(models.Model):
+    user = models.OneToOneField('CustomUser', on_delete=models.CASCADE, related_name='perfil', verbose_name="Usuário")
+    
+    # Forças
+    logica = models.IntegerField(default=0, verbose_name="Lógica")
+    criatividade = models.IntegerField(default=0, verbose_name="Criatividade")
+    foco = models.IntegerField(default=0, verbose_name="Foco")
+    comunicacao = models.IntegerField(default=0, verbose_name="Comunicação")
+    lideranca = models.IntegerField(default=0, verbose_name="Liderança")
+    
+    # Disciplinas
+    matematica = models.IntegerField(default=0, verbose_name="Matemática")
+    fisica = models.IntegerField(default=0, verbose_name="Física")
+    programacao = models.IntegerField(default=0, verbose_name="Programação")
+    desenho = models.IntegerField(default=0, verbose_name="Desenho")
+    portugues = models.IntegerField(default=0, verbose_name="Português")
+    biologia = models.IntegerField(default=0, verbose_name="Biologia")
+    quimica = models.IntegerField(default=0, verbose_name="Química")
+    historia = models.IntegerField(default=0, verbose_name="História")
+    
+    # Áreas
+    tecnologia = models.IntegerField(default=0, verbose_name="Tecnologia")
+    saude = models.IntegerField(default=0, verbose_name="Saúde")
+    negocios = models.IntegerField(default=0, verbose_name="Negócios")
+    artes = models.IntegerField(default=0, verbose_name="Artes")
+    direito = models.IntegerField(default=0, verbose_name="Direito")
+    agronomia = models.IntegerField(default=0, verbose_name="Agronomia")
+
+    class Meta:
+        verbose_name = "Perfil de Usuário"
+        verbose_name_plural = "Perfis de Usuários"
+
+    def __str__(self):
+        return f"Perfil de {self.user.username}"
+

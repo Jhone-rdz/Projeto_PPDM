@@ -1,5 +1,50 @@
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { PerfilCalculado } from '../_constants/perguntas';
+
+export interface CursoComMatch {
+  id: number;
+  nome: string;
+  tipo: string;
+  duracao: string;
+  descricao: string;
+  tags: string[];
+  icone: string;
+  corIcone: string;
+  corFundo: string;
+  match: number;
+  tipoMatch: string;
+}
+
+export interface PerfilUsuario {
+  nome: string;
+  email: string;
+  curso_tecnico: string;
+  nivel: {
+    numero: number;
+    nome: string;
+    progresso: number;
+  };
+  forcas: {
+    logica: number;
+    criatividade: number;
+    foco: number;
+    comunicacao: number;
+    lideranca: number;
+  };
+  disciplinas: {
+    matematica: number;
+    fisica: number;
+    programacao: number;
+    desenho: number;
+    portugues: number;
+    biologia: number;
+    quimica: number;
+    historia: number;
+  };
+  progresso_geral: number;
+}
+
 
 // Dynamically sets backend URL:
 // - Android Emulator uses 10.0.2.2 to access the host loopback.
@@ -334,16 +379,66 @@ export const apiService = {
     }
   },
 
-  getCourses: async (area?: string, busca?: string) => {
+  salvarRespostas: async (respostas: { [id: number]: string }): Promise<PerfilCalculado> => {
     try {
       const token = await getToken();
+      const response = await fetch(`${API_BASE_URL}/questionario/respostas/`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ respostas }),
+      });
 
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.detail || 'Falha ao salvar respostas.');
+      }
+      return data as PerfilCalculado;
+    } catch (error: any) {
+      console.error('salvarRespostas API Error:', error);
+      throw error;
+    }
+  },
+
+  getRespostas: async (): Promise<{ respostas: { [id: string]: string }; perfil: PerfilCalculado } | null> => {
+    try {
+      const token = await getToken();
+      const response = await fetch(`${API_BASE_URL}/questionario/respostas/`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.status === 404) {
+        return null;
+      }
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.detail || 'Falha ao obter respostas.');
+      }
+      return data;
+    } catch (error: any) {
+      console.error('getRespostas API Error:', error);
+      throw error;
+    }
+  },
+
+  getCursos: async (params?: { area?: string; busca?: string; limite?: number }): Promise<CursoComMatch[]> => {
+    try {
+      const token = await getToken();
       let url = `${API_BASE_URL}/cursos/`;
-      const params = [];
-      if (area) params.push(`area=${encodeURIComponent(area)}`);
-      if (busca) params.push(`busca=${encodeURIComponent(busca)}`);
-      if (params.length > 0) {
-        url += `?${params.join('&')}`;
+      const queryParts: string[] = [];
+      if (params?.area) queryParts.push(`area=${encodeURIComponent(params.area)}`);
+      if (params?.busca) queryParts.push(`busca=${encodeURIComponent(params.busca)}`);
+      if (params?.limite) queryParts.push(`limite=${encodeURIComponent(params.limite.toString())}`);
+      
+      if (queryParts.length > 0) {
+        url += `?${queryParts.join('&')}`;
       }
 
       const response = await fetch(url, {
@@ -355,14 +450,34 @@ export const apiService = {
       });
 
       const data = await response.json();
-
       if (!response.ok) {
-        throw new Error(data.detail || 'Falha ao carregar cursos.');
+        throw new Error(data.detail || 'Falha ao buscar cursos.');
       }
-
-      return data;
+      return data as CursoComMatch[];
     } catch (error: any) {
-      console.error('Get Courses API Error:', error);
+      console.error('getCursos API Error:', error);
+      throw error;
+    }
+  },
+
+  getPerfil: async (): Promise<PerfilUsuario> => {
+    try {
+      const token = await getToken();
+      const response = await fetch(`${API_BASE_URL}/perfil/`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.detail || 'Falha ao buscar perfil.');
+      }
+      return data as PerfilUsuario;
+    } catch (error: any) {
+      console.error('getPerfil API Error:', error);
       throw error;
     }
   },

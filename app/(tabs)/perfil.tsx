@@ -14,35 +14,34 @@ import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { apiService } from '../_services/api';
+import { apiService, PerfilUsuario } from '../_services/api';
 
 export default function PerfilScreen() {
   const router = useRouter();
-  const [isSyncing, setIsSyncing] = useState(true);
+  const [perfil, setPerfil] = useState<PerfilUsuario | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Sync profile details on mount
   useEffect(() => {
-    const syncProfile = async () => {
+    const loadPerfil = async () => {
       try {
-        setIsSyncing(true);
-        const token = apiService.getSession().access;
-        if (token) {
-          await apiService.getProfile(token);
-        }
+        setIsLoading(true);
+        const data = await apiService.getPerfil();
+        setPerfil(data);
       } catch (err) {
         console.warn('Failed to sync profile details on perfil mount:', err);
       } finally {
-        setIsSyncing(false);
+        setIsLoading(false);
       }
     };
-    syncProfile();
+    loadPerfil();
   }, []);
 
   const session = apiService.getSession();
   const user = session.user;
-  const userLevel = user ? user.nivel : 1;
-  const userXp = user ? user.xp : 0;
-  const progressoGeral = user ? user.progresso_geral : 0;
+  const userLevel = perfil ? perfil.nivel.numero : (user ? user.nivel : 1);
+  const userXp = perfil ? perfil.nivel.progresso : 0;
+  const progressoGeral = perfil ? perfil.progresso_geral : 0;
 
   const handleBack = () => {
     router.back();
@@ -88,13 +87,23 @@ export default function PerfilScreen() {
         return require('../../assets/images/nivel 2 super nexo 1.png');
       case 3:
         return require('../../assets/images/nivel 3 super nexo 2.png');
+      case 4:
+        return require('../../assets/images/nivel 4 super nexo blue.png');
+      case 5:
+        return require('../../assets/images/nivel 5 alem do limite.png');
       default:
-        return require('../../assets/images/icone tela de cadastro e home.png');
+        return require('../../assets/images/nivel 1 despertado.png');
     }
   };
 
   // Map forces dynamically
-  const forces = user?.forcas || [
+  const forces = perfil ? [
+    { nome: 'Lógica', valor: perfil.forcas.logica },
+    { nome: 'Criatividade', valor: perfil.forcas.criatividade },
+    { nome: 'Foco', valor: perfil.forcas.foco },
+    { nome: 'Comunicação', valor: perfil.forcas.comunicacao },
+    { nome: 'Liderança', valor: perfil.forcas.lideranca },
+  ] : [
     { nome: 'Lógica', valor: 30 },
     { nome: 'Criatividade', valor: 30 },
     { nome: 'Foco', valor: 30 },
@@ -114,7 +123,16 @@ export default function PerfilScreen() {
   };
 
   // Map disciplines dynamically
-  const disciplines = user?.disciplinas || [
+  const disciplines = perfil ? [
+    { nome: 'Matemática', valor: perfil.disciplinas.matematica },
+    { nome: 'Física', valor: perfil.disciplinas.fisica },
+    { nome: 'Programação', valor: perfil.disciplinas.programacao },
+    { nome: 'Desenho', valor: perfil.disciplinas.desenho },
+    { nome: 'Português', valor: perfil.disciplinas.portugues },
+    { nome: 'Biologia', valor: perfil.disciplinas.biologia },
+    { nome: 'Química', valor: perfil.disciplinas.quimica },
+    { nome: 'História', valor: perfil.disciplinas.historia },
+  ] : [
     { nome: 'Matemática', valor: 30 },
     { nome: 'Física', valor: 30 },
     { nome: 'Programação', valor: 30 },
@@ -129,6 +147,9 @@ export default function PerfilScreen() {
       case 'Programação': return 'code-slash-outline';
       case 'Desenho': return 'pencil-outline';
       case 'Português': return 'book-outline';
+      case 'Biologia': return 'leaf-outline';
+      case 'Química': return 'flask-outline';
+      case 'História': return 'earth-outline';
       default: return 'help-circle-outline';
     }
   };
@@ -306,9 +327,8 @@ export default function PerfilScreen() {
           </View>
         </View>
 
-        {/* SEÇÃO 4 — FORÇAS E DISCIPLINAS */}
         <View style={styles.statsSection}>
-          {isSyncing ? (
+          {isLoading ? (
             <View style={{ height: 200, justifyContent: 'center', alignItems: 'center' }}>
               <ActivityIndicator size="large" color="#6B21A8" />
               <Text style={{ color: '#94A3B8', marginTop: 10 }}>Carregando estatísticas...</Text>

@@ -17,7 +17,7 @@ import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { apiService } from '../_services/api';
+import { apiService, PerfilUsuario } from '../_services/api';
 
 const CURSOS_COMPATIVEIS = [
   { match: '94%', icone: 'hardware-chip-outline', cor: '#8B5CF6', nome: 'Engenharia de Inteligência Artificial', tipo: 'MATCH ALTO' },
@@ -39,9 +39,10 @@ export default function HomeScreen() {
   // Load session statistics dynamically
   const session = apiService.getSession();
   const user = session.user;
-  const userName = user ? user.username.split('@')[0] : 'Francisco';
-  const userLevel = user ? user.nivel : 1;
-  const userXp = user ? user.xp : 40; // Default placeholder
+
+  const [perfil, setPerfil] = useState<PerfilUsuario | null>(null);
+  const [cursos, setCursos] = useState<any[]>([]);
+  const [isLoadingCursos, setIsLoadingCursos] = useState(true);
 
   const getLevelLabelName = (level: number) => {
     switch (level) {
@@ -54,7 +55,29 @@ export default function HomeScreen() {
     }
   };
 
-  const levelName = getLevelLabelName(userLevel);
+  const getLevelImage = (nivel: number) => {
+    switch (nivel) {
+      case 0:
+        return require('../../assets/images/nivel 0 iniciante.png');
+      case 1:
+        return require('../../assets/images/nivel 1 despertado.png');
+      case 2:
+        return require('../../assets/images/nivel 2 super nexo 1.png');
+      case 3:
+        return require('../../assets/images/nivel 3 super nexo 2.png');
+      case 4:
+        return require('../../assets/images/nivel 4 super nexo blue.png');
+      case 5:
+        return require('../../assets/images/nivel 5 alem do limite.png');
+      default:
+        return require('../../assets/images/nivel 1 despertado.png');
+    }
+  };
+
+  const userLevel = perfil ? perfil.nivel.numero : (user ? user.nivel : 1);
+  const userXp = perfil ? perfil.nivel.progresso : (user ? user.xp % 100 : 40);
+  const userName = perfil ? perfil.nome : (user ? user.username.split('@')[0] : 'Francisco');
+  const levelName = perfil ? perfil.nivel.nome : getLevelLabelName(userLevel);
 
   // Drawer and Quiz states
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -63,36 +86,35 @@ export default function HomeScreen() {
   const [quizSubmitted, setQuizSubmitted] = useState(false);
   const [isCorrectAnswer, setIsCorrectAnswer] = useState(false);
 
-  // Dynamic courses and loading states
-  const [cursos, setCursos] = useState<any[]>([]);
-  const [isLoadingCursos, setIsLoadingCursos] = useState(true);
-
   // Sync profile details and courses on mount
   useEffect(() => {
     const syncProfileAndCourses = async () => {
       try {
-        const token = apiService.getSession().access;
-        if (token) {
-          await apiService.getProfile(token);
-        }
+        const pData = await apiService.getPerfil();
+        setPerfil(pData);
       } catch (err) {
         console.warn('Failed to sync profile details on home mount:', err);
       }
 
       try {
         setIsLoadingCursos(true);
-        const data = await apiService.getCourses();
-        // Show top 4 courses
-        setCursos(data.slice(0, 4));
+        const data = await apiService.getCursos({ limite: 4 });
+        setCursos(data);
       } catch (err) {
         console.warn('Failed to fetch courses, falling back to static lists:', err);
         // Fallback mapping matching standard course card shapes
         setCursos(CURSOS_COMPATIVEIS.map((c, i) => ({
           id: i + 1,
           nome: c.nome,
-          match_percent: parseInt(c.match),
+          match: parseInt(c.match),
           icone: c.icone,
-          cor_icone: c.cor,
+          corIcone: c.cor,
+          corFundo: '#111827',
+          tipo: 'Tecnólogo',
+          duracao: '2.5 anos',
+          descricao: '',
+          tags: ['Tecnologia'],
+          tipoMatch: 'MATCH ALTO'
         })));
       } finally {
         setIsLoadingCursos(false);
@@ -227,7 +249,7 @@ export default function HomeScreen() {
         >
           <View style={styles.levelCardLeft}>
             <Image
-              source={require('../../assets/images/nivel 1 despertado.png')}
+              source={getLevelImage(userLevel)}
               style={styles.levelAvatar}
             />
           </View>
@@ -240,10 +262,10 @@ export default function HomeScreen() {
                 colors={['#4F46E5', '#00D4FF']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
-                style={[styles.levelProgressFill, { width: `${userXp % 100 || 40}%` }]}
+                style={[styles.levelProgressFill, { width: `${userXp}%` }]}
               />
             </View>
-            <Text style={styles.levelProgressText}>Progresso {userXp % 100 || 40}% ⚡</Text>
+            <Text style={styles.levelProgressText}>Progresso {userXp}% ⚡</Text>
           </View>
 
           <View style={styles.levelCardRight}>
@@ -498,7 +520,7 @@ export default function HomeScreen() {
             <View style={styles.drawerProfileHeader}>
               <View style={styles.drawerProfileAvatarContainer}>
                 <Image
-                  source={require('../../assets/images/nivel 1 despertado.png')}
+                  source={getLevelImage(userLevel)}
                   style={styles.drawerAvatar}
                 />
               </View>

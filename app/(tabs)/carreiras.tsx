@@ -10,11 +10,12 @@ import {
   TextInput,
   Alert,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
-import { apiService } from '../_services/api';
+import { apiService, PerfilUsuario } from '../_services/api';
 
 const DADOS_CURSOS = [
   {
@@ -88,11 +89,26 @@ export default function CarreirasScreen() {
   const [busca, setBusca] = useState('');
   const [cursos, setCursos] = useState<CursoItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [perfil, setPerfil] = useState<PerfilUsuario | null>(null);
 
   // Load session statistics dynamically
   const session = apiService.getSession();
   const user = session.user;
-  const userLevel = user ? user.nivel : 1;
+
+  // Load profile details on mount
+  useEffect(() => {
+    const loadPerfil = async () => {
+      try {
+        const data = await apiService.getPerfil();
+        setPerfil(data);
+      } catch (err) {
+        console.warn('Failed to load profile in carreiras:', err);
+      }
+    };
+    loadPerfil();
+  }, []);
+
+  const userLevel = perfil ? perfil.nivel.numero : (user ? user.nivel : 1);
   const getLevelLabelName = (level: number) => {
     switch (level) {
       case 0: return 'Iniciante';
@@ -103,7 +119,7 @@ export default function CarreirasScreen() {
       default: return 'Além do Limite';
     }
   };
-  const levelName = getLevelLabelName(userLevel);
+  const levelName = perfil ? perfil.nivel.nome : getLevelLabelName(userLevel);
 
   const getLevelImage = (lvl: number) => {
     switch (lvl) {
@@ -111,6 +127,8 @@ export default function CarreirasScreen() {
       case 1: return require('../../assets/images/nivel 1 despertado.png');
       case 2: return require('../../assets/images/nivel 2 super nexo 1.png');
       case 3: return require('../../assets/images/nivel 3 super nexo 2.png');
+      case 4: return require('../../assets/images/nivel 4 super nexo blue.png');
+      case 5: return require('../../assets/images/nivel 5 alem do limite.png');
       default: return require('../../assets/images/nivel 1 despertado.png');
     }
   };
@@ -128,7 +146,7 @@ export default function CarreirasScreen() {
     const delayDebounce = setTimeout(async () => {
       setIsLoading(true);
       try {
-        const data = await apiService.getCourses(areaAtiva, busca);
+        const data = await apiService.getCursos({ area: areaAtiva, busca });
         const mapped = data.map((c: any) => ({
           id: c.id,
           tipo: c.tipo,
@@ -136,10 +154,10 @@ export default function CarreirasScreen() {
           nome: c.nome,
           descricao: c.descricao,
           tags: c.tags,
-          match: `${c.match_percent}%`,
+          match: `${c.match}%`,
           icone: c.icone,
-          corIcone: c.cor_icone,
-          corFundo: c.cor_fundo,
+          corIcone: c.corIcone || c.cor_icone,
+          corFundo: c.corFundo || c.cor_fundo,
         }));
         setCursos(mapped);
       } catch (err) {
@@ -295,6 +313,7 @@ export default function CarreirasScreen() {
         <View style={styles.coursesListContainer}>
           {isLoading ? (
             <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#6B21A8" style={{ marginBottom: 12 }} />
               <Text style={styles.loadingText}>Carregando cursos...</Text>
             </View>
           ) : cursos.length > 0 ? (

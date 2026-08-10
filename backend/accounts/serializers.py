@@ -423,3 +423,41 @@ class DesafioSerializer(serializers.ModelSerializer):
             desafio=obj,
             concluido_em=date.today()
         ).exists()
+
+class CursoComMatchSerializer(serializers.ModelSerializer):
+    tags = serializers.ReadOnlyField()
+    corIcone = serializers.CharField(source='cor_icone')
+    corFundo = serializers.CharField(source='cor_fundo')
+    match = serializers.SerializerMethodField()
+    tipoMatch = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Curso
+        fields = [
+            'id', 'nome', 'tipo', 'duracao', 'descricao', 'tags',
+            'icone', 'corIcone', 'corFundo', 'match', 'tipoMatch'
+        ]
+
+    def get_match(self, obj):
+        request = self.context.get('request')
+        if not request or not request.user.is_authenticated:
+            return obj.match_percent
+        try:
+            perfil = request.user.perfil
+            # Get the match percent from user's computed areas
+            area_score = getattr(perfil, obj.area.lower(), None)
+            if area_score is not None:
+                return area_score
+        except Exception:
+            pass
+        return obj.match_percent
+
+    def get_tipoMatch(self, obj):
+        match_val = self.get_match(obj)
+        if match_val >= 80:
+            return 'MATCH ALTO'
+        elif match_val >= 50:
+            return 'MATCH BOM'
+        else:
+            return 'MATCH REGULAR'
+
