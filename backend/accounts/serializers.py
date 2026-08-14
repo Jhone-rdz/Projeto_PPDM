@@ -276,6 +276,115 @@ class DesafioSerializer(serializers.ModelSerializer):
             concluido_em=date.today()
         ).exists()
 
+def get_course_requirements(nome, area):
+    nome_lower = nome.lower()
+    reqs = {}
+    
+    # Default requirements by area
+    if area == 'tecnologia':
+        reqs = {'logica': 0.4, 'programacao': 0.4, 'matematica': 0.2}
+        if 'inteligência' in nome_lower or 'dados' in nome_lower:
+            reqs = {'logica': 0.3, 'programacao': 0.3, 'matematica': 0.4}
+        elif 'segurança' in nome_lower or 'redes' in nome_lower:
+            reqs = {'foco': 0.4, 'logica': 0.3, 'programacao': 0.3}
+    elif area == 'saude':
+        reqs = {'biologia': 0.4, 'foco': 0.3, 'quimica': 0.3}
+        if 'psicologia' in nome_lower:
+            reqs = {'comunicacao': 0.4, 'foco': 0.3, 'historia': 0.3}
+        elif 'educação física' in nome_lower:
+            reqs = {'foco': 0.4, 'biologia': 0.3, 'lideranca': 0.3}
+    elif area == 'negocios':
+        reqs = {'lideranca': 0.3, 'comunicacao': 0.3, 'matematica': 0.4}
+        if 'marketing' in nome_lower:
+            reqs = {'criatividade': 0.4, 'comunicacao': 0.4, 'portugues': 0.2}
+        elif 'recursos humanos' in nome_lower:
+            reqs = {'comunicacao': 0.4, 'lideranca': 0.3, 'portugues': 0.3}
+    elif area == 'artes':
+        reqs = {'criatividade': 0.5, 'desenho': 0.3, 'foco': 0.2}
+        if 'arquitetura' in nome_lower:
+            reqs = {'criatividade': 0.3, 'desenho': 0.3, 'fisica': 0.4}
+        elif 'cinema' in nome_lower or 'audiovisual' in nome_lower:
+            reqs = {'criatividade': 0.4, 'comunicacao': 0.3, 'historia': 0.3}
+    elif area == 'direito':
+        reqs = {'portugues': 0.4, 'comunicacao': 0.3, 'historia': 0.3}
+        if 'direito' in nome_lower:
+            reqs = {'portugues': 0.3, 'comunicacao': 0.4, 'historia': 0.3}
+        elif 'geografia' in nome_lower:
+            reqs = {'historia': 0.4, 'fisica': 0.3, 'foco': 0.3}
+    elif area == 'agronomia':
+        reqs = {'biologia': 0.4, 'quimica': 0.3, 'foco': 0.3}
+        if 'veterinária' in nome_lower or 'zootecnia' in nome_lower:
+            reqs = {'biologia': 0.5, 'foco': 0.3, 'quimica': 0.2}
+        elif 'máquinas' in nome_lower or 'agrícola' in nome_lower:
+            reqs = {'fisica': 0.4, 'matematica': 0.3, 'logica': 0.3}
+            
+    return reqs
+
+def get_user_boosted_scores(user):
+    from .models import PerfilUsuario
+    try:
+        perfil = user.perfil
+        scores = {
+            'logica': perfil.logica,
+            'criatividade': perfil.criatividade,
+            'foco': perfil.foco,
+            'comunicacao': perfil.comunicacao,
+            'lideranca': perfil.lideranca,
+            'matematica': perfil.matematica,
+            'fisica': perfil.fisica,
+            'programacao': perfil.programacao,
+            'desenho': perfil.desenho,
+            'portugues': perfil.portugues,
+            'biologia': perfil.biologia,
+            'quimica': perfil.quimica,
+            'historia': perfil.historia,
+            'tecnologia': perfil.tecnologia,
+            'saude': perfil.saude,
+            'negocios': perfil.negocios,
+            'artes': perfil.artes,
+            'direito': perfil.direito,
+            'agronomia': perfil.agronomia
+        }
+    except PerfilUsuario.DoesNotExist:
+        fb = get_fallback_profile(user.curso_tecnico)
+        scores = {
+            'logica': fb['logica'],
+            'criatividade': fb['criatividade'],
+            'foco': fb['foco'],
+            'comunicacao': fb['comunicacao'],
+            'lideranca': fb['lideranca'],
+            'matematica': fb['matematica'],
+            'fisica': fb['fisica'],
+            'programacao': fb['programacao'],
+            'desenho': fb['desenho'],
+            'portugues': fb['portugues'],
+            'biologia': fb['biologia'],
+            'quimica': fb['quimica'],
+            'historia': fb['historia'],
+            'tecnologia': fb['logica'],
+            'saude': fb['biologia'],
+            'negocios': fb['lideranca'],
+            'artes': fb['criatividade'],
+            'direito': fb['portugues'],
+            'agronomia': fb['biologia']
+        }
+        
+    xp_bonus = user.xp // 10
+    boosted = {}
+    
+    multipliers = {
+        'logica': 1.2, 'criatividade': 0.8, 'foco': 1.1, 'comunicacao': 0.9, 'lideranca': 1.0,
+        'matematica': 1.1, 'fisica': 1.0, 'programacao': 1.2, 'desenho': 0.8, 'portugues': 0.9,
+        'biologia': 0.7, 'quimica': 0.7, 'historia': 0.8,
+        'tecnologia': 1.0, 'saude': 1.0, 'negocios': 1.0, 'artes': 1.0, 'direito': 1.0, 'agronomia': 1.0
+    }
+    
+    for k, v in scores.items():
+        mult = multipliers.get(k, 1.0)
+        boosted[k] = min(100, v + int(xp_bonus * mult))
+        
+    return boosted
+
 class CursoComMatchSerializer(serializers.ModelSerializer):
     tags = serializers.ReadOnlyField()
     corIcone = serializers.CharField(source='cor_icone')
@@ -294,15 +403,37 @@ class CursoComMatchSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         if not request or not request.user.is_authenticated:
             return obj.match_percent
+            
         try:
-            perfil = request.user.perfil
-            # Get the match percent from user's computed areas
-            area_score = getattr(perfil, obj.area.lower(), None)
-            if area_score is not None:
-                return area_score
+            scores = get_user_boosted_scores(request.user)
+            area_score = scores.get(obj.area.lower(), 50)
+            
+            # Get requirements
+            reqs = get_course_requirements(obj.nome, obj.area.lower())
+            
+            attr_score = 0
+            for attr, weight in reqs.items():
+                val = scores.get(attr, 50)
+                attr_score += val * weight
+                
+            if not reqs:
+                attr_score = area_score
+                
+            # Combine 40% area affinity + 60% specific skills alignment
+            match_val = round((area_score * 0.4) + (attr_score * 0.6))
+            
+            # Boost if technical course matches tags
+            user_tech = (request.user.curso_tecnico or "").lower()
+            if user_tech:
+                boost = 0
+                for tag in obj.tags:
+                    if tag.lower() in user_tech or user_tech in tag.lower():
+                        boost += 5
+                match_val = min(98, match_val + boost)
+                
+            return max(30, min(98, match_val))
         except Exception:
-            pass
-        return obj.match_percent
+            return obj.match_percent
 
     def get_tipoMatch(self, obj):
         match_val = self.get_match(obj)
