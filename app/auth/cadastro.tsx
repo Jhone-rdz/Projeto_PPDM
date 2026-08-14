@@ -102,15 +102,7 @@ export default function CadastroScreen() {
       await apiService.register(nome, email, senha, curso);
       setIsLoading(false);
       
-      const msg = 'Cadastro realizado com sucesso! Vamos iniciar o seu questionário de perfil.';
-      if (Platform.OS === 'web') {
-        alert(msg);
-        router.replace('/onboarding/questionario');
-      } else {
-        Alert.alert('Sucesso', msg, [
-          { text: 'OK', onPress: () => router.replace('/onboarding/questionario') }
-        ]);
-      }
+      router.replace('/onboarding/questionario');
     } catch (error: any) {
       setIsLoading(false);
       const errorMsg = error.message || 'Falha ao realizar cadastro. Verifique os dados e tente novamente.';
@@ -126,14 +118,7 @@ export default function CadastroScreen() {
     setIsLoading(true);
     setTimeout(() => {
       setIsLoading(false);
-      if (Platform.OS === 'web') {
-        alert('Cadastro com Google realizado (simulado)!');
-        router.push('/auth/login?fromCadastro=true');
-      } else {
-        Alert.alert('Google Signup', 'Cadastro com Google realizado (simulado)!', [
-          { text: 'OK', onPress: () => router.push('/auth/login?fromCadastro=true') }
-        ]);
-      }
+      router.push('/auth/login?fromCadastro=true');
     }, 1000);
   };
 

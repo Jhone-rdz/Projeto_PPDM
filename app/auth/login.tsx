@@ -61,20 +61,7 @@ export default function LoginScreen() {
       const user = apiService.getSession().user;
       const isComplete = user?.onboarding_completo ?? false;
       const targetRoute = isComplete ? '/(tabs)' : '/onboarding/questionario';
-      const msg = isComplete
-        ? 'Login realizado com sucesso!'
-        : 'Login realizado! Vamos responder ao questionário inicial.';
-
-      if (Platform.OS === 'web') {
-        alert(msg);
-        router.replace(targetRoute);
-      } else {
-        Alert.alert(
-          'Sucesso',
-          msg,
-          [{ text: 'OK', onPress: () => router.replace(targetRoute) }]
-        );
-      }
+      router.replace(targetRoute);
     } catch (error: any) {
       setIsLoading(false);
       const errorMsg = error.message || 'E-mail ou senha incorretos. Tente novamente.';
@@ -91,20 +78,7 @@ export default function LoginScreen() {
     setTimeout(() => {
       setIsLoading(false);
       const targetRoute = fromCadastro ? '/onboarding/questionario' : '/(tabs)';
-      const msg = fromCadastro
-        ? 'Login com Google realizado! Vamos responder ao questionário inicial.'
-        : 'Login com Google realizado (simulado)!';
-
-      if (Platform.OS === 'web') {
-        alert(msg);
-        router.replace(targetRoute);
-      } else {
-        Alert.alert(
-          'Google Login',
-          msg,
-          [{ text: 'OK', onPress: () => router.replace(targetRoute) }]
-        );
-      }
+      router.replace(targetRoute);
     }, 1000);
   };
 
