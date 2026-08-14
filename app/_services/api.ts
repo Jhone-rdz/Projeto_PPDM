@@ -50,11 +50,11 @@ export interface PerfilUsuario {
 // - Android Emulator uses 10.0.2.2 to access the host loopback.
 // - iOS Simulator and Web use localhost (127.0.0.1).
 // Replace with your local machine's IP (e.g. 192.168.1.50) if running on real physical devices via Expo Go.
-export const API_BASE_URL = Platform.select({
+export const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || Platform.select({
   android: 'http://10.0.2.2:8000/api',
   ios: 'http://localhost:8000/api',
   default: 'http://localhost:8000/api',
-});
+})!;
 
 export interface UserProfile {
   id: number;
