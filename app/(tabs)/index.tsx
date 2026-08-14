@@ -18,6 +18,7 @@ import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { apiService, PerfilUsuario } from '../_services/api';
+import { questoesDiarias, QuestaoQuiz } from '../_constants/questoes_diarias';
 
 const CURSOS_COMPATIVEIS = [
   { match: '94%', icone: 'hardware-chip-outline', cor: '#8B5CF6', nome: 'Engenharia de Inteligência Artificial', tipo: 'MATCH ALTO' },
@@ -25,14 +26,14 @@ const CURSOS_COMPATIVEIS = [
   { match: '88%', icone: 'laptop-outline', cor: '#8B5CF6', nome: 'Engenharia de Software', tipo: 'MATCH ALTO' },
   { match: '86%', icone: 'phone-portrait-outline', cor: '#F59E0B', nome: 'Análise e Desenvolvimento de Sistemas', tipo: 'MATCH BOM' },
 ];
-
-const QUIZ_OPTIONS = [
-  { id: 'a', label: 'Cloud Computing (Nuvem)' },
-  { id: 'b', label: 'Cyber Security (Segurança)' }, // Correct answer
-  { id: 'c', label: 'Web Development (Web)' },
-  { id: 'd', label: 'Database Administration (Banco de Dados)' },
-];
-
+const CATEGORY_ICONS: { [key: string]: string } = {
+  TECNOLOGIA: 'hardware-chip-outline',
+  SAÚDE: 'heart-outline',
+  NEGÓCIOS: 'briefcase-outline',
+  ARTES: 'color-palette-outline',
+  DIREITO: 'scale-outline',
+  AGRONOMIA: 'leaf-outline',
+};
 export default function HomeScreen() {
   const router = useRouter();
 
@@ -85,6 +86,7 @@ export default function HomeScreen() {
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [quizSubmitted, setQuizSubmitted] = useState(false);
   const [isCorrectAnswer, setIsCorrectAnswer] = useState(false);
+  const [currentQuestion, setCurrentQuestion] = useState<QuestaoQuiz>(questoesDiarias[0]);
 
   // Sync profile details and courses on screen focus
   useFocusEffect(
@@ -162,6 +164,8 @@ export default function HomeScreen() {
   };
 
   const handleOpenQuiz = () => {
+    const randomIndex = Math.floor(Math.random() * questoesDiarias.length);
+    setCurrentQuestion(questoesDiarias[randomIndex]);
     setSelectedAnswer(null);
     setQuizSubmitted(false);
     setIsCorrectAnswer(false);
@@ -175,7 +179,7 @@ export default function HomeScreen() {
   const handleSubmitQuiz = async () => {
     if (!selectedAnswer) return;
 
-    const correct = selectedAnswer === 'b';
+    const correct = selectedAnswer === currentQuestion.respostaCorreta;
     setIsCorrectAnswer(correct);
     setQuizSubmitted(true);
 
@@ -183,7 +187,7 @@ export default function HomeScreen() {
       // Award XP on Django Backend
       try {
         if (session.user) {
-          await apiService.updateProfile(15);
+          await apiService.updateProfile(currentQuestion.xpBonus);
         }
       } catch (err) {
         console.error('Failed to sync XP with backend:', err);
@@ -191,7 +195,7 @@ export default function HomeScreen() {
 
       Alert.alert(
         'Resposta Correta! 🎉',
-        '+15 XP obtido! Seu perfil lógico e forças de segurança cibernética subiram de nível.',
+        `+${currentQuestion.xpBonus} XP obtido! ${currentQuestion.explicacao}`,
         [{ text: 'Ver Evolução', onPress: () => { setIsQuizOpen(false); router.push('/(tabs)/perfil'); } }]
       );
     } else {
@@ -617,7 +621,7 @@ export default function HomeScreen() {
             {/* Header */}
             <View style={styles.quizHeaderRow}>
               <View style={styles.quizTitleBadge}>
-                <Ionicons name="hardware-chip-outline" size={16} color="#8B5CF6" />
+                <Ionicons name={(CATEGORY_ICONS[currentQuestion.categoria] || 'help-circle-outline') as any} size={16} color="#8B5CF6" />
                 <Text style={styles.quizTitleBadgeText}>EVOLUA SEU PERFIL</Text>
               </View>
               <TouchableOpacity onPress={handleCloseQuiz} style={styles.quizCloseBtn}>
@@ -626,14 +630,14 @@ export default function HomeScreen() {
             </View>
 
             {/* Content */}
-            <Text style={styles.quizSubtitle}>Questão Diária de Lógica & Tech</Text>
+            <Text style={styles.quizSubtitle}>{currentQuestion.subtitulo}</Text>
             <Text style={styles.quizQuestion}>
-              Qual das seguintes áreas de tecnologia foca principalmente na proteção de sistemas, redes e dados contra ataques digitais?
+              {currentQuestion.pergunta}
             </Text>
 
             {/* Options */}
             <View style={styles.quizOptionsList}>
-              {QUIZ_OPTIONS.map((opt) => {
+              {currentQuestion.opcoes.map((opt) => {
                 const isSelected = selectedAnswer === opt.id;
                 return (
                   <TouchableOpacity
