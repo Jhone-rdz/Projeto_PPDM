@@ -12,7 +12,7 @@ import {
   Platform,
   Animated,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -81,12 +81,52 @@ const clientFallback = (mensagem: string): string => {
 
 export default function ChatScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams<{ autoPrompt?: string }>();
   const flatListRef = useRef<FlatList>(null);
 
   // States
   const [mensagens, setMensagens] = useState<Mensagem[]>(MENSAGENS_INICIAIS);
   const [inputTexto, setInputTexto] = useState('');
   const [isDigitando, setIsDigitando] = useState(false);
+
+  // Handle autoPrompt from other screens
+  useEffect(() => {
+    if (params?.autoPrompt) {
+      const sendAutoMessage = async (promptText: string) => {
+        const time = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        const userMsg: Mensagem = {
+          id: Date.now(),
+          tipo: 'usuario',
+          texto: promptText,
+          horario: time,
+          lido: true,
+        };
+        setMensagens((prev) => [...prev, userMsg]);
+        setIsDigitando(true);
+        try {
+          const data = await apiService.sendChatMessage(promptText);
+          setIsDigitando(false);
+          const reply: Mensagem = {
+            id: Date.now() + 1,
+            tipo: 'nexo',
+            texto: data.resposta,
+            horario: data.horario,
+          };
+          setMensagens((prev) => [...prev, reply]);
+        } catch {
+          setIsDigitando(false);
+          const reply: Mensagem = {
+            id: Date.now() + 1,
+            tipo: 'nexo',
+            texto: clientFallback(promptText),
+            horario: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+          };
+          setMensagens((prev) => [...prev, reply]);
+        }
+      };
+      sendAutoMessage(params.autoPrompt);
+    }
+  }, [params?.autoPrompt]);
 
   // Animated values for typing indicator dots
   const dot1Op = useRef(new Animated.Value(0.3)).current;

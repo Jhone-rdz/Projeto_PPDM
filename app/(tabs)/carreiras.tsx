@@ -8,13 +8,14 @@ import {
   SafeAreaView,
   Image,
   TextInput,
-  Alert,
   Platform,
   ActivityIndicator,
+  Modal,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { apiService, PerfilUsuario } from '../_services/api';
 
 const DADOS_CURSOS = [
@@ -90,6 +91,8 @@ export default function CarreirasScreen() {
   const [cursos, setCursos] = useState<CursoItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [perfil, setPerfil] = useState<PerfilUsuario | null>(null);
+  const [selectedCurso, setSelectedCurso] = useState<any | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Load session statistics dynamically
   const session = apiService.getSession();
@@ -137,8 +140,9 @@ export default function CarreirasScreen() {
     router.back();
   };
 
-  const handleSaibaMais = (nomeCurso: string) => {
-    Alert.alert('Saiba mais', `Informações sobre o curso: ${nomeCurso}`);
+  const handleSaibaMais = (curso: any) => {
+    setSelectedCurso(curso);
+    setIsModalOpen(true);
   };
 
   // Fetch courses from Django backend with area and search params (debounced)
@@ -361,7 +365,7 @@ export default function CarreirasScreen() {
                   </View>
 
                   <TouchableOpacity
-                    onPress={() => handleSaibaMais(curso.nome)}
+                    onPress={() => handleSaibaMais(curso)}
                     activeOpacity={0.7}
                   >
                     <Text style={styles.saibaMaisLink}>Saiba mais ›</Text>
@@ -377,6 +381,89 @@ export default function CarreirasScreen() {
           )}
         </View>
       </ScrollView>
+
+      {/* DETALHES DO CURSO MODAL */}
+      <Modal
+        visible={isModalOpen}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setIsModalOpen(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setIsModalOpen(false)}
+        >
+          <View style={styles.modalCard} onStartShouldSetResponder={() => true}>
+            {/* Header */}
+            <View style={styles.modalHeaderRow}>
+              <View style={[styles.courseIconContainer, { backgroundColor: selectedCurso?.corFundo || '#1E1B4B' }]}>
+                <Ionicons name={selectedCurso?.icone || 'school-outline'} size={24} color={selectedCurso?.corIcone || '#8B5CF6'} />
+              </View>
+              <View style={styles.modalTitleContainer}>
+                <Text style={styles.modalCourseName}>{selectedCurso?.nome}</Text>
+                <Text style={styles.modalCourseMeta}>{selectedCurso?.tipo} • {selectedCurso?.duracao}</Text>
+              </View>
+              <TouchableOpacity onPress={() => setIsModalOpen(false)} style={styles.modalCloseBtn}>
+                <Ionicons name="close" size={24} color="#94A3B8" />
+              </TouchableOpacity>
+            </View>
+
+            {/* Match Badge */}
+            <View style={styles.modalMatchRow}>
+              <LinearGradient
+                colors={['#8B5CF6', '#4F46E5']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.modalMatchBadge}
+              >
+                <Ionicons name="sparkles" size={14} color="#FFFFFF" />
+                <Text style={styles.modalMatchText}>{selectedCurso?.match} compatível</Text>
+              </LinearGradient>
+              <View style={styles.modalTipoMatchBadge}>
+                <Text style={styles.modalTipoMatchText}>{selectedCurso?.tipoMatch}</Text>
+              </View>
+            </View>
+
+            {/* Description */}
+            <Text style={styles.modalLabel}>Sobre o Curso</Text>
+            <Text style={styles.modalDescription}>{selectedCurso?.descricao}</Text>
+
+            {/* Tags */}
+            <Text style={styles.modalLabel}>Disciplinas e Foco</Text>
+            <View style={styles.modalTagsList}>
+              {selectedCurso?.tags?.map((tag: string, index: number) => (
+                <View key={index} style={styles.modalTag}>
+                  <Text style={styles.modalTagText}>{tag}</Text>
+                </View>
+              ))}
+            </View>
+
+            {/* Interconnected AI Chat Prompt Button */}
+            <TouchableOpacity
+              style={styles.modalAiBtn}
+              onPress={() => {
+                setIsModalOpen(false);
+                router.push({
+                  pathname: '/(tabs)/chat',
+                  params: { autoPrompt: `Quero saber mais sobre o curso de ${selectedCurso?.nome}. Quais são as principais matérias, o mercado de trabalho e a média salarial?` }
+                } as any);
+              }}
+              activeOpacity={0.8}
+            >
+              <LinearGradient
+                colors={['#10B981', '#059669']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.modalAiGradient}
+              >
+                <Ionicons name="chatbubbles-outline" size={18} color="#FFFFFF" />
+                <Text style={styles.modalAiBtnText}>Perguntar à IA Nexo</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -735,5 +822,146 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: 'System',
     fontWeight: '600',
+  },
+  // MODAL DETALHES DO CURSO STYLES
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(5, 8, 22, 0.85)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalCard: {
+    width: '100%',
+    backgroundColor: '#0F172A',
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: '#1E293B',
+    padding: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.5,
+    shadowRadius: 16,
+    elevation: 10,
+  },
+  modalHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  courseIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 14,
+  },
+  modalTitleContainer: {
+    flex: 1,
+  },
+  modalCourseName: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    fontFamily: 'System',
+  },
+  modalCourseMeta: {
+    fontSize: 12,
+    color: '#94A3B8',
+    marginTop: 2,
+    fontFamily: 'System',
+  },
+  modalCloseBtn: {
+    padding: 4,
+  },
+  modalMatchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 20,
+  },
+  modalMatchBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  modalMatchText: {
+    fontSize: 12,
+    color: '#FFFFFF',
+    fontWeight: '700',
+    fontFamily: 'System',
+  },
+  modalTipoMatchBadge: {
+    backgroundColor: '#1E293B',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#334155',
+  },
+  modalTipoMatchText: {
+    fontSize: 11,
+    color: '#38BDF8',
+    fontWeight: '700',
+    fontFamily: 'System',
+  },
+  modalLabel: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#94A3B8',
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+    marginBottom: 8,
+    marginTop: 12,
+    fontFamily: 'System',
+  },
+  modalDescription: {
+    fontSize: 14,
+    color: '#E2E8F0',
+    lineHeight: 22,
+    fontFamily: 'System',
+    marginBottom: 12,
+  },
+  modalTagsList: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 24,
+  },
+  modalTag: {
+    backgroundColor: '#1E293B',
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderWidth: 1,
+    borderColor: '#334155',
+  },
+  modalTagText: {
+    fontSize: 12,
+    color: '#CBD5E1',
+    fontFamily: 'System',
+  },
+  modalAiBtn: {
+    width: '100%',
+    borderRadius: 14,
+    overflow: 'hidden',
+    marginTop: 8,
+  },
+  modalAiGradient: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 14,
+  },
+  modalAiBtnText: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    fontFamily: 'System',
   },
 });
