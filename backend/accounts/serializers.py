@@ -54,9 +54,53 @@ class CustomUserSerializer(serializers.ModelSerializer):
             'forcas', 'disciplinas', 'progresso_geral'
         ]
         read_only_fields = [
-            'id', 'nivel', 'xp', 'onboarding_completo', 'xp_hoje', 'respostas_hoje',
+            'id', 'onboarding_completo', 'xp_hoje', 'respostas_hoje',
             'forcas', 'disciplinas', 'progresso_geral'
         ]
+
+    def update(self, instance, validated_data):
+        instance = super().update(instance, validated_data)
+        
+        # Recalculate user level when XP is modified via API
+        if 'xp' in validated_data:
+            from .models import PerfilUsuario
+            try:
+                perfil = instance.perfil
+                logica, criatividade, foco, comunicacao, lideranca = perfil.logica, perfil.criatividade, perfil.foco, perfil.comunicacao, perfil.lideranca
+                matematica, fisica, programacao, desenho, portugues, biologia, quimica, historia = perfil.matematica, perfil.fisica, perfil.programacao, perfil.desenho, perfil.portugues, perfil.biologia, perfil.quimica, perfil.historia
+            except PerfilUsuario.DoesNotExist:
+                fb = get_fallback_profile(instance.curso_tecnico)
+                logica, criatividade, foco, comunicacao, lideranca = fb['logica'], fb['criatividade'], fb['foco'], fb['comunicacao'], fb['lideranca']
+                matematica, fisica, programacao, desenho, portugues, biologia, quimica, historia = fb['matematica'], fb['fisica'], fb['programacao'], fb['desenho'], fb['portugues'], fb['biologia'], fb['quimica'], fb['historia']
+            
+            xp_bonus = instance.xp // 10
+            total_sum = (
+                min(100, logica + int(xp_bonus * 1.2)) + min(100, criatividade + int(xp_bonus * 0.8)) + min(100, foco + int(xp_bonus * 1.1)) +
+                min(100, comunicacao + int(xp_bonus * 0.9)) + min(100, lideranca + int(xp_bonus * 1.0)) +
+                min(100, matematica + int(xp_bonus * 1.1)) + min(100, fisica + int(xp_bonus * 1.0)) + min(100, programacao + int(xp_bonus * 1.2)) +
+                min(100, desenho + int(xp_bonus * 0.8)) + min(100, portugues + int(xp_bonus * 0.9)) + min(100, biologia + int(xp_bonus * 0.7)) +
+                min(100, quimica + int(xp_bonus * 0.7)) + min(100, historia + int(xp_bonus * 0.8))
+            )
+            progresso_geral = round(total_sum / 13)
+            
+            if progresso_geral >= 100:
+                nivel_num = 5
+            elif progresso_geral >= 80:
+                nivel_num = 4
+            elif progresso_geral >= 60:
+                nivel_num = 3
+            elif progresso_geral >= 40:
+                nivel_num = 2
+            elif progresso_geral >= 20:
+                nivel_num = 1
+            else:
+                nivel_num = 0
+                
+            if instance.nivel != nivel_num:
+                instance.nivel = nivel_num
+                instance.save(update_fields=['nivel'])
+                
+        return instance
 
     def get_onboarding_completo(self, obj):
         from .models import Pergunta
