@@ -379,6 +379,23 @@ class PerfilView(APIView):
             logica = criatividade = foco = comunicacao = lideranca = 30
             matematica = fisica = programacao = desenho = portugues = biologia = quimica = historia = 30
 
+        # Apply XP bonus (1% per 10 XP)
+        xp_bonus = user.xp // 10
+        logica = min(100, logica + xp_bonus)
+        criatividade = min(100, criatividade + xp_bonus)
+        foco = min(100, foco + xp_bonus)
+        comunicacao = min(100, comunicacao + xp_bonus)
+        lideranca = min(100, lideranca + xp_bonus)
+
+        matematica = min(100, matematica + xp_bonus)
+        fisica = min(100, fisica + xp_bonus)
+        programacao = min(100, programacao + xp_bonus)
+        desenho = min(100, desenho + xp_bonus)
+        portugues = min(100, portugues + xp_bonus)
+        biologia = min(100, biologia + xp_bonus)
+        quimica = min(100, quimica + xp_bonus)
+        historia = min(100, historia + xp_bonus)
+
         total_sum = (
             logica + criatividade + foco + comunicacao + lideranca +
             matematica + fisica + programacao + desenho + portugues + biologia + quimica + historia
@@ -525,8 +542,50 @@ class ConcluirDesafioView(APIView):
         nivel_anterior = user.nivel
         user.xp += desafio.xp
 
-        # Level-up formula: 1 level per 100 XP
-        novo_nivel = (user.xp // 100) + 1
+        # Calculate new level based on forces + disciplines average including the updated XP bonus
+        try:
+            perfil = user.perfil
+            logica = perfil.logica
+            criatividade = perfil.criatividade
+            foco = perfil.foco
+            comunicacao = perfil.comunicacao
+            lideranca = perfil.lideranca
+            
+            matematica = perfil.matematica
+            fisica = perfil.fisica
+            programacao = perfil.programacao
+            desenho = perfil.desenho
+            portugues = perfil.portugues
+            biologia = perfil.biologia
+            quimica = perfil.quimica
+            historia = perfil.historia
+        except PerfilUsuario.DoesNotExist:
+            logica = criatividade = foco = comunicacao = lideranca = 30
+            matematica = fisica = programacao = desenho = portugues = biologia = quimica = historia = 30
+
+        xp_bonus = user.xp // 10
+        total_sum = (
+            min(100, logica + xp_bonus) + min(100, criatividade + xp_bonus) + min(100, foco + xp_bonus) +
+            min(100, comunicacao + xp_bonus) + min(100, lideranca + xp_bonus) +
+            min(100, matematica + xp_bonus) + min(100, fisica + xp_bonus) + min(100, programacao + xp_bonus) +
+            min(100, desenho + xp_bonus) + min(100, portugues + xp_bonus) + min(100, biologia + xp_bonus) +
+            min(100, quimica + xp_bonus) + min(100, historia + xp_bonus)
+        )
+        progresso_geral = round(total_sum / 13)
+
+        if progresso_geral >= 100:
+            novo_nivel = 5
+        elif progresso_geral >= 80:
+            novo_nivel = 4
+        elif progresso_geral >= 60:
+            novo_nivel = 3
+        elif progresso_geral >= 40:
+            novo_nivel = 2
+        elif progresso_geral >= 20:
+            novo_nivel = 1
+        else:
+            novo_nivel = 0
+
         user.nivel = novo_nivel
         user.save()
 

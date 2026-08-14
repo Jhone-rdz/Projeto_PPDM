@@ -45,270 +45,84 @@ class CustomUserSerializer(serializers.ModelSerializer):
         return obj.respostas.filter(created_at__date=date.today()).count()
 
     def get_forcas(self, obj):
-        respostas = obj.respostas.select_related('pergunta', 'opcao').all()
-        forcas_totais = {
-            'logica': 0, 'criatividade': 0, 'foco': 0, 'comunicacao': 0, 'lideranca': 0
-        }
-        
-        WEIGHTS = {
-            1: {
-                'a': {'tecnologia': 3, 'logica': 2, 'programacao': 2},
-                'b': {'saude': 3, 'biologia': 2, 'foco': 1},
-                'c': {'negocios': 3, 'comunicacao': 2, 'lideranca': 1},
-                'd': {'artes': 3, 'criatividade': 3, 'desenho': 2},
-                'e': {'direito': 3, 'comunicacao': 2, 'portugues': 2},
-                'f': {'agronomia': 3, 'biologia': 2, 'quimica': 1},
-                'g': {}
-            },
-            2: {
-                'a': {'tecnologia': 2, 'logica': 2, 'programacao': 2},
-                'b': {'artes': 2, 'criatividade': 3, 'desenho': 2},
-                'c': {'foco': 2, 'portugues': 2, 'historia': 1},
-                'd': {'saude': 2, 'comunicacao': 2, 'lideranca': 1},
-                'e': {'negocios': 2, 'comunicacao': 2, 'lideranca': 2},
-                'f': {'agronomia': 2, 'biologia': 1, 'foco': 1}
-            },
-            3: {
-                'a': {'foco': 2},
-                'b': {},
-                'c': {'criatividade': 1}
-            },
-            4: {
-                'a': {'logica': 3, 'matematica': 2, 'foco': 1},
-                'b': {'criatividade': 3, 'logica': 1},
-                'c': {'comunicacao': 3, 'lideranca': 1},
-                'd': {'foco': 3, 'logica': 1, 'programacao': 1}
-            },
-            5: {
-                'a': {'criatividade': 3, 'desenho': 3, 'artes': 2},
-                'b': {'logica': 3, 'matematica': 3, 'fisica': 1},
-                'c': {'comunicacao': 3, 'portugues': 3, 'criatividade': 1},
-                'd': {'logica': 2, 'foco': 3, 'lideranca': 1}
-            },
-            6: {
-                'a': {'foco': 3, 'lideranca': 1, 'logica': 1},
-                'b': {'foco': 2, 'criatividade': 1},
-                'c': {'criatividade': 2},
-                'd': {'foco': 1, 'comunicacao': 1}
-            },
-            7: {
-                'a': {'comunicacao': 3, 'lideranca': 2, 'portugues': 1},
-                'b': {'comunicacao': 2, 'foco': 1},
-                'c': {'logica': 2, 'criatividade': 2, 'programacao': 1},
-                'd': {'foco': 2, 'portugues': 1}
-            },
-            8: {
-                'a': {'lideranca': 3, 'comunicacao': 2, 'foco': 1},
-                'b': {'foco': 3, 'logica': 2},
-                'c': {'criatividade': 3, 'lideranca': 1},
-                'd': {'comunicacao': 3, 'lideranca': 2}
-            },
-            9: {
-                'a': {'matematica': 3, 'logica': 2, 'fisica': 1},
-                'b': {'matematica': 2, 'foco': 2},
-                'c': {'matematica': 1, 'logica': 1},
-                'd': {'criatividade': 1, 'portugues': 1}
-            },
-            10: {
-                'a': {'fisica': 3, 'matematica': 2, 'logica': 1},
-                'b': {'quimica': 3, 'logica': 1, 'foco': 1},
-                'c': {'biologia': 3, 'saude': 1, 'agronomia': 1},
-                'd': {'portugues': 1, 'criatividade': 1}
-            },
-            11: {
-                'a': {'programacao': 3, 'logica': 2, 'tecnologia': 2},
-                'b': {'tecnologia': 2, 'foco': 1},
-                'c': {'comunicacao': 1},
-                'd': {'criatividade': 1, 'desenho': 1}
-            },
-            12: {
-                'a': {'portugues': 3, 'comunicacao': 2, 'criatividade': 1},
-                'b': {'desenho': 3, 'criatividade': 3, 'artes': 2},
-                'c': {'logica': 2, 'foco': 1, 'programacao': 1},
-                'd': {'matematica': 1, 'logica': 1}
-            },
-            13: {
-                'a': {'historia': 3, 'comunicacao': 1, 'portugues': 1},
-                'b': {'historia': 1, 'portugues': 1},
-                'c': {'logica': 2, 'matematica': 1},
-                'd': {'programacao': 1, 'tecnologia': 1}
-            },
-            14: {
-                'a': {'negocios': 1, 'foco': 2, 'lideranca': 1},
-                'b': {'saude': 2, 'comunicacao': 2, 'lideranca': 1},
-                'c': {'tecnologia': 2, 'criatividade': 3, 'programacao': 1},
-                'd': {'foco': 2, 'logica': 1, 'historia': 1}
-            },
-            15: {
-                'a': {'logica': 3, 'matematica': 1, 'foco': 1},
-                'b': {'criatividade': 3, 'desenho': 1, 'artes': 1},
-                'c': {'comunicacao': 3, 'lideranca': 1, 'portugues': 1},
-                'd': {'foco': 3, 'lideranca': 2}
-            }
-        }
+        from .models import PerfilUsuario
+        try:
+            perfil = obj.perfil
+            logica = perfil.logica
+            criatividade = perfil.criatividade
+            foco = perfil.foco
+            comunicacao = perfil.comunicacao
+            lideranca = perfil.lideranca
+        except PerfilUsuario.DoesNotExist:
+            logica = criatividade = foco = comunicacao = lideranca = 30
 
-        for resp in respostas:
-            p_id = resp.pergunta.id
-            chave = resp.opcao.chave
-            if p_id in WEIGHTS and chave in WEIGHTS[p_id]:
-                peso = WEIGHTS[p_id][chave]
-                for k, v in peso.items():
-                    if k in forcas_totais:
-                        forcas_totais[k] += v
-
-        max_forcas = 15
-        result = []
-        display_names = {
-            'logica': 'Lógica',
-            'criatividade': 'Criatividade',
-            'foco': 'Foco',
-            'comunicacao': 'Comunicação',
-            'lideranca': 'Liderança'
-        }
-        for k, v in forcas_totais.items():
-            pct = min(100, round((v / max_forcas) * 100))
-            val_norm = min(95, max(30, pct))
-            result.append({"nome": display_names[k], "valor": val_norm})
-        return result
+        xp_bonus = obj.xp // 10
+        return [
+            {"nome": "Lógica", "valor": min(100, logica + xp_bonus)},
+            {"nome": "Criatividade", "valor": min(100, criatividade + xp_bonus)},
+            {"nome": "Foco", "valor": min(100, foco + xp_bonus)},
+            {"nome": "Comunicação", "valor": min(100, comunicacao + xp_bonus)},
+            {"nome": "Liderança", "valor": min(100, lideranca + xp_bonus)},
+        ]
 
     def get_disciplinas(self, obj):
-        respostas = obj.respostas.select_related('pergunta', 'opcao').all()
-        disciplinas_totais = {
-            'matematica': 0, 'fisica': 0, 'programacao': 0, 'desenho': 0, 'portugues': 0,
-            'biologia': 0, 'quimica': 0, 'historia': 0
-        }
-        
-        WEIGHTS = {
-            1: {
-                'a': {'tecnologia': 3, 'logica': 2, 'programacao': 2},
-                'b': {'saude': 3, 'biologia': 2, 'foco': 1},
-                'c': {'negocios': 3, 'comunicacao': 2, 'lideranca': 1},
-                'd': {'artes': 3, 'criatividade': 3, 'desenho': 2},
-                'e': {'direito': 3, 'comunicacao': 2, 'portugues': 2},
-                'f': {'agronomia': 3, 'biologia': 2, 'quimica': 1},
-                'g': {}
-            },
-            2: {
-                'a': {'tecnologia': 2, 'logica': 2, 'programacao': 2},
-                'b': {'artes': 2, 'criatividade': 3, 'desenho': 2},
-                'c': {'foco': 2, 'portugues': 2, 'historia': 1},
-                'd': {'saude': 2, 'comunicacao': 2, 'lideranca': 1},
-                'e': {'negocios': 2, 'comunicacao': 2, 'lideranca': 2},
-                'f': {'agronomia': 2, 'biologia': 1, 'foco': 1}
-            },
-            3: {
-                'a': {'foco': 2},
-                'b': {},
-                'c': {'criatividade': 1}
-            },
-            4: {
-                'a': {'logica': 3, 'matematica': 2, 'foco': 1},
-                'b': {'criatividade': 3, 'logica': 1},
-                'c': {'comunicacao': 3, 'lideranca': 1},
-                'd': {'foco': 3, 'logica': 1, 'programacao': 1}
-            },
-            5: {
-                'a': {'criatividade': 3, 'desenho': 3, 'artes': 2},
-                'b': {'logica': 3, 'matematica': 3, 'fisica': 1},
-                'c': {'comunicacao': 3, 'portugues': 3, 'criatividade': 1},
-                'd': {'logica': 2, 'foco': 3, 'lideranca': 1}
-            },
-            6: {
-                'a': {'foco': 3, 'lideranca': 1, 'logica': 1},
-                'b': {'foco': 2, 'criatividade': 1},
-                'c': {'criatividade': 2},
-                'd': {'foco': 1, 'comunicacao': 1}
-            },
-            7: {
-                'a': {'comunicacao': 3, 'lideranca': 2, 'portugues': 1},
-                'b': {'comunicacao': 2, 'foco': 1},
-                'c': {'logica': 2, 'criatividade': 2, 'programacao': 1},
-                'd': {'foco': 2, 'portugues': 1}
-            },
-            8: {
-                'a': {'lideranca': 3, 'comunicacao': 2, 'foco': 1},
-                'b': {'foco': 3, 'logica': 2},
-                'c': {'criatividade': 3, 'lideranca': 1},
-                'd': {'comunicacao': 3, 'lideranca': 2}
-            },
-            9: {
-                'a': {'matematica': 3, 'logica': 2, 'fisica': 1},
-                'b': {'matematica': 2, 'foco': 2},
-                'c': {'matematica': 1, 'logica': 1},
-                'd': {'criatividade': 1, 'portugues': 1}
-            },
-            10: {
-                'a': {'fisica': 3, 'matematica': 2, 'logica': 1},
-                'b': {'quimica': 3, 'logica': 1, 'foco': 1},
-                'c': {'biologia': 3, 'saude': 1, 'agronomia': 1},
-                'd': {'portugues': 1, 'criatividade': 1}
-            },
-            11: {
-                'a': {'programacao': 3, 'logica': 2, 'tecnologia': 2},
-                'b': {'tecnologia': 2, 'foco': 1},
-                'c': {'comunicacao': 1},
-                'd': {'criatividade': 1, 'desenho': 1}
-            },
-            12: {
-                'a': {'portugues': 3, 'comunicacao': 2, 'criatividade': 1},
-                'b': {'desenho': 3, 'criatividade': 3, 'artes': 2},
-                'c': {'logica': 2, 'foco': 1, 'programacao': 1},
-                'd': {'matematica': 1, 'logica': 1}
-            },
-            13: {
-                'a': {'historia': 3, 'comunicacao': 1, 'portugues': 1},
-                'b': {'historia': 1, 'portugues': 1},
-                'c': {'logica': 2, 'matematica': 1},
-                'd': {'programacao': 1, 'tecnologia': 1}
-            },
-            14: {
-                'a': {'negocios': 1, 'foco': 2, 'lideranca': 1},
-                'b': {'saude': 2, 'comunicacao': 2, 'lideranca': 1},
-                'c': {'tecnologia': 2, 'criatividade': 3, 'programacao': 1},
-                'd': {'foco': 2, 'logica': 1, 'historia': 1}
-            },
-            15: {
-                'a': {'logica': 3, 'matematica': 1, 'foco': 1},
-                'b': {'criatividade': 3, 'desenho': 1, 'artes': 1},
-                'c': {'comunicacao': 3, 'lideranca': 1, 'portugues': 1},
-                'd': {'foco': 3, 'lideranca': 2}
-            }
-        }
+        from .models import PerfilUsuario
+        try:
+            perfil = obj.perfil
+            matematica = perfil.matematica
+            fisica = perfil.fisica
+            programacao = perfil.programacao
+            desenho = perfil.desenho
+            portugues = perfil.portugues
+            biologia = perfil.biologia
+            quimica = perfil.quimica
+            historia = perfil.historia
+        except PerfilUsuario.DoesNotExist:
+            matematica = fisica = programacao = desenho = portugues = biologia = quimica = historia = 30
 
-        for resp in respostas:
-            p_id = resp.pergunta.id
-            chave = resp.opcao.chave
-            if p_id in WEIGHTS and chave in WEIGHTS[p_id]:
-                peso = WEIGHTS[p_id][chave]
-                for k, v in peso.items():
-                    if k in disciplinas_totais:
-                        disciplinas_totais[k] += v
-
-        max_disciplinas = 12
-        result = []
-        display_names = {
-            'matematica': 'Matemática',
-            'fisica': 'Física',
-            'programacao': 'Programação',
-            'desenho': 'Desenho',
-            'portugues': 'Português',
-            'biologia': 'Biologia',
-            'quimica': 'Química',
-            'historia': 'História'
-        }
-        for k, v in disciplinas_totais.items():
-            pct = min(100, round((v / max_disciplinas) * 100))
-            val_norm = min(95, max(30, pct))
-            result.append({"nome": display_names[k], "valor": val_norm})
-        return result
+        xp_bonus = obj.xp // 10
+        return [
+            {"nome": "Matemática", "valor": min(100, matematica + xp_bonus)},
+            {"nome": "Física", "valor": min(100, fisica + xp_bonus)},
+            {"nome": "Programação", "valor": min(100, programacao + xp_bonus)},
+            {"nome": "Desenho", "valor": min(100, desenho + xp_bonus)},
+            {"nome": "Português", "valor": min(100, portugues + xp_bonus)},
+            {"nome": "Biologia", "valor": min(100, biologia + xp_bonus)},
+            {"nome": "Química", "valor": min(100, quimica + xp_bonus)},
+            {"nome": "História", "valor": min(100, historia + xp_bonus)},
+        ]
 
     def get_progresso_geral(self, obj):
-        from .models import Desafio, DesafioConcluido
-        total_desafios = Desafio.objects.count()
-        if total_desafios == 0:
-            return 0
-        concluidos = DesafioConcluido.objects.filter(user=obj).count()
-        return min(100, int((concluidos / total_desafios) * 100))
+        from .models import PerfilUsuario
+        try:
+            perfil = obj.perfil
+            logica = perfil.logica
+            criatividade = perfil.criatividade
+            foco = perfil.foco
+            comunicacao = perfil.comunicacao
+            lideranca = perfil.lideranca
+            
+            matematica = perfil.matematica
+            fisica = perfil.fisica
+            programacao = perfil.programacao
+            desenho = perfil.desenho
+            portugues = perfil.portugues
+            biologia = perfil.biologia
+            quimica = perfil.quimica
+            historia = perfil.historia
+        except PerfilUsuario.DoesNotExist:
+            logica = criatividade = foco = comunicacao = lideranca = 30
+            matematica = fisica = programacao = desenho = portugues = biologia = quimica = historia = 30
+
+        xp_bonus = obj.xp // 10
+        total_sum = (
+            min(100, logica + xp_bonus) + min(100, criatividade + xp_bonus) + min(100, foco + xp_bonus) +
+            min(100, comunicacao + xp_bonus) + min(100, lideranca + xp_bonus) +
+            min(100, matematica + xp_bonus) + min(100, fisica + xp_bonus) + min(100, programacao + xp_bonus) +
+            min(100, desenho + xp_bonus) + min(100, portugues + xp_bonus) + min(100, biologia + xp_bonus) +
+            min(100, quimica + xp_bonus) + min(100, historia + xp_bonus)
+        )
+        return round(total_sum / 13)
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)

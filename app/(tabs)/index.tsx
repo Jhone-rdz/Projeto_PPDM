@@ -13,7 +13,7 @@ import {
   Animated,
   ActivityIndicator,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -86,43 +86,45 @@ export default function HomeScreen() {
   const [quizSubmitted, setQuizSubmitted] = useState(false);
   const [isCorrectAnswer, setIsCorrectAnswer] = useState(false);
 
-  // Sync profile details and courses on mount
-  useEffect(() => {
-    const syncProfileAndCourses = async () => {
-      try {
-        const pData = await apiService.getPerfil();
-        setPerfil(pData);
-      } catch (err) {
-        console.warn('Failed to sync profile details on home mount:', err);
-      }
+  // Sync profile details and courses on screen focus
+  useFocusEffect(
+    React.useCallback(() => {
+      const syncProfileAndCourses = async () => {
+        try {
+          const pData = await apiService.getPerfil();
+          setPerfil(pData);
+        } catch (err) {
+          console.warn('Failed to sync profile details on home focus:', err);
+        }
 
-      try {
-        setIsLoadingCursos(true);
-        const data = await apiService.getCursos({ limite: 4 });
-        setCursos(data);
-      } catch (err) {
-        console.warn('Failed to fetch courses, falling back to static lists:', err);
-        // Fallback mapping matching standard course card shapes
-        setCursos(CURSOS_COMPATIVEIS.map((c, i) => ({
-          id: i + 1,
-          nome: c.nome,
-          match: parseInt(c.match),
-          icone: c.icone,
-          corIcone: c.cor,
-          corFundo: '#111827',
-          tipo: 'Tecnólogo',
-          duracao: '2.5 anos',
-          descricao: '',
-          tags: ['Tecnologia'],
-          tipoMatch: 'MATCH ALTO'
-        })));
-      } finally {
-        setIsLoadingCursos(false);
-      }
-    };
+        try {
+          setIsLoadingCursos(true);
+          const data = await apiService.getCursos({ limite: 4 });
+          setCursos(data);
+        } catch (err) {
+          console.warn('Failed to fetch courses, falling back to static lists:', err);
+          // Fallback mapping matching standard course card shapes
+          setCursos(CURSOS_COMPATIVEIS.map((c, i) => ({
+            id: i + 1,
+            nome: c.nome,
+            match: parseInt(c.match),
+            icone: c.icone,
+            corIcone: c.cor,
+            corFundo: '#111827',
+            tipo: 'Tecnólogo',
+            duracao: '2.5 anos',
+            descricao: '',
+            tags: ['Tecnologia'],
+            tipoMatch: 'MATCH ALTO'
+          })));
+        } finally {
+          setIsLoadingCursos(false);
+        }
+      };
 
-    syncProfileAndCourses();
-  }, []);
+      syncProfileAndCourses();
+    }, [])
+  );
 
   // Animated drawer slide-in value
   const drawerSlideAnim = useRef(new Animated.Value(-300)).current;
@@ -462,7 +464,7 @@ export default function HomeScreen() {
                   style={[styles.summaryProgressFill, { width: `${Math.min(100, ((user?.xp_hoje ?? 0) / 50) * 100)}%` }]}
                 />
               </View>
-              <Text style={styles.summarySubtext}>Falta {100 - (userXp % 100)} XP para o próximo nível</Text>
+              <Text style={styles.summarySubtext}>Falta {Math.max(0, 100 - userXp)} XP para o próximo nível</Text>
             </View>
 
             <View style={styles.verticalDivider} />

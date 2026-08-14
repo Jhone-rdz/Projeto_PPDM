@@ -395,6 +395,25 @@ export const apiService = {
       if (!response.ok) {
         throw new Error(data.detail || 'Falha ao salvar respostas.');
       }
+
+      // Sync and update local session cache
+      try {
+        const profile = await apiService.getProfile(token);
+        if (session.user) {
+          session.user.onboarding_completo = profile.onboarding_completo;
+          session.user.nivel = profile.nivel;
+          session.user.xp = profile.xp;
+          session.user.streak = profile.streak;
+          session.user.xp_hoje = profile.xp_hoje;
+          session.user.respostas_hoje = profile.respostas_hoje;
+          session.user.forcas = profile.forcas;
+          session.user.disciplinas = profile.disciplinas;
+          session.user.progresso_geral = profile.progresso_geral;
+        }
+      } catch (syncErr) {
+        console.warn('Failed to sync session after saving answers:', syncErr);
+      }
+
       return data as PerfilCalculado;
     } catch (error: any) {
       console.error('salvarRespostas API Error:', error);

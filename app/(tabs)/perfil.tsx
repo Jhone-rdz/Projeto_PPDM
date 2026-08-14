@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   StyleSheet,
   View,
@@ -10,7 +10,7 @@ import {
   Platform,
   ActivityIndicator,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -21,21 +21,23 @@ export default function PerfilScreen() {
   const [perfil, setPerfil] = useState<PerfilUsuario | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Sync profile details on mount
-  useEffect(() => {
-    const loadPerfil = async () => {
-      try {
-        setIsLoading(true);
-        const data = await apiService.getPerfil();
-        setPerfil(data);
-      } catch (err) {
-        console.warn('Failed to sync profile details on perfil mount:', err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    loadPerfil();
-  }, []);
+  // Sync profile details on screen focus
+  useFocusEffect(
+    React.useCallback(() => {
+      const loadPerfil = async () => {
+        try {
+          setIsLoading(true);
+          const data = await apiService.getPerfil();
+          setPerfil(data);
+        } catch (err) {
+          console.warn('Failed to sync profile details on perfil focus:', err);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      loadPerfil();
+    }, [])
+  );
 
   const session = apiService.getSession();
   const user = session.user;
@@ -154,14 +156,13 @@ export default function PerfilScreen() {
     }
   };
 
-  // Map levels progression carousel dynamically
   const dynamicNiveis = [
-    { nivel: 0, nome: 'Iniciante', progresso: userLevel > 0 ? '100%' : (userLevel === 0 ? `${userXp % 100}%` : '0%'), bloqueado: userLevel < 0, ativo: userLevel === 0 },
-    { nivel: 1, nome: 'Despertado', progresso: userLevel > 1 ? '100%' : (userLevel === 1 ? `${userXp % 100}%` : '0%'), bloqueado: userLevel < 1, ativo: userLevel === 1 },
-    { nivel: 2, nome: 'Super Nexo 1', progresso: userLevel > 2 ? '100%' : (userLevel === 2 ? `${userXp % 100}%` : '0%'), bloqueado: userLevel < 2, ativo: userLevel === 2 },
-    { nivel: 3, nome: 'Super Nexo 2', progresso: userLevel > 3 ? '100%' : (userLevel === 3 ? `${userXp % 100}%` : '0%'), bloqueado: userLevel < 3, ativo: userLevel === 3 },
-    { nivel: 4, nome: 'Super Nexo Blue', progresso: userLevel > 4 ? '100%' : (userLevel === 4 ? `${userXp % 100}%` : '0%'), bloqueado: userLevel < 4, ativo: userLevel === 4 },
-    { nivel: 5, nome: 'Além do Limite', progresso: userLevel > 5 ? '100%' : (userLevel === 5 ? `${userXp % 100}%` : '0%'), bloqueado: userLevel < 5, ativo: userLevel === 5 },
+    { nivel: 0, nome: 'Iniciante', progresso: userLevel > 0 ? '100%' : (userLevel === 0 ? `${userXp}%` : '0%'), bloqueado: userLevel < 0, ativo: userLevel === 0 },
+    { nivel: 1, nome: 'Despertado', progresso: userLevel > 1 ? '100%' : (userLevel === 1 ? `${userXp}%` : '0%'), bloqueado: userLevel < 1, ativo: userLevel === 1 },
+    { nivel: 2, nome: 'Super Nexo 1', progresso: userLevel > 2 ? '100%' : (userLevel === 2 ? `${userXp}%` : '0%'), bloqueado: userLevel < 2, ativo: userLevel === 2 },
+    { nivel: 3, nome: 'Super Nexo 2', progresso: userLevel > 3 ? '100%' : (userLevel === 3 ? `${userXp}%` : '0%'), bloqueado: userLevel < 3, ativo: userLevel === 3 },
+    { nivel: 4, nome: 'Super Nexo Blue', progresso: userLevel > 4 ? '100%' : (userLevel === 4 ? `${userXp}%` : '0%'), bloqueado: userLevel < 4, ativo: userLevel === 4 },
+    { nivel: 5, nome: 'Além do Limite', progresso: userLevel > 5 ? '100%' : (userLevel === 5 ? `${userXp}%` : '0%'), bloqueado: userLevel < 5, ativo: userLevel === 5 },
   ];
 
 
@@ -302,7 +303,7 @@ export default function PerfilScreen() {
 
               <View style={styles.currentLevelProgressBadge}>
                 <Ionicons name="flash" size={14} color="#F59E0B" />
-                <Text style={styles.currentLevelProgressText}>Progresso {userXp % 100}%</Text>
+                <Text style={styles.currentLevelProgressText}>Progresso {userXp}%</Text>
               </View>
             </View>
           </View>
