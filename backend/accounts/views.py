@@ -130,109 +130,12 @@ def calcular_perfil_usuario(respostas_dict):
         'tecnologia': 0, 'saude': 0, 'negocios': 0, 'artes': 0, 'direito': 0, 'agronomia': 0
     }
     
-    WEIGHTS = {
-        1: {
-            'a': {'tecnologia': 3, 'logica': 2, 'programacao': 2},
-            'b': {'saude': 3, 'biologia': 2, 'foco': 1},
-            'c': {'negocios': 3, 'comunicacao': 2, 'lideranca': 1},
-            'd': {'artes': 3, 'criatividade': 3, 'desenho': 2},
-            'e': {'direito': 3, 'comunicacao': 2, 'portugues': 2},
-            'f': {'agronomia': 3, 'biologia': 2, 'quimica': 1},
-            'g': {}
-        },
-        2: {
-            'a': {'tecnologia': 2, 'logica': 2, 'programacao': 2},
-            'b': {'artes': 2, 'criatividade': 3, 'desenho': 2},
-            'c': {'foco': 2, 'portugues': 2, 'historia': 1},
-            'd': {'saude': 2, 'comunicacao': 2, 'lideranca': 1},
-            'e': {'negocios': 2, 'comunicacao': 2, 'lideranca': 2},
-            'f': {'agronomia': 2, 'biologia': 1, 'foco': 1}
-        },
-        3: {
-            'a': {'foco': 2},
-            'b': {},
-            'c': {'criatividade': 1}
-        },
-        4: {
-            'a': {'logica': 3, 'matematica': 2, 'foco': 1},
-            'b': {'criatividade': 3, 'logica': 1},
-            'c': {'comunicacao': 3, 'lideranca': 1},
-            'd': {'foco': 3, 'logica': 1, 'programacao': 1}
-        },
-        5: {
-            'a': {'criatividade': 3, 'desenho': 3, 'artes': 2},
-            'b': {'logica': 3, 'matematica': 3, 'fisica': 1},
-            'c': {'comunicacao': 3, 'portugues': 3, 'criatividade': 1},
-            'd': {'logica': 2, 'foco': 3, 'lideranca': 1}
-        },
-        6: {
-            'a': {'foco': 3, 'lideranca': 1, 'logica': 1},
-            'b': {'foco': 2, 'criatividade': 1},
-            'c': {'criatividade': 2},
-            'd': {'foco': 1, 'comunicacao': 1}
-        },
-        7: {
-            'a': {'comunicacao': 3, 'lideranca': 2, 'portugues': 1},
-            'b': {'comunicacao': 2, 'foco': 1},
-            'c': {'logica': 2, 'criatividade': 2, 'programacao': 1},
-            'd': {'foco': 2, 'portugues': 1}
-        },
-        8: {
-            'a': {'lideranca': 3, 'comunicacao': 2, 'foco': 1},
-            'b': {'foco': 3, 'logica': 2},
-            'c': {'criatividade': 3, 'lideranca': 1},
-            'd': {'comunicacao': 3, 'lideranca': 2}
-        },
-        9: {
-            'a': {'matematica': 3, 'logica': 2, 'fisica': 1},
-            'b': {'matematica': 2, 'foco': 2},
-            'c': {'matematica': 1, 'logica': 1},
-            'd': {'criatividade': 1, 'portugues': 1}
-        },
-        10: {
-            'a': {'fisica': 3, 'matematica': 2, 'logica': 1},
-            'b': {'quimica': 3, 'logica': 1, 'foco': 1},
-            'c': {'biologia': 3, 'saude': 1, 'agronomia': 1},
-            'd': {'portugues': 1, 'criatividade': 1}
-        },
-        11: {
-            'a': {'programacao': 3, 'logica': 2, 'tecnologia': 2},
-            'b': {'tecnologia': 2, 'foco': 1},
-            'c': {'comunicacao': 1},
-            'd': {'criatividade': 1, 'desenho': 1}
-        },
-        12: {
-            'a': {'portugues': 3, 'comunicacao': 2, 'criatividade': 1},
-            'b': {'desenho': 3, 'criatividade': 3, 'artes': 2},
-            'c': {'logica': 2, 'foco': 1, 'programacao': 1},
-            'd': {'matematica': 1, 'logica': 1}
-        },
-        13: {
-            'a': {'historia': 3, 'comunicacao': 1, 'portugues': 1},
-            'b': {'historia': 1, 'portugues': 1},
-            'c': {'logica': 2, 'matematica': 1},
-            'd': {'programacao': 1, 'tecnologia': 1}
-        },
-        14: {
-            'a': {'negocios': 1, 'foco': 2, 'lideranca': 1},
-            'b': {'saude': 2, 'comunicacao': 2, 'lideranca': 1},
-            'c': {'tecnologia': 2, 'criatividade': 3, 'programacao': 1},
-            'd': {'foco': 2, 'logica': 1, 'historia': 1}
-        },
-        15: {
-            'a': {'logica': 3, 'matematica': 1, 'foco': 1},
-            'b': {'criatividade': 3, 'desenho': 1, 'artes': 1},
-            'c': {'comunicacao': 3, 'lideranca': 1, 'portugues': 1},
-            'd': {'foco': 3, 'lideranca': 2}
-        }
-    }
-    
     for p_id, o_chave in respostas_dict.items():
         try:
             p_id = int(p_id)
-            if p_id in WEIGHTS and o_chave in WEIGHTS[p_id]:
-                peso = WEIGHTS[p_id][o_chave]
-                for key, val in peso.items():
+            opcao = Opcao.objects.filter(pergunta_id=p_id, chave=o_chave).first()
+            if opcao and opcao.peso:
+                for key, val in opcao.peso.items():
                     if key in totais:
                         totais[key] += val
         except ValueError:

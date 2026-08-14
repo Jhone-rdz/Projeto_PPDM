@@ -43,9 +43,10 @@ class Opcao(models.Model):
     pergunta = models.ForeignKey(Pergunta, on_delete=models.CASCADE, related_name='opcoes', verbose_name="Pergunta")
     chave = models.CharField(max_length=2, verbose_name="Chave (a, b, c...)")
     icone = models.CharField(max_length=100, verbose_name="Ícone")
-    cor_icone = models.CharField(max_length=20, verbose_name="Cor do Ícone")
-    label = models.CharField(max_length=150, verbose_name="Label")
-    descricao = models.TextField(verbose_name="Descrição")
+    cor_icone = models.CharField(max_length=20, default="#8B5CF6", verbose_name="Cor do Ícone")
+    label = models.CharField(max_length=200, verbose_name="Rótulo")
+    descricao = models.CharField(max_length=300, verbose_name="Descrição")
+    peso = models.JSONField(default=dict, blank=True, verbose_name="Peso")
 
     class Meta:
         verbose_name = "Opção"
