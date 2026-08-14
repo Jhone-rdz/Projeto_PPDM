@@ -5,10 +5,10 @@ import {
   Text,
   TouchableOpacity,
   ScrollView,
-  SafeAreaView,
   Platform,
   Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
@@ -122,7 +122,7 @@ export default function QuestionarioScreen() {
 
   if (isLoading || perguntas.length === 0) {
     return (
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView style={styles.safeArea} edges={['top', 'bottom', 'left', 'right']}>
         <StatusBar style="light" />
         <View style={styles.loadingContainer}>
           <Text style={styles.loadingText}>Carregando perguntas...</Text>
@@ -135,7 +135,7 @@ export default function QuestionarioScreen() {
   const hasSelected = opcaoSelecionada !== undefined;
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} edges={['top', 'bottom', 'left', 'right']}>
       <StatusBar style="light" />
 
       {/* Main content container */}

@@ -5,11 +5,11 @@ import {
   Text,
   TouchableOpacity,
   ScrollView,
-  SafeAreaView,
   Platform,
   Alert,
   ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
@@ -134,7 +134,7 @@ export default function PlanosScreen() {
   const progressoPct = Math.round((concluidosCount / totalCount) * 100);
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
       <StatusBar style="light" backgroundColor="#0A0F1E" />
 
       {/* CABEÇALHO (Fixo no topo) */}
