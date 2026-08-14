@@ -6,6 +6,41 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 User = get_user_model()
 
+def get_fallback_profile(curso_tecnico):
+    curso = (curso_tecnico or "").strip().lower()
+    
+    if "desenvolvimento" in curso or "informática" in curso or "tecnologia" in curso or "ti" in curso:
+        return {
+            'logica': 65, 'criatividade': 50, 'foco': 60, 'comunicacao': 45, 'lideranca': 40,
+            'matematica': 60, 'fisica': 50, 'programacao': 70, 'desenho': 35, 'portugues': 50,
+            'biologia': 30, 'quimica': 30, 'historia': 40
+        }
+    elif "administração" in curso or "adm" in curso or "logística" in curso or "negócios" in curso:
+        return {
+            'logica': 55, 'criatividade': 45, 'foco': 60, 'comunicacao': 65, 'lideranca': 70,
+            'matematica': 55, 'fisica': 30, 'programacao': 30, 'desenho': 35, 'portugues': 60,
+            'biologia': 30, 'quimica': 30, 'historia': 55
+        }
+    elif "enfermagem" in curso or "saúde" in curso or "biológica" in curso:
+        return {
+            'logica': 45, 'criatividade': 40, 'foco': 70, 'comunicacao': 60, 'lideranca': 50,
+            'matematica': 40, 'fisica': 40, 'programacao': 30, 'desenho': 30, 'portugues': 55,
+            'biologia': 75, 'quimica': 60, 'historia': 50
+        }
+    elif "eletrotécnica" in curso or "mecatrônica" in curso or "automação" in curso or "mecânica" in curso:
+        return {
+            'logica': 60, 'criatividade': 45, 'foco': 65, 'comunicacao': 40, 'lideranca': 45,
+            'matematica': 65, 'fisica': 70, 'programacao': 50, 'desenho': 55, 'portugues': 45,
+            'biologia': 30, 'quimica': 40, 'historia': 35
+        }
+    else:
+        # Balanced general default
+        return {
+            'logica': 50, 'criatividade': 50, 'foco': 50, 'comunicacao': 50, 'lideranca': 50,
+            'matematica': 45, 'fisica': 40, 'programacao': 40, 'desenho': 40, 'portugues': 50,
+            'biologia': 35, 'quimica': 35, 'historia': 45
+        }
+
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     permission_classes = [permissions.AllowAny]
@@ -376,25 +411,26 @@ class PerfilView(APIView):
             quimica = perfil.quimica
             historia = perfil.historia
         except PerfilUsuario.DoesNotExist:
-            logica = criatividade = foco = comunicacao = lideranca = 30
-            matematica = fisica = programacao = desenho = portugues = biologia = quimica = historia = 30
+            fb = get_fallback_profile(user.curso_tecnico)
+            logica, criatividade, foco, comunicacao, lideranca = fb['logica'], fb['criatividade'], fb['foco'], fb['comunicacao'], fb['lideranca']
+            matematica, fisica, programacao, desenho, portugues, biologia, quimica, historia = fb['matematica'], fb['fisica'], fb['programacao'], fb['desenho'], fb['portugues'], fb['biologia'], fb['quimica'], fb['historia']
 
         # Apply XP bonus (1% per 10 XP)
         xp_bonus = user.xp // 10
-        logica = min(100, logica + xp_bonus)
-        criatividade = min(100, criatividade + xp_bonus)
-        foco = min(100, foco + xp_bonus)
-        comunicacao = min(100, comunicacao + xp_bonus)
-        lideranca = min(100, lideranca + xp_bonus)
+        logica = min(100, logica + int(xp_bonus * 1.2))
+        criatividade = min(100, criatividade + int(xp_bonus * 0.8))
+        foco = min(100, foco + int(xp_bonus * 1.1))
+        comunicacao = min(100, comunicacao + int(xp_bonus * 0.9))
+        lideranca = min(100, lideranca + int(xp_bonus * 1.0))
 
-        matematica = min(100, matematica + xp_bonus)
-        fisica = min(100, fisica + xp_bonus)
-        programacao = min(100, programacao + xp_bonus)
-        desenho = min(100, desenho + xp_bonus)
-        portugues = min(100, portugues + xp_bonus)
-        biologia = min(100, biologia + xp_bonus)
-        quimica = min(100, quimica + xp_bonus)
-        historia = min(100, historia + xp_bonus)
+        matematica = min(100, matematica + int(xp_bonus * 1.1))
+        fisica = min(100, fisica + int(xp_bonus * 1.0))
+        programacao = min(100, programacao + int(xp_bonus * 1.2))
+        desenho = min(100, desenho + int(xp_bonus * 0.8))
+        portugues = min(100, portugues + int(xp_bonus * 0.9))
+        biologia = min(100, biologia + int(xp_bonus * 0.7))
+        quimica = min(100, quimica + int(xp_bonus * 0.7))
+        historia = min(100, historia + int(xp_bonus * 0.8))
 
         total_sum = (
             logica + criatividade + foco + comunicacao + lideranca +
@@ -560,16 +596,17 @@ class ConcluirDesafioView(APIView):
             quimica = perfil.quimica
             historia = perfil.historia
         except PerfilUsuario.DoesNotExist:
-            logica = criatividade = foco = comunicacao = lideranca = 30
-            matematica = fisica = programacao = desenho = portugues = biologia = quimica = historia = 30
+            fb = get_fallback_profile(user.curso_tecnico)
+            logica, criatividade, foco, comunicacao, lideranca = fb['logica'], fb['criatividade'], fb['foco'], fb['comunicacao'], fb['lideranca']
+            matematica, fisica, programacao, desenho, portugues, biologia, quimica, historia = fb['matematica'], fb['fisica'], fb['programacao'], fb['desenho'], fb['portugues'], fb['biologia'], fb['quimica'], fb['historia']
 
         xp_bonus = user.xp // 10
         total_sum = (
-            min(100, logica + xp_bonus) + min(100, criatividade + xp_bonus) + min(100, foco + xp_bonus) +
-            min(100, comunicacao + xp_bonus) + min(100, lideranca + xp_bonus) +
-            min(100, matematica + xp_bonus) + min(100, fisica + xp_bonus) + min(100, programacao + xp_bonus) +
-            min(100, desenho + xp_bonus) + min(100, portugues + xp_bonus) + min(100, biologia + xp_bonus) +
-            min(100, quimica + xp_bonus) + min(100, historia + xp_bonus)
+            min(100, logica + int(xp_bonus * 1.2)) + min(100, criatividade + int(xp_bonus * 0.8)) + min(100, foco + int(xp_bonus * 1.1)) +
+            min(100, comunicacao + int(xp_bonus * 0.9)) + min(100, lideranca + int(xp_bonus * 1.0)) +
+            min(100, matematica + int(xp_bonus * 1.1)) + min(100, fisica + int(xp_bonus * 1.0)) + min(100, programacao + int(xp_bonus * 1.2)) +
+            min(100, desenho + int(xp_bonus * 0.8)) + min(100, portugues + int(xp_bonus * 0.9)) + min(100, biologia + int(xp_bonus * 0.7)) +
+            min(100, quimica + int(xp_bonus * 0.7)) + min(100, historia + int(xp_bonus * 0.8))
         )
         progresso_geral = round(total_sum / 13)
 

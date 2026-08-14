@@ -3,6 +3,41 @@ from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
+def get_fallback_profile(curso_tecnico):
+    curso = (curso_tecnico or "").strip().lower()
+    
+    if "desenvolvimento" in curso or "informática" in curso or "tecnologia" in curso or "ti" in curso:
+        return {
+            'logica': 65, 'criatividade': 50, 'foco': 60, 'comunicacao': 45, 'lideranca': 40,
+            'matematica': 60, 'fisica': 50, 'programacao': 70, 'desenho': 35, 'portugues': 50,
+            'biologia': 30, 'quimica': 30, 'historia': 40
+        }
+    elif "administração" in curso or "adm" in curso or "logística" in curso or "negócios" in curso:
+        return {
+            'logica': 55, 'criatividade': 45, 'foco': 60, 'comunicacao': 65, 'lideranca': 70,
+            'matematica': 55, 'fisica': 30, 'programacao': 30, 'desenho': 35, 'portugues': 60,
+            'biologia': 30, 'quimica': 30, 'historia': 55
+        }
+    elif "enfermagem" in curso or "saúde" in curso or "biológica" in curso:
+        return {
+            'logica': 45, 'criatividade': 40, 'foco': 70, 'comunicacao': 60, 'lideranca': 50,
+            'matematica': 40, 'fisica': 40, 'programacao': 30, 'desenho': 30, 'portugues': 55,
+            'biologia': 75, 'quimica': 60, 'historia': 50
+        }
+    elif "eletrotécnica" in curso or "mecatrônica" in curso or "automação" in curso or "mecânica" in curso:
+        return {
+            'logica': 60, 'criatividade': 45, 'foco': 65, 'comunicacao': 40, 'lideranca': 45,
+            'matematica': 65, 'fisica': 70, 'programacao': 50, 'desenho': 55, 'portugues': 45,
+            'biologia': 30, 'quimica': 40, 'historia': 35
+        }
+    else:
+        # Balanced general default
+        return {
+            'logica': 50, 'criatividade': 50, 'foco': 50, 'comunicacao': 50, 'lideranca': 50,
+            'matematica': 45, 'fisica': 40, 'programacao': 40, 'desenho': 40, 'portugues': 50,
+            'biologia': 35, 'quimica': 35, 'historia': 45
+        }
+
 class CustomUserSerializer(serializers.ModelSerializer):
     onboarding_completo = serializers.SerializerMethodField()
     xp_hoje = serializers.SerializerMethodField()
@@ -54,15 +89,16 @@ class CustomUserSerializer(serializers.ModelSerializer):
             comunicacao = perfil.comunicacao
             lideranca = perfil.lideranca
         except PerfilUsuario.DoesNotExist:
-            logica = criatividade = foco = comunicacao = lideranca = 30
+            fb = get_fallback_profile(obj.curso_tecnico)
+            logica, criatividade, foco, comunicacao, lideranca = fb['logica'], fb['criatividade'], fb['foco'], fb['comunicacao'], fb['lideranca']
 
         xp_bonus = obj.xp // 10
         return [
-            {"nome": "Lógica", "valor": min(100, logica + xp_bonus)},
-            {"nome": "Criatividade", "valor": min(100, criatividade + xp_bonus)},
-            {"nome": "Foco", "valor": min(100, foco + xp_bonus)},
-            {"nome": "Comunicação", "valor": min(100, comunicacao + xp_bonus)},
-            {"nome": "Liderança", "valor": min(100, lideranca + xp_bonus)},
+            {"nome": "Lógica", "valor": min(100, logica + int(xp_bonus * 1.2))},
+            {"nome": "Criatividade", "valor": min(100, criatividade + int(xp_bonus * 0.8))},
+            {"nome": "Foco", "valor": min(100, foco + int(xp_bonus * 1.1))},
+            {"nome": "Comunicação", "valor": min(100, comunicacao + int(xp_bonus * 0.9))},
+            {"nome": "Liderança", "valor": min(100, lideranca + int(xp_bonus * 1.0))},
         ]
 
     def get_disciplinas(self, obj):
@@ -78,18 +114,19 @@ class CustomUserSerializer(serializers.ModelSerializer):
             quimica = perfil.quimica
             historia = perfil.historia
         except PerfilUsuario.DoesNotExist:
-            matematica = fisica = programacao = desenho = portugues = biologia = quimica = historia = 30
+            fb = get_fallback_profile(obj.curso_tecnico)
+            matematica, fisica, programacao, desenho, portugues, biologia, quimica, historia = fb['matematica'], fb['fisica'], fb['programacao'], fb['desenho'], fb['portugues'], fb['biologia'], fb['quimica'], fb['historia']
 
         xp_bonus = obj.xp // 10
         return [
-            {"nome": "Matemática", "valor": min(100, matematica + xp_bonus)},
-            {"nome": "Física", "valor": min(100, fisica + xp_bonus)},
-            {"nome": "Programação", "valor": min(100, programacao + xp_bonus)},
-            {"nome": "Desenho", "valor": min(100, desenho + xp_bonus)},
-            {"nome": "Português", "valor": min(100, portugues + xp_bonus)},
-            {"nome": "Biologia", "valor": min(100, biologia + xp_bonus)},
-            {"nome": "Química", "valor": min(100, quimica + xp_bonus)},
-            {"nome": "História", "valor": min(100, historia + xp_bonus)},
+            {"nome": "Matemática", "valor": min(100, matematica + int(xp_bonus * 1.1))},
+            {"nome": "Física", "valor": min(100, fisica + int(xp_bonus * 1.0))},
+            {"nome": "Programação", "valor": min(100, programacao + int(xp_bonus * 1.2))},
+            {"nome": "Desenho", "valor": min(100, desenho + int(xp_bonus * 0.8))},
+            {"nome": "Português", "valor": min(100, portugues + int(xp_bonus * 0.9))},
+            {"nome": "Biologia", "valor": min(100, biologia + int(xp_bonus * 0.7))},
+            {"nome": "Química", "valor": min(100, quimica + int(xp_bonus * 0.7))},
+            {"nome": "História", "valor": min(100, historia + int(xp_bonus * 0.8))},
         ]
 
     def get_progresso_geral(self, obj):
@@ -111,16 +148,17 @@ class CustomUserSerializer(serializers.ModelSerializer):
             quimica = perfil.quimica
             historia = perfil.historia
         except PerfilUsuario.DoesNotExist:
-            logica = criatividade = foco = comunicacao = lideranca = 30
-            matematica = fisica = programacao = desenho = portugues = biologia = quimica = historia = 30
+            fb = get_fallback_profile(obj.curso_tecnico)
+            logica, criatividade, foco, comunicacao, lideranca = fb['logica'], fb['criatividade'], fb['foco'], fb['comunicacao'], fb['lideranca']
+            matematica, fisica, programacao, desenho, portugues, biologia, quimica, historia = fb['matematica'], fb['fisica'], fb['programacao'], fb['desenho'], fb['portugues'], fb['biologia'], fb['quimica'], fb['historia']
 
         xp_bonus = obj.xp // 10
         total_sum = (
-            min(100, logica + xp_bonus) + min(100, criatividade + xp_bonus) + min(100, foco + xp_bonus) +
-            min(100, comunicacao + xp_bonus) + min(100, lideranca + xp_bonus) +
-            min(100, matematica + xp_bonus) + min(100, fisica + xp_bonus) + min(100, programacao + xp_bonus) +
-            min(100, desenho + xp_bonus) + min(100, portugues + xp_bonus) + min(100, biologia + xp_bonus) +
-            min(100, quimica + xp_bonus) + min(100, historia + xp_bonus)
+            min(100, logica + int(xp_bonus * 1.2)) + min(100, criatividade + int(xp_bonus * 0.8)) + min(100, foco + int(xp_bonus * 1.1)) +
+            min(100, comunicacao + int(xp_bonus * 0.9)) + min(100, lideranca + int(xp_bonus * 1.0)) +
+            min(100, matematica + int(xp_bonus * 1.1)) + min(100, fisica + int(xp_bonus * 1.0)) + min(100, programacao + int(xp_bonus * 1.2)) +
+            min(100, desenho + int(xp_bonus * 0.8)) + min(100, portugues + int(xp_bonus * 0.9)) + min(100, biologia + int(xp_bonus * 0.7)) +
+            min(100, quimica + int(xp_bonus * 0.7)) + min(100, historia + int(xp_bonus * 0.8))
         )
         return round(total_sum / 13)
 
