@@ -332,7 +332,10 @@ export default function HomeScreen() {
                 style={[styles.levelProgressFill, { width: `${userXp}%` }]}
               />
             </View>
-            <Text style={styles.levelProgressText}>Progresso {userXp}% ⚡</Text>
+            <View style={styles.levelProgressInfoRow}>
+              <Text style={styles.levelProgressText}>Progresso {userXp}%</Text>
+              <Text style={styles.levelXpText}>{user?.xp ?? 0} XP ⚡</Text>
+            </View>
           </View>
 
           <View style={styles.levelCardRight}>
@@ -529,7 +532,7 @@ export default function HomeScreen() {
                   style={[styles.summaryProgressFill, { width: `${Math.min(100, ((user?.xp_hoje ?? 0) / 50) * 100)}%` }]}
                 />
               </View>
-              <Text style={styles.summarySubtext}>Falta {Math.max(0, 100 - userXp)} XP para o próximo nível</Text>
+              <Text style={styles.summarySubtext}>Falta {Math.max(0, 100 - userXp)}% para o próximo nível</Text>
             </View>
 
             <View style={styles.verticalDivider} />
@@ -863,8 +866,20 @@ const styles = StyleSheet.create({
   levelProgressText: {
     fontSize: 12,
     color: '#94A3B8',
-    marginTop: 4,
     fontWeight: '500',
+    fontFamily: 'System',
+  },
+  levelProgressInfoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+    marginTop: 4,
+  },
+  levelXpText: {
+    fontSize: 12,
+    color: '#F59E0B',
+    fontWeight: '700',
     fontFamily: 'System',
   },
   levelCardRight: {

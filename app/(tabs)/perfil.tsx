@@ -303,7 +303,7 @@ export default function PerfilScreen() {
 
               <View style={styles.currentLevelProgressBadge}>
                 <Ionicons name="flash" size={14} color="#F59E0B" />
-                <Text style={styles.currentLevelProgressText}>Progresso {userXp}%</Text>
+                <Text style={styles.currentLevelProgressText}>Progresso {userXp}% ({user?.xp ?? 0} XP)</Text>
               </View>
             </View>
           </View>
