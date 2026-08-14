@@ -34,6 +34,66 @@ const CATEGORY_ICONS: { [key: string]: string } = {
   DIREITO: 'scale-outline',
   AGRONOMIA: 'leaf-outline',
 };
+
+const getPersonalizedQuestions = (user: any, perfil: PerfilUsuario | null): QuestaoQuiz[] => {
+  if (!user) return questoesDiarias;
+
+  const targetCategories: string[] = [];
+
+  // 1. Try to find highest areas from calculated profile
+  if (perfil) {
+    const areas = [
+      { name: 'TECNOLOGIA', score: ((perfil.forcas?.logica || 0) + (perfil.disciplinas?.programacao || 0) + (perfil.disciplinas?.matematica || 0)) / 3 },
+      { name: 'SAÚDE', score: ((perfil.disciplinas?.biologia || 0) + (perfil.disciplinas?.quimica || 0) + (perfil.forcas?.foco || 0)) / 3 },
+      { name: 'NEGÓCIOS', score: ((perfil.forcas?.lideranca || 0) + (perfil.forcas?.comunicacao || 0) + (perfil.disciplinas?.matematica || 0)) / 3 },
+      { name: 'ARTES', score: ((perfil.forcas?.criatividade || 0) + (perfil.disciplinas?.desenho || 0)) / 2 },
+      { name: 'DIREITO', score: ((perfil.disciplinas?.portugues || 0) + (perfil.forcas?.comunicacao || 0) + (perfil.disciplinas?.historia || 0)) / 3 },
+      { name: 'AGRONOMIA', score: ((perfil.disciplinas?.biologia || 0) + (perfil.disciplinas?.quimica || 0) + (perfil.forcas?.foco || 0)) / 3 },
+    ];
+    // Find the maximum score
+    const maxScore = Math.max(...areas.map(a => a.score));
+    
+    // We target any area that has the maximum score (handles ties) or is within 10 points of the max
+    if (maxScore > 0) {
+      areas.forEach(a => {
+        if (a.score >= maxScore - 10) {
+          targetCategories.push(a.name);
+        }
+      });
+    }
+  }
+
+  // 2. If no categories found yet (e.g. perfil not loaded or all 0), check curso_tecnico/objetivo_carreira keywords
+  if (targetCategories.length === 0) {
+    const textToMatch = `${user.curso_tecnico || ''} ${user.objetivo_carreira || ''}`.toLowerCase();
+    
+    if (textToMatch.includes('desenvolvimento') || textToMatch.includes('informática') || textToMatch.includes('computa') || textToMatch.includes('tecnologia') || textToMatch.includes('ti') || textToMatch.includes('software')) {
+      targetCategories.push('TECNOLOGIA');
+    }
+    if (textToMatch.includes('enfermagem') || textToMatch.includes('saúde') || textToMatch.includes('médic') || textToMatch.includes('psicol') || textToMatch.includes('fisioter')) {
+      targetCategories.push('SAÚDE');
+    }
+    if (textToMatch.includes('administração') || textToMatch.includes('negócios') || textToMatch.includes('marketing') || textToMatch.includes('vendas') || textToMatch.includes('logístic')) {
+      targetCategories.push('NEGÓCIOS');
+    }
+    if (textToMatch.includes('design') || textToMatch.includes('arte') || textToMatch.includes('arquitet') || textToMatch.includes('músic') || textToMatch.includes('cinema')) {
+      targetCategories.push('ARTES');
+    }
+    if (textToMatch.includes('direito') || textToMatch.includes('advoc') || textToMatch.includes('leis') || textToMatch.includes('histór') || textToMatch.includes('pedagog')) {
+      targetCategories.push('DIREITO');
+    }
+    if (textToMatch.includes('agronom') || textToMatch.includes('veterinár') || textToMatch.includes('florest') || textToMatch.includes('meio ambiente') || textToMatch.includes('biolog')) {
+      targetCategories.push('AGRONOMIA');
+    }
+  }
+
+  // 3. Filter the questions
+  const filtered = questoesDiarias.filter(q => targetCategories.includes(q.categoria));
+  
+  // Fallback to all questions if none matched
+  return filtered.length > 0 ? filtered : questoesDiarias;
+};
+
 export default function HomeScreen() {
   const router = useRouter();
 
@@ -164,8 +224,9 @@ export default function HomeScreen() {
   };
 
   const handleOpenQuiz = () => {
-    const randomIndex = Math.floor(Math.random() * questoesDiarias.length);
-    setCurrentQuestion(questoesDiarias[randomIndex]);
+    const personalizedPool = getPersonalizedQuestions(user, perfil);
+    const randomIndex = Math.floor(Math.random() * personalizedPool.length);
+    setCurrentQuestion(personalizedPool[randomIndex]);
     setSelectedAnswer(null);
     setQuizSubmitted(false);
     setIsCorrectAnswer(false);
