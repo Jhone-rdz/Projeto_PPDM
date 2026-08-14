@@ -422,6 +422,9 @@ class CursoComMatchSerializer(serializers.ModelSerializer):
             # Combine 40% area affinity + 60% specific skills alignment
             match_val = round((area_score * 0.4) + (attr_score * 0.6))
             
+            # Apply a small course-specific offset to break ties and differentiate similar scores
+            match_val = match_val - (obj.id % 4)
+
             # Boost if technical course matches tags
             user_tech = (request.user.curso_tecnico or "").lower()
             if user_tech:
@@ -429,7 +432,7 @@ class CursoComMatchSerializer(serializers.ModelSerializer):
                 for tag in obj.tags:
                     if tag.lower() in user_tech or user_tech in tag.lower():
                         boost += 5
-                match_val = min(98, match_val + boost)
+                match_val = match_val + boost
                 
             return max(30, min(98, match_val))
         except Exception:
