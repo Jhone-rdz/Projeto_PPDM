@@ -11,8 +11,9 @@ import {
   Modal,
   FlatList,
   Image,
+  useWindowDimensions,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
@@ -33,6 +34,8 @@ const CURSOS_TECNICOS = [
 
 export default function CadastroScreen() {
   const router = useRouter();
+  const { width: screenWidth } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
 
   // Form states
   const [nome, setNome] = useState('');
@@ -123,22 +126,33 @@ export default function CadastroScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <StatusBar style="dark" />
+    <View style={styles.container}>
+      <StatusBar style="light" />
+      <Image
+        source={require('../../assets/images/icone tela de cadastro e home.png')}
+        style={[
+          styles.backgroundImage,
+          {
+            width: screenWidth,
+            height: screenWidth * (1536 / 1024),
+          }
+        ]}
+        resizeMode="cover"
+      />
 
       {/* Top Header Row with Back Button */}
-      <View style={styles.navigationHeader}>
+      <View style={[styles.navigationHeader, { top: insets.top }]}>
         <TouchableOpacity
           onPress={() => router.back()}
           style={styles.backButton}
           activeOpacity={0.7}
         >
-          <Ionicons name="arrow-back" size={24} color="#1F2937" />
+          <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
         </TouchableOpacity>
       </View>
 
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.keyboardView}
       >
         <ScrollView
@@ -146,123 +160,124 @@ export default function CadastroScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Header Title Section */}
-          <View style={styles.headerTitleContainer}>
-            <Image
-              source={require('../../assets/images/nexo-cadastro.png')}
-              style={styles.cadastroHeaderImage}
-              resizeMode="contain"
-            />
-            <Text style={styles.welcomeText}>
-              Bem-vindo ao <Text style={styles.highlightText}>NexoCareer</Text>
-            </Text>
-            <Text style={styles.subtitleText}>Vamos construir seu futuro juntos!</Text>
-          </View>
+          {/* Spacer to push card below the image's critical content */}
+          <View style={{ height: screenWidth * (1536 / 1024) - Math.max(insets.top + 56, 76) - 60 }} />
 
-          {/* Form Fields */}
-          <View style={styles.formContainer}>
-            <CustomInput
-              placeholder="Nome completo"
-              value={nome}
-              onChangeText={setNome}
-              iconName="person-outline"
-              autoCapitalize="words"
-              error={errors.nome}
-            />
+          {/* Form Card wrapper */}
+          <View style={[styles.formCard, { paddingBottom: 40 + insets.bottom }]}>
+            {/* Header Title Section inside Card */}
+            <View style={styles.headerTitleContainer}>
+              <Text style={styles.welcomeText}>
+                Bem-vindo ao <Text style={styles.highlightText}>NexoCareer</Text>
+              </Text>
+              <Text style={styles.subtitleText}>Vamos construir seu futuro juntos!</Text>
+            </View>
 
-            <CustomInput
-              placeholder="E-mail"
-              value={email}
-              onChangeText={setEmail}
-              iconName="mail-outline"
-              keyboardType="email-address"
-              error={errors.email}
-            />
+            {/* Form Fields */}
+            <View style={styles.formContainer}>
+              <CustomInput
+                placeholder="Nome completo"
+                value={nome}
+                onChangeText={setNome}
+                iconName="person-outline"
+                autoCapitalize="words"
+                error={errors.nome}
+              />
 
-            <CustomInput
-              placeholder="Senha"
-              value={senha}
-              onChangeText={setSenha}
-              iconName="lock-closed-outline"
-              secureTextEntry
-              isPassword
-              error={errors.senha}
-            />
+              <CustomInput
+                placeholder="E-mail"
+                value={email}
+                onChangeText={setEmail}
+                iconName="mail-outline"
+                keyboardType="email-address"
+                error={errors.email}
+              />
 
-            <CustomInput
-              placeholder="Confirmar senha"
-              value={confirmarSenha}
-              onChangeText={setConfirmarSenha}
-              iconName="lock-closed-outline"
-              secureTextEntry
-              isPassword
-              error={errors.confirmarSenha}
-            />
+              {/* Custom select/dropdown trigger */}
+              <View style={styles.dropdownWrapper}>
+                <TouchableOpacity
+                  style={[
+                    styles.selectTrigger,
+                    modalVisible && styles.selectTriggerActive,
+                    errors.curso ? styles.selectTriggerError : null,
+                  ]}
+                  onPress={() => setModalVisible(true)}
+                  activeOpacity={0.8}
+                >
+                  <View style={styles.selectLeftSection}>
+                    <Ionicons
+                      name="school-outline"
+                      size={20}
+                      color={errors.curso ? '#EF4444' : modalVisible ? '#6B21A8' : '#9CA3AF'}
+                      style={styles.selectIcon}
+                    />
+                    <Text
+                      style={[
+                        styles.selectText,
+                        curso ? styles.selectTextSelected : styles.selectTextPlaceholder,
+                      ]}
+                    >
+                      {curso ? curso : 'Curso técnico atual'}
+                    </Text>
+                  </View>
+                  <Ionicons name="chevron-down" size={20} color="#9CA3AF" />
+                </TouchableOpacity>
+                {errors.curso ? <Text style={styles.errorText}>{errors.curso}</Text> : null}
+              </View>
 
-            {/* Custom select/dropdown trigger */}
-            <View style={styles.dropdownWrapper}>
-              <TouchableOpacity
-                style={[
-                  styles.selectTrigger,
-                  modalVisible && styles.selectTriggerActive,
-                  errors.curso ? styles.selectTriggerError : null,
-                ]}
-                onPress={() => setModalVisible(true)}
-                activeOpacity={0.8}
-              >
-                <View style={styles.selectLeftSection}>
-                  <Ionicons
-                    name="school-outline"
-                    size={20}
-                    color={errors.curso ? '#EF4444' : modalVisible ? '#6B21A8' : '#9CA3AF'}
-                    style={styles.selectIcon}
-                  />
-                  <Text
-                    style={[
-                      styles.selectText,
-                      curso ? styles.selectTextSelected : styles.selectTextPlaceholder,
-                    ]}
-                  >
-                    {curso ? curso : 'Curso técnico atual'}
-                  </Text>
-                </View>
-                <Ionicons name="chevron-down" size={20} color="#9CA3AF" />
+              <CustomInput
+                placeholder="Senha"
+                value={senha}
+                onChangeText={setSenha}
+                iconName="lock-closed-outline"
+                secureTextEntry
+                isPassword
+                error={errors.senha}
+              />
+
+              <CustomInput
+                placeholder="Confirmar senha"
+                value={confirmarSenha}
+                onChangeText={setConfirmarSenha}
+                iconName="lock-closed-outline"
+                secureTextEntry
+                isPassword
+                error={errors.confirmarSenha}
+              />
+
+              <BotaoCustom
+                title="Criar conta"
+                onPress={handleCadastro}
+                iconName="arrow-forward-outline"
+                iconPosition="right"
+                loading={isLoading}
+              />
+
+              {/* Divider */}
+              <View style={styles.dividerContainer}>
+                <View style={styles.dividerLine} />
+                <Text style={styles.dividerText}>ou</Text>
+                <View style={styles.dividerLine} />
+              </View>
+
+              {/* Google Signup Button */}
+              <BotaoCustom
+                title="Cadastrar com Google"
+                onPress={handleGoogleCadastro}
+                type="secondary"
+                iconName="logo-google"
+                iconPosition="left"
+                disabled={isLoading}
+              />
+            </View>
+
+            {/* Footer Navigation Link */}
+            <View style={styles.footerContainer}>
+              <Text style={styles.footerText}>Já tem uma conta? </Text>
+              <TouchableOpacity onPress={() => router.push('/auth/login')} activeOpacity={0.7}>
+                <Text style={styles.footerLinkText}>Fazer login</Text>
               </TouchableOpacity>
-              {errors.curso ? <Text style={styles.errorText}>{errors.curso}</Text> : null}
             </View>
-
-            <BotaoCustom
-              title="Criar conta"
-              onPress={handleCadastro}
-              iconName="arrow-forward-outline"
-              iconPosition="right"
-              loading={isLoading}
-            />
-
-            {/* Divider */}
-            <View style={styles.dividerContainer}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>ou</Text>
-              <View style={styles.dividerLine} />
-            </View>
-
-            {/* Google Signup Button */}
-            <BotaoCustom
-              title="Cadastrar com Google"
-              onPress={handleGoogleCadastro}
-              type="secondary"
-              iconName="logo-google"
-              iconPosition="left"
-              disabled={isLoading}
-            />
-          </View>
-
-          {/* Footer Navigation Link */}
-          <View style={styles.footerContainer}>
-            <Text style={styles.footerText}>Já tem uma conta? </Text>
-            <TouchableOpacity onPress={() => router.push('/auth/login')} activeOpacity={0.7}>
-              <Text style={styles.footerLinkText}>Fazer login</Text>
-            </TouchableOpacity>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -321,16 +336,25 @@ export default function CadastroScreen() {
           </View>
         </TouchableOpacity>
       </Modal>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
+  container: {
     flex: 1,
     backgroundColor: '#FFFFFF',
   },
+  backgroundImage: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+  },
   navigationHeader: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    zIndex: 10,
     height: 56,
     justifyContent: 'center',
     paddingHorizontal: 16,
@@ -341,25 +365,31 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F3F4F6',
+    backgroundColor: 'rgba(15, 23, 42, 0.6)',
   },
   keyboardView: {
     flex: 1,
   },
   scrollContainer: {
     flexGrow: 1,
-    paddingHorizontal: 24,
+  },
+  formCard: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    paddingTop: 32,
     paddingBottom: 40,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 8,
   },
   headerTitleContainer: {
     alignItems: 'center',
-    marginBottom: 28,
-  },
-  cadastroHeaderImage: {
-    width: '100%',
-    height: 120,
-    marginBottom: 16,
-    alignSelf: 'center',
+    marginBottom: 20,
+    paddingHorizontal: 24,
   },
   welcomeText: {
     fontSize: 26,
