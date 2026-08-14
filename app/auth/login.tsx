@@ -116,7 +116,7 @@ export default function LoginScreen() {
           <View style={{ height: screenWidth * (1550 / 1080) - Math.max(insets.top, 20) - 80 }} />
 
           {/* Form Card wrapper */}
-          <View style={styles.formCard}>
+          <View style={[styles.formCard, { paddingBottom: 40 + insets.bottom }]}>
             {/* Form Section */}
             <View style={styles.formContainer}>
               <CustomInput
