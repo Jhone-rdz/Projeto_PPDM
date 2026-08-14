@@ -9,8 +9,9 @@ import {
   ScrollView,
   Alert,
   Image,
+  useWindowDimensions,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import CustomInput from '../_components/CustomInput';
@@ -20,6 +21,8 @@ import { apiService } from '../_services/api';
 export default function LoginScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
+  const { width: screenWidth } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const fromCadastro = params.fromCadastro === 'true';
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -83,119 +86,139 @@ export default function LoginScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <StatusBar style="dark" />
+    <View style={styles.container}>
+      <StatusBar style="light" />
+      <Image
+        source={require('../../assets/images/tela de login.png')}
+        style={[
+          styles.backgroundImage,
+          {
+            width: screenWidth,
+            height: screenWidth * (1550 / 1080),
+          }
+        ]}
+        resizeMode="cover"
+      />
+
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.keyboardView}
       >
         <ScrollView
-          contentContainerStyle={styles.scrollContainer}
+          contentContainerStyle={[
+            styles.scrollContainer,
+            { paddingTop: Math.max(insets.top, 20) }
+          ]}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Header Image Section */}
-          <View style={styles.headerContainer}>
-            <Image
-              source={require('../../assets/images/tela de login.png')}
-              style={styles.loginHeaderImage}
-              resizeMode="cover"
-            />
-          </View>
+          {/* Spacer to push card below the image's critical content */}
+          <View style={{ height: screenWidth * (1550 / 1080) - Math.max(insets.top, 20) - 80 }} />
 
-          {/* Form Section */}
-          <View style={styles.formContainer}>
-            <CustomInput
-              placeholder="Digite seu e-mail"
-              value={email}
-              onChangeText={setEmail}
-              iconName="mail-outline"
-              keyboardType="email-address"
-              autoComplete="email"
-              error={errors.email}
-            />
+          {/* Form Card wrapper */}
+          <View style={styles.formCard}>
+            {/* Form Section */}
+            <View style={styles.formContainer}>
+              <CustomInput
+                placeholder="Digite seu e-mail"
+                value={email}
+                onChangeText={setEmail}
+                iconName="mail-outline"
+                keyboardType="email-address"
+                autoComplete="email"
+                error={errors.email}
+              />
 
-            <CustomInput
-              placeholder="Digite sua senha"
-              value={password}
-              onChangeText={setPassword}
-              iconName="lock-closed-outline"
-              secureTextEntry
-              isPassword
-              error={errors.password}
-            />
+              <CustomInput
+                placeholder="Digite sua senha"
+                value={password}
+                onChangeText={setPassword}
+                iconName="lock-closed-outline"
+                secureTextEntry
+                isPassword
+                error={errors.password}
+              />
 
-            <TouchableOpacity
-              onPress={() => Alert.alert('Recuperar Senha', 'Funcionalidade de recuperação de senha (simulada).')}
-              style={styles.forgotPasswordContainer}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.forgotPasswordText}>Esqueci minha senha</Text>
-            </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => Alert.alert('Recuperar Senha', 'Funcionalidade de recuperação de senha (simulada).')}
+                style={styles.forgotPasswordContainer}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.forgotPasswordText}>Esqueci minha senha</Text>
+              </TouchableOpacity>
 
-            <BotaoCustom
-              title="Entrar"
-              onPress={handleLogin}
-              iconName="arrow-forward-outline"
-              iconPosition="right"
-              loading={isLoading}
-            />
+              <BotaoCustom
+                title="Entrar"
+                onPress={handleLogin}
+                iconName="arrow-forward-outline"
+                iconPosition="right"
+                loading={isLoading}
+              />
 
-            {/* Divider */}
-            <View style={styles.dividerContainer}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>ou</Text>
-              <View style={styles.dividerLine} />
+              {/* Divider */}
+              <View style={styles.dividerContainer}>
+                <View style={styles.dividerLine} />
+                <Text style={styles.dividerText}>ou</Text>
+                <View style={styles.dividerLine} />
+              </View>
+
+              {/* Google Button */}
+              <BotaoCustom
+                title="Entrar com Google"
+                onPress={handleGoogleLogin}
+                type="secondary"
+                iconName="logo-google"
+                iconPosition="left"
+                disabled={isLoading}
+              />
             </View>
 
-            {/* Google Button */}
-            <BotaoCustom
-              title="Entrar com Google"
-              onPress={handleGoogleLogin}
-              type="secondary"
-              iconName="logo-google"
-              iconPosition="left"
-              disabled={isLoading}
-            />
-          </View>
-
-          {/* Footer Section */}
-          <View style={styles.footerContainer}>
-            <Text style={styles.footerText}>Ainda não tem uma conta? </Text>
-            <TouchableOpacity onPress={() => router.push('/auth/cadastro')} activeOpacity={0.7}>
-              <Text style={styles.footerLinkText}>Criar conta</Text>
-            </TouchableOpacity>
+            {/* Footer Section */}
+            <View style={styles.footerContainer}>
+              <Text style={styles.footerText}>Ainda não tem uma conta? </Text>
+              <TouchableOpacity onPress={() => router.push('/auth/cadastro')} activeOpacity={0.7}>
+                <Text style={styles.footerLinkText}>Criar conta</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
+  container: {
     flex: 1,
     backgroundColor: '#FFFFFF',
+  },
+  backgroundImage: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
   },
   keyboardView: {
     flex: 1,
   },
   scrollContainer: {
     flexGrow: 1,
-    paddingBottom: 32,
   },
-  headerContainer: {
-    width: '100%',
-    marginBottom: 20,
-  },
-  loginHeaderImage: {
-    width: '100%',
-    aspectRatio: 1728 / 2474,
+  formCard: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    paddingTop: 32,
+    paddingBottom: 40,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 8,
   },
   formContainer: {
     width: '100%',
     paddingHorizontal: 24,
-    marginBottom: 24,
   },
   forgotPasswordContainer: {
     alignSelf: 'center',
