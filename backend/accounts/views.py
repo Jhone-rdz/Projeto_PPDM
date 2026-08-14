@@ -545,3 +545,29 @@ class ConcluirDesafioView(APIView):
             "xp_hoje": total_xp_hoje,
         }, status=status.HTTP_200_OK)
 
+class ResetProgressView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        user = request.user
+        
+        # 1. Clear all question responses
+        user.respostas.all().delete()
+        
+        # 2. Reset user stats
+        user.xp = 0
+        user.nivel = 0
+        user.save(update_fields=['xp', 'nivel'])
+        
+        # 3. Clear user profile
+        from .models import PerfilUsuario
+        PerfilUsuario.objects.filter(user=user).delete()
+        
+        # 4. Clear completed challenges
+        from .models import DesafioConcluido
+        DesafioConcluido.objects.filter(user=user).delete()
+        
+        return Response({
+            "detail": "Progresso redefinido com sucesso! Você será redirecionado para o onboarding."
+        }, status=status.HTTP_200_OK)
+

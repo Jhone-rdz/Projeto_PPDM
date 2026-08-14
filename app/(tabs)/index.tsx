@@ -650,7 +650,7 @@ export default function HomeScreen() {
                 style={styles.drawerLinkRow}
                 onPress={() => {
                   setIsDrawerOpen(false);
-                  Alert.alert('Configurações', 'Área de configurações simulada!');
+                  router.push('/configuracoes');
                 }}
               >
                 <Ionicons name="settings-outline" size={20} color="#94A3B8" />

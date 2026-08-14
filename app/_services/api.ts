@@ -321,6 +321,69 @@ export const apiService = {
     }
   },
 
+  updateProfileInfo: async (fields: { curso_tecnico?: string; objetivo_carreira?: string }) => {
+    try {
+      const token = await getToken();
+      const response = await fetch(`${API_BASE_URL}/accounts/profile/`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(fields),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.detail || 'Falha ao atualizar dados.');
+      }
+      
+      // Update session locally
+      if (session.user) {
+        session.user = {
+          ...session.user,
+          ...fields,
+        };
+      }
+      return data;
+    } catch (error: any) {
+      console.error('Update Profile Info Error:', error);
+      throw error;
+    }
+  },
+
+  resetProgress: async () => {
+    try {
+      const token = await getToken();
+      const response = await fetch(`${API_BASE_URL}/accounts/profile/reset/`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.detail || 'Falha ao redefinir progresso.');
+      }
+
+      // Reset local user session properties
+      if (session.user) {
+        session.user.xp = 0;
+        session.user.nivel = 0;
+        session.user.streak = 0;
+        session.user.xp_hoje = 0;
+        session.user.respostas_hoje = 0;
+        session.user.onboarding_completo = false;
+      }
+      return data;
+    } catch (error: any) {
+      console.error('Reset Progress Error:', error);
+      throw error;
+    }
+  },
+
   getQuestions: async () => {
     try {
       const token = await getToken();
