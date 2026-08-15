@@ -105,40 +105,7 @@ export default function HomeScreen() {
   const [cursos, setCursos] = useState<any[]>([]);
   const [isLoadingCursos, setIsLoadingCursos] = useState(true);
 
-  const getLevelLabelName = (level: number) => {
-    switch (level) {
-      case 0: return 'Iniciante';
-      case 1: return 'Despertado';
-      case 2: return 'Super Nexo 1';
-      case 3: return 'Super Nexo 2';
-      case 4: return 'Super Nexo Blue';
-      default: return 'Além do Limite';
-    }
-  };
-
-  const getLevelImage = (nivel: number) => {
-    switch (nivel) {
-      case 0:
-        return require('../../assets/images/nivel 0 iniciante.png');
-      case 1:
-        return require('../../assets/images/nivel 1 despertado.png');
-      case 2:
-        return require('../../assets/images/nivel 2 super nexo 1.png');
-      case 3:
-        return require('../../assets/images/nivel 3 super nexo 2.png');
-      case 4:
-        return require('../../assets/images/nivel 4 super nexo blue.png');
-      case 5:
-        return require('../../assets/images/nivel 5 alem do limite.png');
-      default:
-        return require('../../assets/images/nivel 1 despertado.png');
-    }
-  };
-
-  const userLevel = perfil ? perfil.nivel.numero : (user ? user.nivel : 1);
-  const userXp = perfil ? perfil.nivel.progresso : (user ? user.xp % 100 : 40);
   const userName = perfil ? perfil.nome : (user ? user.username.split('@')[0] : 'Francisco');
-  const levelName = perfil ? perfil.nivel.nome : getLevelLabelName(userLevel);
 
   // Drawer and Quiz states
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -215,9 +182,6 @@ export default function HomeScreen() {
     router.push('/(tabs)/chat');
   };
 
-  const handleNavigatePlano = () => {
-    router.push('/(tabs)/planos');
-  };
 
   const handleNavigatePerfil = () => {
     router.push('/(tabs)/perfil');
@@ -256,13 +220,13 @@ export default function HomeScreen() {
 
       Alert.alert(
         'Resposta Correta! 🎉',
-        `+${currentQuestion.xpBonus} XP obtido! ${currentQuestion.explicacao}`,
-        [{ text: 'Ver Evolução', onPress: () => { setIsQuizOpen(false); router.push('/(tabs)/perfil'); } }]
+        `${currentQuestion.explicacao}`,
+        [{ text: 'Ver Perfil', onPress: () => { setIsQuizOpen(false); router.push('/(tabs)/perfil'); } }]
       );
     } else {
       Alert.alert(
         'Quase lá!',
-        'Essa não é a resposta correta. Tente novamente para ganhar o XP de evolução!',
+        'Essa não é a resposta correta. Tente novamente para aprender mais!',
         [{ text: 'Tentar Novamente', onPress: () => setQuizSubmitted(false) }]
       );
     }
@@ -290,7 +254,7 @@ export default function HomeScreen() {
 
         <View style={styles.headerCenter}>
           <Text style={styles.headerGreeting}>Olá, {userName}!</Text>
-          <Text style={styles.headerSubtitle}>Pronto para evoluir hoje?</Text>
+          <Text style={styles.headerSubtitle}>Descubra seu futuro profissional</Text>
         </View>
 
         <TouchableOpacity
@@ -308,37 +272,22 @@ export default function HomeScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* SEÇÃO 1 — CARD DE NÍVEL */}
+        {/* SEÇÃO 1 — CARD DE PERFIL (Sem Gameficação) */}
         <TouchableOpacity
-          style={styles.levelCard}
+          style={styles.profileCard}
           onPress={handleNavigatePerfil}
           activeOpacity={0.8}
         >
-          <View style={styles.levelCardLeft}>
-            <Image
-              source={getLevelImage(userLevel)}
-              style={styles.levelAvatar}
-            />
+          <View style={styles.profileCardLeft}>
+            <Ionicons name="person-circle" size={44} color="#4F46E5" />
           </View>
 
-          <View style={styles.levelCardCenter}>
-            <Text style={styles.levelLabel}>NÍVEL {userLevel}</Text>
-            <Text style={styles.levelName}>{levelName}</Text>
-            <View style={styles.levelProgressBg}>
-              <LinearGradient
-                colors={['#4F46E5', '#00D4FF']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={[styles.levelProgressFill, { width: `${userXp}%` }]}
-              />
-            </View>
-            <View style={styles.levelProgressInfoRow}>
-              <Text style={styles.levelProgressText}>Progresso {userXp}%</Text>
-              <Text style={styles.levelXpText}>{user?.xp ?? 0} XP ⚡</Text>
-            </View>
+          <View style={styles.profileCardCenter}>
+            <Text style={styles.profileCardName}>{userName || 'Estudante'}</Text>
+            <Text style={styles.profileCardCourse}>{user?.curso_tecnico || 'Estudante Técnico'}</Text>
           </View>
 
-          <View style={styles.levelCardRight}>
+          <View style={styles.profileCardRight}>
             <Ionicons name="chevron-forward" size={20} color="#4F46E5" />
           </View>
         </TouchableOpacity>
@@ -421,12 +370,12 @@ export default function HomeScreen() {
             {/* Shortcut 4 */}
             <TouchableOpacity
               style={styles.shortcutCard}
-              onPress={handleNavigatePlano}
+              onPress={() => router.push('/configuracoes')}
               activeOpacity={0.8}
             >
-              <Ionicons name="trophy-outline" size={28} color="#00D4FF" />
-              <Text style={styles.shortcutTitle}>Ver desafios diários</Text>
-              <Text style={styles.shortcutDesc}>Ganhe XP</Text>
+              <Ionicons name="settings-outline" size={28} color="#00D4FF" />
+              <Text style={styles.shortcutTitle}>Configurações</Text>
+              <Text style={styles.shortcutDesc}>Gerenciar conta</Text>
               <Text style={styles.shortcutArrow}>→</Text>
             </TouchableOpacity>
           </View>
@@ -507,65 +456,6 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* SEÇÃO 5 — RESUMO DE HOJE */}
-        <View style={styles.summarySection}>
-          <View style={styles.sectionHeaderRow}>
-            <Text style={styles.sectionTitle}>Seu resumo de hoje</Text>
-            <TouchableOpacity onPress={handleNavigatePerfil} activeOpacity={0.7}>
-              <Text style={styles.seeAllLink}>Ver detalhes ›</Text>
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.summaryCard}>
-            {/* Coluna 1 — XP */}
-            <View style={styles.summaryColumn}>
-              <View style={styles.summaryLabelRow}>
-                <Ionicons name="flash" size={14} color="#F59E0B" style={styles.summaryLabelIcon} />
-                <Text style={styles.summaryLabel}>XP ganho hoje</Text>
-              </View>
-              <Text style={styles.summaryValue}>{user?.xp_hoje ?? 0} XP</Text>
-              <View style={styles.summaryProgressBg}>
-                <LinearGradient
-                  colors={['#4F46E5', '#00D4FF']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={[styles.summaryProgressFill, { width: `${Math.min(100, ((user?.xp_hoje ?? 0) / 50) * 100)}%` }]}
-                />
-              </View>
-              <Text style={styles.summarySubtext}>Falta {Math.max(0, 100 - userXp)}% para o próximo nível</Text>
-            </View>
-
-            <View style={styles.verticalDivider} />
-
-            {/* Coluna 2 — Respostas */}
-            <View style={styles.summaryColumn}>
-              <View style={styles.summaryLabelRow}>
-                <Ionicons name="document-text-outline" size={14} color="#4F46E5" style={styles.summaryLabelIcon} />
-                <Text style={styles.summaryLabel}>Respostas</Text>
-              </View>
-              <Text style={styles.summaryValue}>{user?.respostas_hoje ?? 0}</Text>
-              <View style={styles.summaryProgressBg}>
-                <View style={[styles.summaryProgressFillText, { width: `${Math.min(100, ((user?.respostas_hoje ?? 0) / 7) * 100)}%`, backgroundColor: '#4F46E5' }]} />
-              </View>
-              <Text style={styles.summarySubtext}>Mais {Math.max(0, 7 - (user?.respostas_hoje ?? 0))} para a meta</Text>
-            </View>
-
-            <View style={styles.verticalDivider} />
-
-            {/* Coluna 3 — Sequência */}
-            <View style={styles.summaryColumn}>
-              <View style={styles.summaryLabelRow}>
-                <Ionicons name="flame" size={14} color="#F97316" style={styles.summaryLabelIcon} />
-                <Text style={styles.summaryLabel}>Sequência</Text>
-              </View>
-              <Text style={styles.summaryValue}>{user?.streak ?? 1} {user?.streak === 1 ? 'dia' : 'dias'}</Text>
-              <View style={styles.summaryProgressBg}>
-                <View style={[styles.summaryProgressFillText, { width: `${Math.min(100, ((user?.streak ?? 1) / 7) * 100)}%`, backgroundColor: '#F97316' }]} />
-              </View>
-              <Text style={styles.summarySubtext}>Continue assim!</Text>
-            </View>
-          </View>
-        </View>
       </ScrollView>
 
       {/* MODAL SIDE DRAWER (Menu Hambúrguer) */}
@@ -589,13 +479,10 @@ export default function HomeScreen() {
             {/* Drawer profile Header */}
             <View style={styles.drawerProfileHeader}>
               <View style={styles.drawerProfileAvatarContainer}>
-                <Image
-                  source={getLevelImage(userLevel)}
-                  style={styles.drawerAvatar}
-                />
+                <Ionicons name="person-circle" size={54} color="#4F46E5" />
               </View>
               <Text style={styles.drawerProfileName}>{userName}</Text>
-              <Text style={styles.drawerProfileLevel}>Nível {userLevel} • {levelName}</Text>
+              <Text style={styles.drawerProfileSub}>{user?.curso_tecnico || 'Estudante Técnico'}</Text>
             </View>
 
             {/* Drawer Menu links */}
@@ -633,16 +520,6 @@ export default function HomeScreen() {
                 <Text style={styles.drawerLinkLabel}>Mentoria IA</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity
-                style={styles.drawerLinkRow}
-                onPress={() => {
-                  setIsDrawerOpen(false);
-                  router.push('/(tabs)/planos');
-                }}
-              >
-                <Ionicons name="trophy-outline" size={20} color="#94A3B8" />
-                <Text style={styles.drawerLinkLabel}>Desafios Diários</Text>
-              </TouchableOpacity>
 
               <View style={styles.drawerDivider} />
 
@@ -686,7 +563,7 @@ export default function HomeScreen() {
             <View style={styles.quizHeaderRow}>
               <View style={styles.quizTitleBadge}>
                 <Ionicons name={(CATEGORY_ICONS[currentQuestion.categoria] || 'help-circle-outline') as any} size={16} color="#8B5CF6" />
-                <Text style={styles.quizTitleBadgeText}>EVOLUA SEU PERFIL</Text>
+                <Text style={styles.quizTitleBadgeText}>DESENVOLVA SEU PERFIL</Text>
               </View>
               <TouchableOpacity onPress={handleCloseQuiz} style={styles.quizCloseBtn}>
                 <Ionicons name="close" size={22} color="#94A3B8" />
@@ -812,7 +689,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: 32,
   },
-  levelCard: {
+  profileCard: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#111827',
@@ -823,66 +700,28 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#1F2937',
   },
-  levelCardLeft: {
+  profileCardLeft: {
     justifyContent: 'center',
     alignItems: 'center',
   },
-  levelAvatar: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    borderWidth: 2,
-    borderColor: '#6B21A8',
-  },
-  levelCardCenter: {
+  profileCardCenter: {
     flex: 1,
     marginLeft: 12,
   },
-  levelLabel: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#94A3B8',
-    letterSpacing: 0.5,
-    fontFamily: 'System',
-  },
-  levelName: {
+  profileCardName: {
     fontSize: 20,
     fontWeight: '800',
     color: '#FFFFFF',
-    marginBottom: 6,
+    marginBottom: 4,
     fontFamily: 'System',
   },
-  levelProgressBg: {
-    height: 6,
-    backgroundColor: '#1F2937',
-    borderRadius: 3,
-    overflow: 'hidden',
-  },
-  levelProgressFill: {
-    width: '40%',
-    height: '100%',
-    borderRadius: 3,
-  },
-  levelProgressText: {
-    fontSize: 12,
+  profileCardCourse: {
+    fontSize: 13,
     color: '#94A3B8',
     fontWeight: '500',
     fontFamily: 'System',
   },
-  levelProgressInfoRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    width: '100%',
-    marginTop: 4,
-  },
-  levelXpText: {
-    fontSize: 12,
-    color: '#F59E0B',
-    fontWeight: '700',
-    fontFamily: 'System',
-  },
-  levelCardRight: {
+  profileCardRight: {
     justifyContent: 'center',
     alignItems: 'center',
     paddingLeft: 8,
@@ -1088,70 +927,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     backgroundColor: '#4F46E5',
   },
-  summarySection: {
-    paddingHorizontal: 20,
-    marginTop: 24,
-    marginBottom: 20,
-  },
-  summaryCard: {
-    flexDirection: 'row',
-    backgroundColor: '#111827',
-    borderRadius: 16,
-    padding: 16,
-    marginTop: 12,
-    borderWidth: 1,
-    borderColor: '#1F2937',
-  },
-  summaryColumn: {
-    flex: 1,
-    paddingHorizontal: 4,
-  },
-  summaryLabelRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  summaryLabelIcon: {
-    marginRight: 4,
-  },
-  summaryLabel: {
-    fontSize: 11,
-    color: '#94A3B8',
-    fontWeight: '600',
-    fontFamily: 'System',
-  },
-  summaryValue: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginBottom: 6,
-    fontFamily: 'System',
-  },
-  summaryProgressBg: {
-    height: 4,
-    backgroundColor: '#1F2937',
-    borderRadius: 2,
-    overflow: 'hidden',
-  },
-  summaryProgressFill: {
-    height: '100%',
-    borderRadius: 2,
-  },
-  summaryProgressFillText: {
-    height: '100%',
-    borderRadius: 2,
-  },
-  summarySubtext: {
-    fontSize: 9,
-    color: '#64748B',
-    marginTop: 4,
-    fontFamily: 'System',
-  },
-  verticalDivider: {
-    width: 1,
-    backgroundColor: '#1F2937',
-    marginHorizontal: 8,
-  },
+
   // DRAWER MENU STYLES
   drawerOverlay: {
     flex: 1,
@@ -1175,17 +951,11 @@ const styles = StyleSheet.create({
     borderBottomColor: '#1F2937',
   },
   drawerProfileAvatarContainer: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    borderWidth: 2,
-    borderColor: '#4F46E5',
-    overflow: 'hidden',
+    width: 54,
+    height: 54,
+    justifyContent: 'center',
+    alignItems: 'center',
     marginBottom: 12,
-  },
-  drawerAvatar: {
-    width: '100%',
-    height: '100%',
   },
   drawerProfileName: {
     fontSize: 18,
@@ -1193,7 +963,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontFamily: 'System',
   },
-  drawerProfileLevel: {
+  drawerProfileSub: {
     fontSize: 12,
     color: '#94A3B8',
     marginTop: 4,

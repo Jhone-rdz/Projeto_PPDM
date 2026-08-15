@@ -62,14 +62,6 @@ export default function TabLayout() {
           ),
         }}
       />
-      {/* Hide planos screen tab button from visual tabbar, accessible via navigation */}
-      <Tabs.Screen
-        name="planos"
-        options={{
-          title: 'Planos',
-          href: null,
-        }}
-      />
     </Tabs>
   );
 }

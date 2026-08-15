@@ -5,7 +5,6 @@ import {
   Text,
   TouchableOpacity,
   ScrollView,
-  Image,
   Platform,
   ActivityIndicator,
 } from 'react-native';
@@ -41,8 +40,6 @@ export default function PerfilScreen() {
 
   const session = apiService.getSession();
   const user = session.user;
-  const userLevel = perfil ? perfil.nivel.numero : (user ? user.nivel : 1);
-  const userXp = perfil ? perfil.nivel.progresso : 0;
   const progressoGeral = perfil ? perfil.progresso_geral : 0;
 
   const handleBack = () => {
@@ -53,50 +50,7 @@ export default function PerfilScreen() {
     return `${valor}%` as any;
   };
 
-  const getLevelLabelName = (level: number) => {
-    switch (level) {
-      case 0: return 'Iniciante';
-      case 1: return 'Despertado';
-      case 2: return 'Super Nexo 1';
-      case 3: return 'Super Nexo 2';
-      case 4: return 'Super Nexo Blue';
-      default: return 'Além do Limite';
-    }
-  };
 
-  const levelName = getLevelLabelName(userLevel);
-
-  const getLevelDescription = (level: number) => {
-    switch (level) {
-      case 0: return 'Você está dando seus primeiros passos na sua jornada profissional.';
-      case 1: return 'Você começa a entender seu potencial e as áreas mais compatíveis.';
-      case 2: return 'Você está evoluindo rápido e acumulando forças técnicas.';
-      case 3: return 'Seu conhecimento está se consolidando e você se aproxima do mercado.';
-      case 4: return 'Você já domina as principais habilidades e está pronto para voar alto.';
-      default: return 'Você superou todos os limites e é um mentor de carreira Nexo!';
-    }
-  };
-
-  const levelDesc = getLevelDescription(userLevel);
-
-  const getLevelImage = (nivel: number) => {
-    switch (nivel) {
-      case 0:
-        return require('../../assets/images/nivel 0 iniciante.png');
-      case 1:
-        return require('../../assets/images/nivel 1 despertado.png');
-      case 2:
-        return require('../../assets/images/nivel 2 super nexo 1.png');
-      case 3:
-        return require('../../assets/images/nivel 3 super nexo 2.png');
-      case 4:
-        return require('../../assets/images/nivel 4 super nexo blue.png');
-      case 5:
-        return require('../../assets/images/nivel 5 alem do limite.png');
-      default:
-        return require('../../assets/images/nivel 1 despertado.png');
-    }
-  };
 
   // Map forces dynamically
   const forces = perfil ? [
@@ -156,14 +110,7 @@ export default function PerfilScreen() {
     }
   };
 
-  const dynamicNiveis = [
-    { nivel: 0, nome: 'Iniciante', progresso: userLevel > 0 ? '100%' : (userLevel === 0 ? `${userXp}%` : '0%'), bloqueado: userLevel < 0, ativo: userLevel === 0 },
-    { nivel: 1, nome: 'Despertado', progresso: userLevel > 1 ? '100%' : (userLevel === 1 ? `${userXp}%` : '0%'), bloqueado: userLevel < 1, ativo: userLevel === 1 },
-    { nivel: 2, nome: 'Super Nexo 1', progresso: userLevel > 2 ? '100%' : (userLevel === 2 ? `${userXp}%` : '0%'), bloqueado: userLevel < 2, ativo: userLevel === 2 },
-    { nivel: 3, nome: 'Super Nexo 2', progresso: userLevel > 3 ? '100%' : (userLevel === 3 ? `${userXp}%` : '0%'), bloqueado: userLevel < 3, ativo: userLevel === 3 },
-    { nivel: 4, nome: 'Super Nexo Blue', progresso: userLevel > 4 ? '100%' : (userLevel === 4 ? `${userXp}%` : '0%'), bloqueado: userLevel < 4, ativo: userLevel === 4 },
-    { nivel: 5, nome: 'Além do Limite', progresso: userLevel > 5 ? '100%' : (userLevel === 5 ? `${userXp}%` : '0%'), bloqueado: userLevel < 5, ativo: userLevel === 5 },
-  ];
+
 
 
   return (
@@ -182,19 +129,12 @@ export default function PerfilScreen() {
 
         <View style={styles.headerCenter}>
           <Text style={styles.headerTitleBrand}>NEXO</Text>
-          <Text style={styles.headerTitleMain}>SUA EVOLUÇÃO</Text>
-          <Text style={styles.headerSubtitle}>Responda às perguntas e evolua seu nível!</Text>
+          <Text style={styles.headerTitleMain}>PERFIL PROFISSIONAL</Text>
+          <Text style={styles.headerSubtitle}>Gerencie suas competências e carreira técnica</Text>
         </View>
 
         <View style={styles.headerRightCard}>
-          <Image
-            source={getLevelImage(userLevel)}
-            style={styles.headerAvatar}
-          />
-          <View style={styles.headerLevelColumn}>
-            <Text style={styles.headerLevelLabel}>NÍVEL {userLevel}</Text>
-            <Text style={styles.headerLevelName}>{levelName}</Text>
-          </View>
+          <Ionicons name="person-circle-outline" size={28} color="#FFFFFF" />
         </View>
       </View>
 
@@ -205,105 +145,21 @@ export default function PerfilScreen() {
         showsVerticalScrollIndicator={false}
         bounces={false}
       >
-        {/* SEÇÃO 1 — CARROSSEL DE NÍVEIS */}
-        <View style={styles.levelsCarouselContainer}>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.levelsCarouselScroll}
-          >
-            {dynamicNiveis.map((nv, index) => {
-              if (nv.ativo) {
-                // Active Card (Level 1)
-                return (
-                  <View key={index} style={styles.levelCardActive}>
-                    <View style={styles.imageWrapper}>
-                      <Image
-                        source={getLevelImage(nv.nivel)}
-                        style={styles.levelImage}
-                        resizeMode="cover"
-                      />
-                      <View style={styles.levelBadge}>
-                        <Text style={styles.levelBadgeText}>{nv.progresso}</Text>
-                      </View>
-                    </View>
-                    <View style={styles.levelCardFooter}>
-                      <Text style={styles.levelLabel}>NÍVEL {nv.nivel}</Text>
-                      <Text style={styles.levelNameText}>{nv.nome}</Text>
-                    </View>
-                  </View>
-                );
-              }
-
-              if (!nv.bloqueado) {
-                // Unlocked Card (Level 0)
-                return (
-                  <View key={index} style={styles.levelCardUnlocked}>
-                    <View style={styles.imageWrapper}>
-                      <Image
-                        source={getLevelImage(nv.nivel)}
-                        style={styles.levelImage}
-                        resizeMode="cover"
-                      />
-                      <View style={styles.levelBadge}>
-                        <Text style={styles.levelBadgeText}>{nv.progresso}</Text>
-                      </View>
-                    </View>
-                    <View style={styles.levelCardFooter}>
-                      <Text style={styles.levelLabel}>NÍVEL {nv.nivel}</Text>
-                      <Text style={styles.levelNameText}>{nv.nome}</Text>
-                    </View>
-                  </View>
-                );
-              }
-
-              // Locked Card (Levels 2 to 5)
-              return (
-                <View key={index} style={styles.levelCardLocked}>
-                  <View style={styles.imageWrapper}>
-                    <Image
-                      source={getLevelImage(nv.nivel)}
-                      style={[styles.levelImage, styles.levelImageLocked]}
-                      resizeMode="cover"
-                    />
-                    <View style={styles.lockIconContainer}>
-                      <Ionicons name="lock-closed-outline" size={16} color="#94A3B8" />
-                    </View>
-                    <View style={styles.levelBadgeLocked}>
-                      <Text style={styles.levelBadgeTextLocked}>{nv.progresso}</Text>
-                    </View>
-                  </View>
-                  <View style={styles.levelCardFooter}>
-                    <Text style={styles.levelLabelLocked}>NÍVEL {nv.nivel}</Text>
-                    <Text style={styles.levelNameTextLocked}>{nv.nome}</Text>
-                  </View>
+        {/* RESUMO DO PERFIL */}
+        <View style={styles.profileSummarySection}>
+          <View style={styles.profileSummaryCard}>
+            <View style={styles.profileSummaryInfo}>
+              <Text style={styles.profileNameText}>{user?.username || 'Estudante'}</Text>
+              <Text style={styles.profileEmailText}>{user?.email}</Text>
+              <View style={styles.badgeRow}>
+                <View style={styles.infoBadge}>
+                  <Text style={styles.infoBadgeText}>{user?.curso_tecnico || 'Sem Curso'}</Text>
                 </View>
-              );
-            })}
-          </ScrollView>
-        </View>
-
-        {/* SEÇÃO 2 — CARD DO NÍVEL ATUAL */}
-        <View style={styles.currentLevelSection}>
-          <View style={styles.currentLevelCard}>
-            <View style={styles.currentLevelImageContainer}>
-              <Image
-                source={getLevelImage(userLevel)}
-                style={styles.currentLevelImage}
-                resizeMode="contain"
-              />
-            </View>
-
-            <View style={styles.currentLevelTextsContainer}>
-              <Text style={styles.currentLevelTag}>NÍVEL {userLevel}</Text>
-              <Text style={styles.currentLevelName}>{levelName}</Text>
-              <Text style={styles.currentLevelDesc}>
-                {levelDesc}
-              </Text>
-
-              <View style={styles.currentLevelProgressBadge}>
-                <Ionicons name="flash" size={14} color="#F59E0B" />
-                <Text style={styles.currentLevelProgressText}>Progresso {userXp}% ({user?.xp ?? 0} XP)</Text>
+                {user?.objetivo_carreira && (
+                  <View style={[styles.infoBadge, { backgroundColor: 'rgba(79, 70, 229, 0.15)', borderColor: '#4F46E5', borderWidth: 1 }]}>
+                    <Text style={[styles.infoBadgeText, { color: '#00D4FF' }]}>{user?.objetivo_carreira}</Text>
+                  </View>
+                )}
               </View>
             </View>
           </View>
@@ -440,32 +296,9 @@ const styles = StyleSheet.create({
     fontFamily: 'System',
   },
   headerRightCard: {
-    backgroundColor: '#1F2937',
-    borderRadius: 12,
-    padding: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  headerAvatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    marginRight: 8,
-  },
-  headerLevelColumn: {
     justifyContent: 'center',
-  },
-  headerLevelLabel: {
-    fontSize: 10,
-    color: '#94A3B8',
-    fontWeight: 'bold',
-    fontFamily: 'System',
-  },
-  headerLevelName: {
-    fontSize: 13,
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-    fontFamily: 'System',
+    alignItems: 'center',
+    padding: 4,
   },
   scrollView: {
     flex: 1,
@@ -473,179 +306,50 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: 40,
   },
-  levelsCarouselContainer: {
+  profileSummarySection: {
+    paddingHorizontal: 20,
     marginTop: 20,
   },
-  levelsCarouselScroll: {
-    paddingHorizontal: 20,
-    gap: 10,
-  },
-  levelCardActive: {
-    backgroundColor: '#111827',
-    borderWidth: 2,
-    borderColor: '#4F46E5',
-    borderRadius: 16,
-    overflow: 'hidden',
-    width: 110,
-  },
-  levelCardUnlocked: {
-    backgroundColor: '#111827',
-    borderWidth: 1,
-    borderColor: '#1F2937',
-    borderRadius: 16,
-    overflow: 'hidden',
-    width: 110,
-  },
-  levelCardLocked: {
-    backgroundColor: '#111827',
-    borderWidth: 1,
-    borderColor: '#1F2937',
-    borderRadius: 16,
-    overflow: 'hidden',
-    width: 110,
-  },
-  imageWrapper: {
-    position: 'relative',
-    width: '100%',
-    height: 130,
-  },
-  levelImage: {
-    width: '100%',
-    height: '100%',
-  },
-  levelImageLocked: {
-    opacity: 0.35,
-  },
-  levelBadge: {
-    position: 'absolute',
-    top: 6,
-    left: 6,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-  },
-  levelBadgeText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: 'bold',
-    fontFamily: 'System',
-  },
-  levelBadgeLocked: {
-    position: 'absolute',
-    top: 6,
-    left: 6,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-  },
-  levelBadgeTextLocked: {
-    color: '#64748B',
-    fontSize: 12,
-    fontWeight: 'bold',
-    fontFamily: 'System',
-  },
-  lockIconContainer: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-  },
-  levelCardFooter: {
-    padding: 8,
-  },
-  levelLabel: {
-    fontSize: 10,
-    color: '#94A3B8',
-    fontWeight: '700',
-    fontFamily: 'System',
-  },
-  levelNameText: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginTop: 2,
-    fontFamily: 'System',
-  },
-  levelLabelLocked: {
-    fontSize: 10,
-    color: '#64748B',
-    fontWeight: '700',
-    fontFamily: 'System',
-  },
-  levelNameTextLocked: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#64748B',
-    marginTop: 2,
-    fontFamily: 'System',
-  },
-  currentLevelSection: {
-    paddingHorizontal: 20,
-    marginTop: 16,
-  },
-  currentLevelCard: {
+  profileSummaryCard: {
     backgroundColor: '#111827',
     borderRadius: 20,
-    overflow: 'hidden',
-    height: 200,
-    flexDirection: 'row',
+    padding: 20,
     borderWidth: 1,
     borderColor: '#1F2937',
   },
-  currentLevelImageContainer: {
-    width: '45%',
-    height: '100%',
-    position: 'relative',
-  },
-  currentLevelImage: {
+  profileSummaryInfo: {
     width: '100%',
-    height: '100%',
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
   },
-  currentLevelTextsContainer: {
-    width: '55%',
-    padding: 20,
-    justifyContent: 'center',
-  },
-  currentLevelTag: {
-    fontSize: 12,
-    color: '#94A3B8',
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    fontFamily: 'System',
-  },
-  currentLevelName: {
-    fontSize: 28,
+  profileNameText: {
+    fontSize: 22,
     fontWeight: 'bold',
     color: '#FFFFFF',
+    fontFamily: 'System',
+  },
+  profileEmailText: {
+    fontSize: 14,
+    color: '#94A3B8',
     marginTop: 4,
     fontFamily: 'System',
   },
-  currentLevelDesc: {
-    fontSize: 13,
-    color: '#94A3B8',
-    marginTop: 8,
-    lineHeight: 20,
-    fontFamily: 'System',
-  },
-  currentLevelProgressBadge: {
-    backgroundColor: '#1F2937',
-    borderRadius: 20,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+  badgeRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginTop: 14,
-    alignSelf: 'flex-start',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 16,
   },
-  currentLevelProgressText: {
-    color: '#FFFFFF',
-    fontSize: 13,
-    fontWeight: '600',
+  infoBadge: {
+    backgroundColor: 'rgba(0, 212, 255, 0.1)',
+    borderWidth: 1,
+    borderColor: '#00D4FF',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  infoBadgeText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#E2E8F0',
     fontFamily: 'System',
   },
   overallProgressSection: {

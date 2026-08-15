@@ -77,27 +77,27 @@ export default function ConfiguracoesScreen() {
 
   const handleResetProgress = () => {
     Alert.alert(
-      '⚠️ Redefinir Progresso',
-      'Tem certeza de que deseja redefinir todo o seu progresso? Isso limpará seus dados de XP, nível, perfil de habilidades e respostas anteriores do questionário. Esta ação não pode ser desfeita.',
+      '⚠️ Redefinir Perfil Profissional',
+      'Tem certeza de que deseja redefinir seu diagnóstico de carreira? Isso limpará suas respostas anteriores do questionário e do perfil de competências para que você possa refazê-los. Esta ação não pode ser desfeita.',
       [
         { text: 'Cancelar', style: 'cancel' },
         {
-          text: 'Redefinir Tudo',
+          text: 'Redefinir Perfil',
           style: 'destructive',
           onPress: async () => {
             setSaving(true);
             try {
               await apiService.resetProgress();
-              Alert.alert('Progresso Zerado!', 'Seu progresso foi redefinido. Vamos refazer o onboarding.', [
+              Alert.alert('Perfil Redefinido!', 'Suas competências foram redefinidas. Vamos refazer o diagnóstico de onboarding.', [
                 {
-                  text: 'Ir para Onboarding',
+                  text: 'Iniciar Onboarding',
                   onPress: () => {
                     router.replace('/onboarding/questionario');
                   },
                 },
               ]);
             } catch (err: any) {
-              Alert.alert('Erro', err.message || 'Falha ao redefinir progresso.');
+              Alert.alert('Erro', err.message || 'Falha ao redefinir perfil profissional.');
             } finally {
               setSaving(false);
             }
@@ -250,7 +250,7 @@ export default function ConfiguracoesScreen() {
 
           <TouchableOpacity style={styles.dangerBtn} onPress={handleResetProgress}>
             <Ionicons name="refresh" size={18} color="#EF4444" />
-            <Text style={styles.dangerBtnText}>Redefinir Todo o Progresso</Text>
+            <Text style={styles.dangerBtnText}>Redefinir Perfil Profissional</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
