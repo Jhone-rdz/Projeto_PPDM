@@ -12,7 +12,7 @@ import {
   Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -86,6 +86,7 @@ interface CursoItem {
 
 export default function CarreirasScreen() {
   const router = useRouter();
+  const { openCursoId } = useLocalSearchParams<{ openCursoId?: string }>();
   const [areaAtiva, setAreaAtiva] = useState<AreaType>('tecnologia');
   const [busca, setBusca] = useState('');
   const [cursos, setCursos] = useState<CursoItem[]>([]);
@@ -93,6 +94,57 @@ export default function CarreirasScreen() {
   const [perfil, setPerfil] = useState<PerfilUsuario | null>(null);
   const [selectedCurso, setSelectedCurso] = useState<any | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (!openCursoId) return;
+
+    const findAndOpenCourse = async () => {
+      // 1. Try finding in currently loaded list
+      let found = cursos.find(c => c.id === Number(openCursoId));
+      if (found) {
+        setSelectedCurso(found);
+        setIsModalOpen(true);
+        router.setParams({ openCursoId: undefined } as any);
+        return;
+      }
+
+      // 2. Try fetching all courses from backend
+      try {
+        const data = await apiService.getCursos();
+        const mapped = data.map((c: any) => ({
+          id: c.id,
+          tipo: c.tipo,
+          duracao: c.duracao,
+          nome: c.nome,
+          descricao: c.descricao,
+          tags: c.tags,
+          match: `${c.match}%`,
+          icone: c.icone,
+          corIcone: c.corIcone || c.cor_icone,
+          corFundo: c.corFundo || c.cor_fundo,
+        }));
+        const backendFound = mapped.find(c => c.id === Number(openCursoId));
+        if (backendFound) {
+          setSelectedCurso(backendFound);
+          setIsModalOpen(true);
+          router.setParams({ openCursoId: undefined } as any);
+          return;
+        }
+      } catch (err) {
+        console.warn('Failed to fetch fallback courses:', err);
+      }
+
+      // 3. Fallback to static mock courses
+      const staticFound = DADOS_CURSOS.find(c => c.id === Number(openCursoId));
+      if (staticFound) {
+        setSelectedCurso(staticFound);
+        setIsModalOpen(true);
+        router.setParams({ openCursoId: undefined } as any);
+      }
+    };
+
+    findAndOpenCourse();
+  }, [openCursoId, cursos, router]);
 
   // Load session statistics dynamically
   const session = apiService.getSession();

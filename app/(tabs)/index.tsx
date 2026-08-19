@@ -114,6 +114,13 @@ export default function HomeScreen() {
     router.push('/(tabs)/perfil');
   };
 
+  const handleOpenCourseDetails = (curso: any) => {
+    router.push({
+      pathname: '/(tabs)/carreiras',
+      params: { openCursoId: curso.id }
+    });
+  };
+
 
 
   const handleLogout = async () => {
@@ -285,7 +292,12 @@ export default function HomeScreen() {
                 const iconColor = curso.cor_icone || '#8B5CF6';
 
                 return (
-                  <View key={index} style={styles.courseCard}>
+                  <TouchableOpacity
+                    key={index}
+                    style={styles.courseCard}
+                    onPress={() => handleOpenCourseDetails(curso)}
+                    activeOpacity={0.8}
+                  >
                     <View
                       style={[
                         styles.matchBadge,
@@ -316,7 +328,7 @@ export default function HomeScreen() {
                         {typeLabel}
                       </Text>
                     </View>
-                  </View>
+                  </TouchableOpacity>
                 );
               })}
             </ScrollView>
