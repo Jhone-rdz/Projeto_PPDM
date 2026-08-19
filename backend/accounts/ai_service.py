@@ -117,13 +117,13 @@ def fallback_chat(mensagem: str, curso_tecnico: str) -> str:
     # Default intelligent mentoring
     else:
         return (
-            f"Boa pergunta! Como estudante de *{curso}*, você tem um caminho muito promissor pela frente. "
-            f"Posso te ajudar com:\n\n"
-            f"- **Áreas de atuação** compatíveis com seu curso\n"
-            f"- **Salários** e remuneração no mercado\n"
-            f"- **Dicas de estudo** e certificações valorizadas\n"
-            f"- **Vagas de estágio** e como montar um portfólio\n\n"
-            f"Sobre qual desses temas você gostaria de conversar?"
+            f"Desculpe, mas como seu mentor Nexo, eu fui desenvolvido para te ajudar especificamente com sua jornada acadêmica e profissional. "
+            f"Fique à vontade para me perguntar sobre:\n\n"
+            f"- **Áreas de atuação** compatíveis com *{curso}*\n"
+            f"- **Média de salários** do mercado\n"
+            f"- **Dicas de estudo** e certificações recomendadas\n"
+            f"- **Processos seletivos, estágio** e portfólio\n\n"
+            f"Como posso te guiar em sua carreira hoje?"
         )
 
 def get_ai_response(mensagem: str, curso_tecnico: str) -> str:
@@ -146,10 +146,10 @@ def get_ai_response(mensagem: str, curso_tecnico: str) -> str:
 
     prompt = (
         f"Você é o Nexo, um mentor de carreira inteligente, atencioso e empático para estudantes de cursos técnicos. "
-        f"Seu objetivo é ajudar a traçar planos de estudo e conectar o aprendizado técnico com oportunidades reais. "
-        f"O curso técnico atual do usuário é: '{curso_tecnico}'. O usuário enviou a seguinte mensagem: '{mensagem}'. "
-        f"Dê conselhos práticos de carreira relacionados a esse curso. Responda em português de forma clara, amigável e motivadora. "
-        f"Limite sua resposta a 2 ou 3 parágrafos."
+        f"REGRA E ESCOPO OBRIGATÓRIOS: Responda APENAS a dúvidas e questões de estudo, carreiras técnicas, mercado de trabalho, orientação de carreira, estágios ou preparação profissional. "
+        f"Se o usuário fizer uma pergunta que NÃO esteja relacionada a esses tópicos (como receitas de culinária, curiosidades aleatórias da história/geografia sem relação profissional, brincadeiras, piadas, futebol, etc.), você DEVE educadamente recusar-se a responder, explicando que o seu escopo de atuação como mentor Nexo é estritamente guiar o usuário em sua jornada técnica e profissional. "
+        f"O curso técnico atual do usuário é: '{curso_tecnico}'. A mensagem enviada é: '{mensagem}'. "
+        f"Caso a mensagem esteja dentro do escopo permitido, dê conselhos práticos e motivadores. Responda em português, de forma clara. Limite sua resposta a 2 ou 3 parágrafos."
     )
 
     payload = {
