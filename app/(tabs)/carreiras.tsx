@@ -122,6 +122,11 @@ export default function CarreirasScreen() {
           icone: c.icone,
           corIcone: c.corIcone || c.cor_icone,
           corFundo: c.corFundo || c.cor_fundo,
+          scoreTecnico: c.scoreTecnico,
+          scoreComportamental: c.scoreComportamental,
+          scorePragmatico: c.scorePragmatico,
+          explicacoes: c.explicacoes,
+          confianca: c.confianca,
         }));
         const backendFound = mapped.find(c => c.id === Number(openCursoId));
         if (backendFound) {
@@ -214,6 +219,11 @@ export default function CarreirasScreen() {
           icone: c.icone,
           corIcone: c.corIcone || c.cor_icone,
           corFundo: c.corFundo || c.cor_fundo,
+          scoreTecnico: c.scoreTecnico,
+          scoreComportamental: c.scoreComportamental,
+          scorePragmatico: c.scorePragmatico,
+          explicacoes: c.explicacoes,
+          confianca: c.confianca,
         }));
         setCursos(mapped);
       } catch (err) {
@@ -498,6 +508,72 @@ export default function CarreirasScreen() {
             {/* Description */}
             <Text style={styles.modalLabel}>Sobre o Curso</Text>
             <Text style={styles.modalDescription}>{selectedCurso?.descricao}</Text>
+
+            {/* Selo de Confiança */}
+            {selectedCurso?.confianca && (
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 6 }}>
+                <Ionicons 
+                  name={selectedCurso.confianca === 'ALTA CONFIANÇA' ? 'checkmark-circle-outline' : 'alert-circle-outline'} 
+                  size={16} 
+                  color={selectedCurso.confianca === 'ALTA CONFIANÇA' ? '#10B981' : '#F59E0B'} 
+                />
+                <Text style={{ fontSize: 11, fontWeight: 'bold', color: selectedCurso.confianca === 'ALTA CONFIANÇA' ? '#10B981' : '#F59E0B', marginLeft: 4 }}>
+                  {selectedCurso.confianca}
+                </Text>
+              </View>
+            )}
+
+            {/* Radar de Eixos (Barras de progresso para BT, PC, MP) */}
+            {selectedCurso?.scoreTecnico !== undefined && (
+              <View style={{ marginVertical: 8 }}>
+                <Text style={{ fontSize: 13, fontWeight: 'bold', color: '#E2E8F0', marginBottom: 6 }}>Eixos de Compatibilidade</Text>
+                
+                {/* Bagagem Técnica */}
+                <View style={{ marginBottom: 5 }}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 2 }}>
+                    <Text style={{ fontSize: 11, color: '#94A3B8' }}>Bagagem Técnica</Text>
+                    <Text style={{ fontSize: 11, color: '#FFFFFF', fontWeight: 'bold' }}>{selectedCurso.scoreTecnico}%</Text>
+                  </View>
+                  <View style={{ height: 6, backgroundColor: '#1E2937', borderRadius: 3 }}>
+                    <View style={{ width: `${selectedCurso.scoreTecnico}%`, height: 6, backgroundColor: '#4F46E5', borderRadius: 3 }} />
+                  </View>
+                </View>
+
+                {/* Perfil Comportamental */}
+                <View style={{ marginBottom: 5 }}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 2 }}>
+                    <Text style={{ fontSize: 11, color: '#94A3B8' }}>Perfil Comportamental</Text>
+                    <Text style={{ fontSize: 11, color: '#FFFFFF', fontWeight: 'bold' }}>{selectedCurso.scoreComportamental}%</Text>
+                  </View>
+                  <View style={{ height: 6, backgroundColor: '#1E2937', borderRadius: 3 }}>
+                    <View style={{ width: `${selectedCurso.scoreComportamental}%`, height: 6, backgroundColor: '#EC4899', borderRadius: 3 }} />
+                  </View>
+                </View>
+
+                {/* Metas Pragmáticas */}
+                <View style={{ marginBottom: 5 }}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 2 }}>
+                    <Text style={{ fontSize: 11, color: '#94A3B8' }}>Metas Pragmáticas</Text>
+                    <Text style={{ fontSize: 11, color: '#FFFFFF', fontWeight: 'bold' }}>{selectedCurso.scorePragmatico}%</Text>
+                  </View>
+                  <View style={{ height: 6, backgroundColor: '#1E2937', borderRadius: 3 }}>
+                    <View style={{ width: `${selectedCurso.scorePragmatico}%`, height: 6, backgroundColor: '#F59E0B', borderRadius: 3 }} />
+                  </View>
+                </View>
+              </View>
+            )}
+
+            {/* Explicabilidade (Resumo explicativo por que deu match) */}
+            {selectedCurso?.explicacoes && selectedCurso.explicacoes.length > 0 && (
+              <View style={{ backgroundColor: '#111827', padding: 8, borderRadius: 8, marginVertical: 6, borderWidth: 1, borderColor: '#1F2937' }}>
+                <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#10B981', marginBottom: 4 }}>Análise do Match:</Text>
+                {selectedCurso.explicacoes.map((exp: string, idx: number) => (
+                  <Text key={idx} style={{ fontSize: 11, color: '#E2E8F0', marginVertical: 1 }}>
+                    • {exp}
+                  </Text>
+                ))}
+              </View>
+            )}
 
             {/* Tags */}
             <Text style={styles.modalLabel}>Disciplinas e Foco</Text>

@@ -435,52 +435,206 @@ class CursoComMatchSerializer(serializers.ModelSerializer):
     corFundo = serializers.CharField(source='cor_fundo')
     match = serializers.SerializerMethodField()
     tipoMatch = serializers.SerializerMethodField()
+    scoreTecnico = serializers.SerializerMethodField()
+    scoreComportamental = serializers.SerializerMethodField()
+    scorePragmatico = serializers.SerializerMethodField()
+    explicacoes = serializers.SerializerMethodField()
+    confianca = serializers.SerializerMethodField()
 
     class Meta:
         model = Curso
         fields = [
             'id', 'nome', 'tipo', 'duracao', 'descricao', 'tags',
-            'icone', 'corIcone', 'corFundo', 'match', 'tipoMatch'
+            'icone', 'corIcone', 'corFundo', 'match', 'tipoMatch',
+            'scoreTecnico', 'scoreComportamental', 'scorePragmatico',
+            'explicacoes', 'confianca'
         ]
 
-    def get_match(self, obj):
+    def _get_detailed_match(self, obj):
+        # Cache results by course ID
+        if not hasattr(self, '_detailed_match_cache'):
+            self._detailed_match_cache = {}
+            
+        if obj.id in self._detailed_match_cache:
+            return self._detailed_match_cache[obj.id]
+            
         request = self.context.get('request')
         if not request or not request.user.is_authenticated:
-            return obj.match_percent
-            
-        try:
-            scores = get_user_boosted_scores(request.user)
-            area_score = scores.get(obj.area.lower(), 50)
-            
-            # Get requirements
-            reqs = get_course_requirements(obj.nome, obj.area.lower())
-            
-            attr_score = 0
-            for attr, weight in reqs.items():
-                val = scores.get(attr, 50)
-                attr_score += val * weight
-                
-            if not reqs:
-                attr_score = area_score
-                
-            # Combine 40% area affinity + 60% specific skills alignment
-            match_val = round((area_score * 0.4) + (attr_score * 0.6))
-            
-            # Apply a small course-specific offset to break ties and differentiate similar scores
-            match_val = match_val - (obj.id % 4)
+            # Fallback
+            result = {
+                'match': obj.match_percent,
+                'score_tecnico': obj.match_percent,
+                'score_comportamental': obj.match_percent,
+                'score_pragmatico': obj.match_percent,
+                'explicacoes': ["Sem informações de perfil suficientes."],
+                'confianca': "RESULTADO IMPRECISO"
+            }
+            self._detailed_match_cache[obj.id] = result
+            return result
 
-            # Boost if technical course matches tags
-            user_tech = (request.user.curso_tecnico or "").lower()
+        try:
+            user = request.user
+            scores = get_user_boosted_scores(user)
+            course_area = obj.area.lower()
+            user_tech = (user.curso_tecnico or "").strip().lower()
+
+            # 1. Bagagem Técnica Sub-axes
+            if "desenvolvimento" in user_tech or "informática" in user_tech or "redes" in user_tech:
+                eixo_mec_fit = 100 if course_area == 'tecnologia' else (35 if course_area in ['negocios', 'agronomia'] else 15)
+            elif "administração" in user_tech:
+                eixo_mec_fit = 100 if course_area == 'negocios' else (45 if course_area == 'tecnologia' else 25)
+            elif "enfermagem" in user_tech:
+                eixo_mec_fit = 100 if course_area == 'saude' else 25
+            elif "agropecuária" in user_tech:
+                eixo_mec_fit = 100 if course_area == 'agronomia' else 25
+            else:
+                eixo_mec_fit = 55
+
+            reqs = get_course_requirements(obj.nome, course_area)
+            if reqs:
+                disciplinas_fit = sum(scores.get(attr, 50) for attr in reqs.keys()) / len(reqs)
+            else:
+                disciplinas_fit = scores.get(course_area, 50)
+
+            maturidade_pratica = min(100, 35 + (user.xp // 5))
+
+            score_tecnico = round((eixo_mec_fit * 0.4) + (disciplinas_fit * 0.4) + (maturidade_pratica * 0.2))
+
+            # 2. Perfil Comportamental Sub-axes
+            if course_area in ['tecnologia', 'saude', 'agronomia']:
+                eixo_analitico_criativo = (scores.get('logica', 50) * 0.6) + (scores.get('matematica', 50) * 0.4)
+            else:
+                eixo_analitico_criativo = (scores.get('criatividade', 50) * 0.6) + (scores.get('desenho', 50) * 0.4)
+
+            if course_area == 'negocios':
+                eixo_lideranca_tecnico = (scores.get('lideranca', 50) * 0.5) + (scores.get('comunicacao', 50) * 0.5)
+            else:
+                eixo_lideranca_tecnico = (scores.get('logica', 50) * 0.7) + (scores.get('foco', 50) * 0.3)
+
+            eixo_pratica_teoria = (scores.get('foco', 50) * 0.6) + (scores.get('programacao', 50) * 0.4)
+            eixo_rotina_autonomia = (scores.get('logica', 50) * 0.5) + (scores.get('foco', 50) * 0.5)
+
+            score_comportamental = round((eixo_analitico_criativo + eixo_lideranca_tecnico + eixo_pratica_teoria + eixo_rotina_autonomia) / 4)
+
+            # 3. Metas Pragmáticas Sub-axes
+            fit_modalidade = 90
+            fit_duracao = 95 if "tecnólogo" in obj.tipo.lower() else 75
+            fit_financeiro = 85
+
+            score_pragmatico = round((fit_modalidade * 0.4) + (fit_duracao * 0.4) + (fit_financeiro * 0.2))
+
+            # 4. Trilha & Pesos
+            # Auto-detect path
+            is_same_area = False
+            is_related = False
+            if "desenvolvimento" in user_tech or "informática" in user_tech or "redes" in user_tech:
+                is_same_area = (course_area == 'tecnologia')
+                is_related = (course_area in ['negocios', 'direito'])
+            elif "administração" in user_tech:
+                is_same_area = (course_area == 'negocios')
+                is_related = (course_area in ['tecnologia', 'direito'])
+            elif "enfermagem" in user_tech:
+                is_same_area = (course_area == 'saude')
+                is_related = (course_area in ['agronomia'])
+            elif "agropecuária" in user_tech:
+                is_same_area = (course_area == 'agronomia')
+                is_related = (course_area in ['saude'])
+
+            if is_same_area:
+                w_tec, w_comp, w_prag = 0.50, 0.30, 0.20
+            elif is_related:
+                w_tec, w_comp, w_prag = 0.30, 0.40, 0.30
+            else:
+                w_tec, w_comp, w_prag = 0.10, 0.60, 0.30
+
+            score_geral = (score_tecnico * w_tec) + (score_comportamental * w_comp) + (score_pragmatico * w_prag)
+
+            # 5. Outliers behavioral penalty (floor: 25%)
+            has_outlier = (
+                eixo_analitico_criativo < 25 or
+                eixo_lideranca_tecnico < 25 or
+                eixo_pratica_teoria < 25 or
+                eixo_rotina_autonomia < 25
+            )
+            if has_outlier:
+                score_final = score_geral * 0.75
+            else:
+                score_final = score_geral
+
+            # Offset to break ties
+            score_final = score_final - (obj.id % 3)
+
+            # Boost if user tech matches tags
             if user_tech:
                 boost = 0
                 for tag in obj.tags:
                     if tag.lower() in user_tech or user_tech in tag.lower():
-                        boost += 5
-                match_val = match_val + boost
-                
-            return max(30, min(98, match_val))
-        except Exception:
-            return obj.match_percent
+                        boost += 4
+                score_final += boost
+
+            match_val = round(max(30, min(98, score_final)))
+
+            # 6. Confidence Calculation based on score variance
+            profile_vals = [
+                scores.get('logica', 50), scores.get('criatividade', 50), scores.get('foco', 50),
+                scores.get('comunicacao', 50), scores.get('lideranca', 50), scores.get('matematica', 50),
+                scores.get('fisica', 50), scores.get('programacao', 50), scores.get('desenho', 50),
+                scores.get('portugues', 50), scores.get('biologia', 50), scores.get('quimica', 50),
+                scores.get('historia', 50)
+            ]
+            mean_val = sum(profile_vals) / len(profile_vals)
+            variance = sum((x - mean_val) ** 2 for x in profile_vals) / len(profile_vals)
+            import math
+            std_dev = math.sqrt(variance)
+            confianca_label = "ALTA CONFIANÇA" if std_dev >= 8.0 else "RESULTADO IMPRECISO"
+
+            # 7. Explicabilidade Narratives
+            explicacoes = []
+            
+            # Positive reasons
+            if eixo_analitico_criativo > 65:
+                explicacoes.append("Seu raciocínio lógico e analítico se alinham com a grade científica deste curso.")
+            elif maturidade_pratica > 65:
+                explicacoes.append("Sua bagagem e vivência de atividades práticas dão excelente suporte técnico de partida.")
+            elif eixo_lideranca_tecnico > 65:
+                explicacoes.append("Sua facilidade de liderança e comunicação é muito valorizada nesta área.")
+            else:
+                explicacoes.append("A grade deste curso se encaixa com as habilidades gerais mapeadas no seu questionário.")
+
+            # Negative reasons / areas to improve
+            if has_outlier:
+                explicacoes.append("Atenção: Identificamos um forte choque de perfil comportamental com a rotina de trabalho desta carreira.")
+            elif disciplinas_fit < 45:
+                explicacoes.append("Atenção: A grade curricular do curso exige matérias em que você demonstrou menor afinidade.")
+            elif fit_duracao < 80:
+                explicacoes.append("Atenção: A duração mais longa do bacharelado pode ser um fator limitante para inserção rápida no mercado.")
+
+            result = {
+                'match': match_val,
+                'score_tecnico': score_tecnico,
+                'score_comportamental': score_comportamental,
+                'score_pragmatico': score_pragmatico,
+                'explicacoes': explicacoes[:2],
+                'confianca': confianca_label
+            }
+            self._detailed_match_cache[obj.id] = result
+            return result
+        except Exception as e:
+            print("Error in _get_detailed_match:", e)
+            result = {
+                'match': obj.match_percent,
+                'score_tecnico': obj.match_percent,
+                'score_comportamental': obj.match_percent,
+                'score_pragmatico': obj.match_percent,
+                'explicacoes': ["Erro ao calcular detalhes de match."],
+                'confianca': "RESULTADO IMPRECISO"
+            }
+            self._detailed_match_cache[obj.id] = result
+            return result
+
+    def get_match(self, obj):
+        res = self._get_detailed_match(obj)
+        return res['match']
 
     def get_tipoMatch(self, obj):
         match_val = self.get_match(obj)
@@ -490,4 +644,24 @@ class CursoComMatchSerializer(serializers.ModelSerializer):
             return 'MATCH BOM'
         else:
             return 'MATCH REGULAR'
+
+    def get_scoreTecnico(self, obj):
+        res = self._get_detailed_match(obj)
+        return res['score_tecnico']
+
+    def get_scoreComportamental(self, obj):
+        res = self._get_detailed_match(obj)
+        return res['score_comportamental']
+
+    def get_scorePragmatico(self, obj):
+        res = self._get_detailed_match(obj)
+        return res['score_pragmatico']
+
+    def get_explicacoes(self, obj):
+        res = self._get_detailed_match(obj)
+        return res['explicacoes']
+
+    def get_confianca(self, obj):
+        res = self._get_detailed_match(obj)
+        return res['confianca']
 

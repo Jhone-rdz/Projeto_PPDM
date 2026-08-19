@@ -14,6 +14,11 @@ export interface CursoComMatch {
   corFundo: string;
   match: number;
   tipoMatch: string;
+  scoreTecnico?: number;
+  scoreComportamental?: number;
+  scorePragmatico?: number;
+  explicacoes?: string[];
+  confianca?: string;
 }
 
 export interface PerfilUsuario {
