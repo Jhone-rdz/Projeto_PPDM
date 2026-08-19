@@ -7,7 +7,6 @@ import {
   ScrollView,
   Platform,
   Modal,
-  Alert,
   Animated,
   ActivityIndicator,
   Image,
@@ -148,13 +147,7 @@ export default function HomeScreen() {
           <Text style={styles.headerSubtitle}>Descubra seu futuro profissional</Text>
         </View>
 
-        <TouchableOpacity
-          style={styles.headerButton}
-          onPress={() => Alert.alert('Notificações', 'Sem notificações pendentes.')}
-          activeOpacity={0.7}
-        >
-          <Ionicons name="notifications-outline" size={22} color="#FFFFFF" />
-        </TouchableOpacity>
+        <View style={{ width: 40 }} />
       </View>
 
       {/* SCROLL VIEW (Conteúdo) */}
