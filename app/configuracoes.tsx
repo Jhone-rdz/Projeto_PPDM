@@ -35,12 +35,12 @@ export default function ConfiguracoesScreen() {
   const [saving, setSaving] = useState(false);
 
   // Form states
+  const [username, setUsername] = useState('');
   const [cursoTecnico, setCursoTecnico] = useState('');
   const [objetivoCarreira, setObjetivoCarreira] = useState('');
   const [showCursoPicker, setShowCursoPicker] = useState(false);
 
   // Toggle preferences states
-  const [notificacoes, setNotificacoes] = useState(true);
   const [modoOffline, setModoOffline] = useState(false);
 
   useEffect(() => {
@@ -49,6 +49,7 @@ export default function ConfiguracoesScreen() {
         const session = apiService.getSession();
         if (session.user) {
           setUser(session.user);
+          setUsername(session.user.username || '');
           setCursoTecnico(session.user.curso_tecnico || '');
           setObjetivoCarreira(session.user.objetivo_carreira || '');
         }
@@ -65,9 +66,19 @@ export default function ConfiguracoesScreen() {
     setSaving(true);
     try {
       await apiService.updateProfileInfo({
+        username,
         curso_tecnico: cursoTecnico,
         objetivo_carreira: objetivoCarreira,
       });
+      // Update local user state representation as well
+      if (user) {
+        setUser({
+          ...user,
+          username,
+          curso_tecnico: cursoTecnico,
+          objetivo_carreira: objetivoCarreira,
+        });
+      }
       Alert.alert('Sucesso 🎉', 'Configurações de perfil salvas com sucesso!');
     } catch (err: any) {
       Alert.alert('Erro', err.message || 'Falha ao salvar configurações.');
@@ -151,9 +162,13 @@ export default function ConfiguracoesScreen() {
           <Text style={styles.cardTitle}>Dados Cadastrais</Text>
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Nome de Usuário</Text>
-            <View style={styles.disabledInput}>
-              <Text style={styles.disabledText}>{user?.username}</Text>
-            </View>
+            <TextInput
+              style={styles.textInput}
+              value={username}
+              onChangeText={setUsername}
+              placeholder="Digite seu nome..."
+              placeholderTextColor="#4B5563"
+            />
           </View>
           <View style={styles.inputGroup}>
             <Text style={styles.label}>E-mail</Text>
@@ -207,19 +222,6 @@ export default function ConfiguracoesScreen() {
         {/* SEÇÃO 3: PREFERÊNCIAS DO APLICATIVO */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Preferências</Text>
-
-          <View style={styles.preferenceRow}>
-            <View style={styles.preferenceTexts}>
-              <Text style={styles.preferenceLabel}>Notificações Diárias</Text>
-              <Text style={styles.preferenceDesc}>Lembretes para responder ao quiz diário.</Text>
-            </View>
-            <Switch
-              value={notificacoes}
-              onValueChange={setNotificacoes}
-              trackColor={{ false: '#1E293B', true: '#4F46E5' }}
-              thumbColor={notificacoes ? '#FFFFFF' : '#94A3B8'}
-            />
-          </View>
 
           <View style={styles.preferenceRow}>
             <View style={styles.preferenceTexts}>

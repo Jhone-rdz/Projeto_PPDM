@@ -326,7 +326,7 @@ export const apiService = {
     }
   },
 
-  updateProfileInfo: async (fields: { curso_tecnico?: string; objetivo_carreira?: string }) => {
+  updateProfileInfo: async (fields: { username?: string; curso_tecnico?: string; objetivo_carreira?: string }) => {
     try {
       const token = await getToken();
       const response = await fetch(`${API_BASE_URL}/accounts/profile/`, {

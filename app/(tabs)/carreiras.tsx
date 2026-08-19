@@ -5,7 +5,6 @@ import {
   Text,
   TouchableOpacity,
   ScrollView,
-  Image,
   TextInput,
   Platform,
   ActivityIndicator,
@@ -16,7 +15,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { apiService, PerfilUsuario } from '../_services/api';
+import { apiService } from '../_services/api';
 
 const DADOS_CURSOS = [
   // Tecnologia
@@ -190,7 +189,6 @@ export default function CarreirasScreen() {
   const [busca, setBusca] = useState('');
   const [cursos, setCursos] = useState<CursoItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [perfil, setPerfil] = useState<PerfilUsuario | null>(null);
   const [selectedCurso, setSelectedCurso] = useState<any | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -250,47 +248,9 @@ export default function CarreirasScreen() {
     findAndOpenCourse();
   }, [openCursoId, cursos, router]);
 
-  // Load session statistics dynamically
-  const session = apiService.getSession();
-  const user = session.user;
 
-  // Load profile details on mount
-  useEffect(() => {
-    const loadPerfil = async () => {
-      try {
-        const data = await apiService.getPerfil();
-        setPerfil(data);
-      } catch (err) {
-        console.warn('Failed to load profile in carreiras:', err);
-      }
-    };
-    loadPerfil();
-  }, []);
 
-  const userLevel = perfil ? perfil.nivel.numero : (user ? user.nivel : 1);
-  const getLevelLabelName = (level: number) => {
-    switch (level) {
-      case 0: return 'Iniciante';
-      case 1: return 'Despertado';
-      case 2: return 'Super Nexo 1';
-      case 3: return 'Super Nexo 2';
-      case 4: return 'Super Nexo Blue';
-      default: return 'Além do Limite';
-    }
-  };
-  const levelName = perfil ? perfil.nivel.nome : getLevelLabelName(userLevel);
 
-  const getLevelImage = (lvl: number) => {
-    switch (lvl) {
-      case 0: return require('../../assets/images/nivel 0 iniciante.png');
-      case 1: return require('../../assets/images/nivel 1 despertado.png');
-      case 2: return require('../../assets/images/nivel 2 super nexo 1.png');
-      case 3: return require('../../assets/images/nivel 3 super nexo 2.png');
-      case 4: return require('../../assets/images/nivel 4 super nexo blue.png');
-      case 5: return require('../../assets/images/nivel 5 alem do limite.png');
-      default: return require('../../assets/images/nivel 1 despertado.png');
-    }
-  };
 
   const handleBack = () => {
     router.back();
@@ -365,16 +325,7 @@ export default function CarreirasScreen() {
           <Text style={styles.headerSubtitle}>Baseado no seu perfil lógico e criativo.</Text>
         </View>
 
-        <View style={styles.headerRightCard}>
-          <Image
-            source={getLevelImage(userLevel)}
-            style={styles.headerAvatar}
-          />
-          <View style={styles.headerLevelColumn}>
-            <Text style={styles.headerLevelLabel}>NÍVEL {userLevel}</Text>
-            <Text style={styles.headerLevelName}>{levelName}</Text>
-          </View>
-        </View>
+        <View style={{ width: 38 }} />
       </View>
 
       {/* ScrollView principal */}
