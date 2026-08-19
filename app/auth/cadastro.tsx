@@ -152,8 +152,9 @@ export default function CadastroScreen() {
       </View>
 
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
+        keyboardVerticalOffset={Platform.select({ ios: 64, android: 0 })}
       >
         <ScrollView
           contentContainerStyle={styles.scrollContainer}
