@@ -411,6 +411,7 @@ const styles = StyleSheet.create({
   },
   formContainer: {
     width: '100%',
+    paddingHorizontal: 24,
     marginBottom: 20,
   },
   dropdownWrapper: {
