@@ -30,6 +30,12 @@ def fallback_chat(mensagem: str, curso_tecnico: str) -> str:
                 f"têm ganhos consideravelmente maiores, frequentemente acima de R$ 18.000. Ter noções de marketing digital "
                 f"e análise de dados é um grande diferencial competitivo hoje em dia."
             )
+        elif "agropecuária" in curso.lower() or "agro" in curso.lower() or "agronomia" in curso.lower():
+            return (
+                f"No mercado de *{curso}*, os salários variam conforme a área! Profissionais técnicos ou analistas de campo juniores "
+                f"costumam iniciar ganhando de R$ 2.500 a R$ 4.000. Engenheiros agrônomos ou médicos veterinários com experiência "
+                f"têm ganhos médios de R$ 6.000 a R$ 10.000, podendo superar os R$ 15.000 em grandes fazendas produtoras ou multinacionais de insumos."
+            )
         else:
             return (
                 f"Para a área de *{curso}*, a média salarial inicial para nível técnico ou analista júnior varia de R$ 2.200 a R$ 3.800, "
@@ -56,6 +62,14 @@ def fallback_chat(mensagem: str, curso_tecnico: str) -> str:
                 f"- **Bancos de Dados**: Aprenda SQL (PostgreSQL/MySQL) e tenha noções de NoSQL.\n"
                 f"- **Projetos Reais**: Crie repositórios no GitHub com pequenos sistemas desenvolvidos por você.\n\n"
                 f"Que tal focar em desenvolvimento web ou engenharia de dados primeiro? Qual te atrai mais?"
+            )
+        elif "agropecuária" in curso.lower() or "agro" in curso.lower() or "agronomia" in curso.lower():
+            return (
+                f"Para se destacar em *{curso}*, recomendo focar em competências modernas do agronegócio:\n\n"
+                f"- **Manejo de Solo e Fitotecnia**: Entenda a nutrição de plantas e a rotação de culturas.\n"
+                f"- **Tecnologia no Campo**: Aprenda sobre agricultura de precisão, sensores e maquinários modernos.\n"
+                f"- **Zootecnia e Veterinária**: Estude a fundo nutrição e sanidade animal.\n\n"
+                f"Qual dessas frentes de estudo mais te interessa?"
             )
         else:
             return (
@@ -85,6 +99,15 @@ def fallback_chat(mensagem: str, curso_tecnico: str) -> str:
                 f"- **Finanças e Controladoria**: Análise financeira, planejamento orçamentário e auditoria.\n"
                 f"- **Empreendedorismo**: Criação e gestão de startups ou negócios próprios.\n\n"
                 f"Qual área combina mais com seu perfil pessoal?"
+            )
+        elif "agropecuária" in curso.lower() or "agro" in curso.lower() or "agronomia" in curso.lower():
+            return (
+                f"Com o curso de *{curso}*, você tem excelentes frentes de atuação:\n\n"
+                f"- **Manejo Agrícola e Produção**: Cultivos de grãos, frutas e hortaliças com alta eficiência.\n"
+                f"- **Produção e Sanidade Animal**: Criação, nutrição e cuidados de rebanhos bovinos, suínos e aves.\n"
+                f"- **Gestão do Agronegócio**: Administração de fazendas, logística de safras e comercialização de commodities.\n"
+                f"- **Assistência Técnico-Comercial**: Consultoria de campo e representação de insumos agrícolas.\n\n"
+                f"Qual dessas áreas mais atrai você para o futuro?"
             )
         else:
             return (

@@ -69,7 +69,7 @@ const DADOS_CURSOS = [
   },
 ];
 
-type AreaType = 'tecnologia' | 'saude' | 'negocios';
+type AreaType = 'tecnologia' | 'saude' | 'negocios' | 'agronomia';
 
 interface CursoItem {
   id: number;
@@ -342,6 +342,22 @@ export default function CarreirasScreen() {
               <Text style={styles.areaTitle}>Negócios, Finanças & Gestão</Text>
               <Text style={styles.areaDesc}>4 cursos • Para perfis estratégicos e empreendedores.</Text>
             </TouchableOpacity>
+
+            {/* Card 4 — Agropecuária & Ciências Agrárias */}
+            <TouchableOpacity
+              style={[
+                styles.areaCard,
+                areaAtiva === 'agronomia' ? styles.areaCardAgronomiaActive : styles.areaCardAgronomiaInactive,
+              ]}
+              onPress={() => setAreaAtiva('agronomia')}
+              activeOpacity={0.8}
+            >
+              <View style={styles.areaIconContainer}>
+                <Ionicons name="leaf-outline" size={22} color="#10B981" />
+              </View>
+              <Text style={styles.areaTitle}>Agropecuária & Ciências Agrárias</Text>
+              <Text style={styles.areaDesc}>9 cursos • Para quem gosta da natureza, plantas e animais.</Text>
+            </TouchableOpacity>
           </ScrollView>
         </View>
 
@@ -357,7 +373,9 @@ export default function CarreirasScreen() {
                   ? 'Buscar em Tecnologia & Inovação...'
                   : areaAtiva === 'saude'
                   ? 'Buscar em Saúde & Bem-Estar...'
-                  : 'Buscar em Negócios, Finanças & Gestão...'
+                  : areaAtiva === 'negocios'
+                  ? 'Buscar em Negócios, Finanças & Gestão...'
+                  : 'Buscar em Agropecuária & Ciências Agrárias...'
               }
               placeholderTextColor="#64748B"
               style={styles.searchInput}
@@ -684,6 +702,16 @@ const styles = StyleSheet.create({
     backgroundColor: '#1a1200',
     borderWidth: 1.5,
     borderColor: '#F59E0B',
+  },
+  areaCardAgronomiaInactive: {
+    backgroundColor: '#051f15',
+    borderWidth: 1,
+    borderColor: '#2D1B69',
+  },
+  areaCardAgronomiaActive: {
+    backgroundColor: '#051f15',
+    borderWidth: 1.5,
+    borderColor: '#10B981',
   },
   areaIconContainer: {
     backgroundColor: '#1F2937',

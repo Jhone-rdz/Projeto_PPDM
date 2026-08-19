@@ -27,11 +27,11 @@ def get_fallback_profile(curso_tecnico):
             'matematica': 40, 'fisica': 40, 'programacao': 30, 'desenho': 30, 'portugues': 55,
             'biologia': 75, 'quimica': 60, 'historia': 50
         }
-    elif "eletrotécnica" in curso or "mecatrônica" in curso or "automação" in curso or "mecânica" in curso:
+    elif "agropecuária" in curso or "agro" in curso or "agronomia" in curso or "campo" in curso or "pecuária" in curso:
         return {
-            'logica': 60, 'criatividade': 45, 'foco': 65, 'comunicacao': 40, 'lideranca': 45,
-            'matematica': 65, 'fisica': 70, 'programacao': 50, 'desenho': 55, 'portugues': 45,
-            'biologia': 30, 'quimica': 40, 'historia': 35
+            'logica': 50, 'criatividade': 45, 'foco': 65, 'comunicacao': 45, 'lideranca': 50,
+            'matematica': 45, 'fisica': 40, 'programacao': 30, 'desenho': 35, 'portugues': 45,
+            'biologia': 75, 'quimica': 70, 'historia': 40
         }
     else:
         # Balanced general default

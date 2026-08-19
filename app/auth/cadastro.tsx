@@ -22,13 +22,12 @@ import BotaoCustom from '../_components/BotaoCustom';
 import { apiService } from '../_services/api';
 
 const CURSOS_TECNICOS = [
+  'Redes de Computadores',
+  'Técnico em Informática',
   'Desenvolvimento de Sistemas',
-  'Administração',
+  'Agropecuária',
   'Enfermagem',
-  'Eletrotécnica',
-  'Mecatrônica',
-  'Informática para Internet',
-  'Logística',
+  'Administração',
   'Outro',
 ];
 

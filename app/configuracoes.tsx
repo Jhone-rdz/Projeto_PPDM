@@ -19,11 +19,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { apiService, UserProfile } from './_services/api';
 
 const OPCOES_CURSOS_TECNICOS = [
+  'Redes de Computadores',
+  'Técnico em Informática',
   'Desenvolvimento de Sistemas',
-  'Administração',
+  'Agropecuária',
   'Enfermagem',
-  'Mecatrônica',
-  'Química',
+  'Administração',
   'Outro',
 ];
 
