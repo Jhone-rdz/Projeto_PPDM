@@ -288,30 +288,18 @@ export default function ChatScreen() {
         </View>
 
         <View style={styles.headerRightCard}>
-          <Image
-            source={require('../../assets/images/nivel 1 despertado.png')}
-            style={styles.headerAvatar}
-          />
+          <Ionicons name="chatbubble-ellipses-outline" size={24} color="#00D4FF" />
           <View style={styles.headerLevelColumn}>
-            <Text style={styles.headerLevelLabel}>NÍVEL 1</Text>
-            <Text style={styles.headerLevelName}>Despertado</Text>
-            <View style={styles.headerProgressBg}>
-              <LinearGradient
-                colors={['#4F46E5', '#00D4FF']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.headerProgressFill}
-              />
-            </View>
-            <Text style={styles.headerProgressPct}>40%</Text>
+            <Text style={styles.headerLevelLabel}>MENTORIA IA</Text>
+            <Text style={styles.headerLevelName}>Nexo AI</Text>
           </View>
         </View>
       </View>
 
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 8 : 0}
+        keyboardVerticalOffset={Platform.select({ ios: 90, android: 80 })}
       >
         {/* FlatList for messages */}
         <FlatList
@@ -450,13 +438,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#1F2937',
   },
-  headerAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    borderWidth: 2,
-    borderColor: '#4F46E5',
-  },
+
   headerLevelColumn: {
     justifyContent: 'center',
   },
@@ -473,26 +455,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontFamily: 'System',
   },
-  headerProgressBg: {
-    height: 4,
-    backgroundColor: '#1F2937',
-    borderRadius: 2,
-    width: 70,
-    marginTop: 3,
-    overflow: 'hidden',
-  },
-  headerProgressFill: {
-    width: '40%',
-    height: '100%',
-    borderRadius: 2,
-  },
-  headerProgressPct: {
-    fontSize: 10,
-    color: '#94A3B8',
-    marginTop: 2,
-    fontWeight: '500',
-    fontFamily: 'System',
-  },
+
   keyboardView: {
     flex: 1,
   },
