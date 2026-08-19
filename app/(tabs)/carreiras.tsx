@@ -19,8 +19,10 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { apiService, PerfilUsuario } from '../_services/api';
 
 const DADOS_CURSOS = [
+  // Tecnologia
   {
     id: 1,
+    area: 'tecnologia',
     tipo: 'BACHARELADO',
     duracao: '5 anos',
     nome: 'Engenharia de Inteligência Artificial',
@@ -33,6 +35,7 @@ const DADOS_CURSOS = [
   },
   {
     id: 2,
+    area: 'tecnologia',
     tipo: 'BACHARELADO',
     duracao: '4 anos',
     nome: 'Ciência da Computação',
@@ -45,6 +48,7 @@ const DADOS_CURSOS = [
   },
   {
     id: 3,
+    area: 'tecnologia',
     tipo: 'BACHARELADO',
     duracao: '5 anos',
     nome: 'Engenharia de Software',
@@ -57,6 +61,7 @@ const DADOS_CURSOS = [
   },
   {
     id: 4,
+    area: 'tecnologia',
     tipo: 'TECNÓLOGO',
     duracao: '2,5 anos',
     nome: 'Análise e Desenvolvimento de Sistemas (ADS)',
@@ -67,6 +72,100 @@ const DADOS_CURSOS = [
     corIcone: '#FFFFFF',
     corFundo: '#F59E0B',
   },
+  // Saúde
+  {
+    id: 10,
+    area: 'saude',
+    tipo: 'BACHARELADO',
+    duracao: '4 anos',
+    nome: 'Enfermagem',
+    descricao: 'Cuidados diretos ao paciente, gestão de unidades de saúde e promoção da saúde coletiva.',
+    tags: ['Cuidados de Saúde', 'Prática Clínica', 'Gestão Hospitalar'],
+    match: '89%',
+    icone: 'heart-outline',
+    corIcone: '#EC4899',
+    corFundo: '#831843',
+  },
+  {
+    id: 11,
+    area: 'saude',
+    tipo: 'BACHARELADO',
+    duracao: '4 anos',
+    nome: 'Fisioterapia',
+    descricao: 'Reabilitação, prevenção e tratamento de distúrbios de movimentos e funções corporais.',
+    tags: ['Reabilitação', 'Cuidado Físico', 'Ortopedia'],
+    match: '85%',
+    icone: 'body-outline',
+    corIcone: '#10B981',
+    corFundo: '#064E3B',
+  },
+  // Negócios
+  {
+    id: 20,
+    area: 'negocios',
+    tipo: 'BACHARELADO',
+    duracao: '4 anos',
+    nome: 'Administração',
+    descricao: 'Gestão estratégica, finanças corporativas, recursos humanos e marketing.',
+    tags: ['Gestão', 'Finanças', 'Liderança'],
+    match: '92%',
+    icone: 'briefcase-outline',
+    corIcone: '#F59E0B',
+    corFundo: '#78350F',
+  },
+  {
+    id: 21,
+    area: 'negocios',
+    tipo: 'TECNÓLOGO',
+    duracao: '2 anos',
+    nome: 'Marketing Digital',
+    descricao: 'Estratégias de vendas digitais, tráfego online e posicionamento de marcas em redes sociais.',
+    tags: ['Marketing', 'SEO', 'Mídias Sociais'],
+    match: '89%',
+    icone: 'megaphone-outline',
+    corIcone: '#EC4899',
+    corFundo: '#831843',
+  },
+  // Agro
+  {
+    id: 30,
+    area: 'agronomia',
+    tipo: 'BACHARELADO',
+    duracao: '5 anos',
+    nome: 'Agronomia',
+    descricao: 'Planejamento e manejo de cultivos, controle de pragas, adubação e melhoramento genético de lavouras.',
+    tags: ['Cultivos', 'Tecnologia de Solo', 'Manejo Agrícola'],
+    match: '94%',
+    icone: 'leaf-outline',
+    corIcone: '#10B981',
+    corFundo: '#064E3B',
+  },
+  {
+    id: 31,
+    area: 'agronomia',
+    tipo: 'BACHARELADO',
+    duracao: '5 anos',
+    nome: 'Medicina Veterinária',
+    descricao: 'Saúde animal, reprodução e clínica de animais de grande e pequeno porte no agronegócio.',
+    tags: ['Saúde Animal', 'Clínica Veterinária', 'Pecuária'],
+    match: '92%',
+    icone: 'paw-outline',
+    corIcone: '#F59E0B',
+    corFundo: '#78350F',
+  },
+  {
+    id: 32,
+    area: 'agronomia',
+    tipo: 'BACHARELADO',
+    duracao: '5 anos',
+    nome: 'Zootecnia',
+    descricao: 'Produção animal, nutrição, bem-estar em criações industriais e controle genético.',
+    tags: ['Nutrição Animal', 'Genética', 'Produção'],
+    match: '87%',
+    icone: 'water-outline',
+    corIcone: '#3B82F6',
+    corFundo: '#1E3A8A',
+  }
 ];
 
 type AreaType = 'tecnologia' | 'saude' | 'negocios' | 'agronomia';
@@ -228,12 +327,15 @@ export default function CarreirasScreen() {
         setCursos(mapped);
       } catch (err) {
         console.warn('Failed to load courses from API:', err);
-        // Fallback to static mock filter (Teconolgia only)
-        const filtered = DADOS_CURSOS.filter((curso) =>
-          curso.nome.toLowerCase().includes(busca.toLowerCase()) ||
-          curso.descricao.toLowerCase().includes(busca.toLowerCase()) ||
-          curso.tags.some((tag) => tag.toLowerCase().includes(busca.toLowerCase()))
-        );
+        // Fallback to static mock filter by area and search query
+        const filtered = DADOS_CURSOS.filter((curso) => {
+          const matchesArea = curso.area === areaAtiva;
+          const matchesBusca = 
+            curso.nome.toLowerCase().includes(busca.toLowerCase()) ||
+            curso.descricao.toLowerCase().includes(busca.toLowerCase()) ||
+            curso.tags.some((tag) => tag.toLowerCase().includes(busca.toLowerCase()));
+          return matchesArea && matchesBusca;
+        });
         setCursos(filtered);
       } finally {
         setIsLoading(false);
