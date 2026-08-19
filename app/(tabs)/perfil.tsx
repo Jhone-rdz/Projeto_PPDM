@@ -7,6 +7,7 @@ import {
   ScrollView,
   Platform,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
@@ -148,19 +149,26 @@ export default function PerfilScreen() {
         {/* RESUMO DO PERFIL */}
         <View style={styles.profileSummarySection}>
           <View style={styles.profileSummaryCard}>
-            <View style={styles.profileSummaryInfo}>
-              <Text style={styles.profileNameText}>{user?.username || 'Estudante'}</Text>
-              <Text style={styles.profileEmailText}>{user?.email}</Text>
-              <View style={styles.badgeRow}>
-                <View style={styles.infoBadge}>
-                  <Text style={styles.infoBadgeText}>{user?.curso_tecnico || 'Sem Curso'}</Text>
-                </View>
-                {user?.objetivo_carreira && (
-                  <View style={[styles.infoBadge, { backgroundColor: 'rgba(79, 70, 229, 0.15)', borderColor: '#4F46E5', borderWidth: 1 }]}>
-                    <Text style={[styles.infoBadgeText, { color: '#00D4FF' }]}>{user?.objetivo_carreira}</Text>
-                  </View>
-                )}
+            <View style={styles.profileSummaryHeader}>
+              <Image
+                source={require('../../assets/images/nivel 0 iniciante.png')}
+                style={styles.profileAvatar}
+              />
+              <View style={styles.profileSummaryInfo}>
+                <Text style={styles.profileNameText}>{user?.username || 'Estudante'}</Text>
+                <Text style={styles.profileEmailText}>{user?.email}</Text>
               </View>
+            </View>
+
+            <View style={styles.badgeRow}>
+              <View style={styles.infoBadge}>
+                <Text style={styles.infoBadgeText}>{user?.curso_tecnico || 'Sem Curso'}</Text>
+              </View>
+              {user?.objetivo_carreira && (
+                <View style={[styles.infoBadge, { backgroundColor: 'rgba(79, 70, 229, 0.15)', borderColor: '#4F46E5', borderWidth: 1 }]}>
+                  <Text style={[styles.infoBadgeText, { color: '#00D4FF' }]}>{user?.objetivo_carreira}</Text>
+                </View>
+              )}
             </View>
           </View>
         </View>
@@ -317,8 +325,21 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#1F2937',
   },
+  profileSummaryHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+  profileAvatar: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    borderWidth: 2,
+    borderColor: '#4F46E5',
+    backgroundColor: '#1F2937',
+  },
   profileSummaryInfo: {
-    width: '100%',
+    flex: 1,
   },
   profileNameText: {
     fontSize: 22,

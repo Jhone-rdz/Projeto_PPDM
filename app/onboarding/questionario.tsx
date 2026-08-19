@@ -162,10 +162,7 @@ export default function QuestionarioScreen() {
             <Text style={styles.progressText}>
               Pergunta <Text style={styles.progressTextHighlight}>{perguntaAtual + 1}</Text> de {perguntas.length}
             </Text>
-            <View style={styles.xpBadge}>
-              <Ionicons name="flash" size={14} color="#F59E0B" style={styles.xpIcon} />
-              <Text style={styles.xpText}>+20 XP</Text>
-            </View>
+
           </View>
 
           {/* Segmented Progress Bar */}
@@ -439,25 +436,6 @@ const styles = StyleSheet.create({
   progressTextHighlight: {
     color: '#FFFFFF',
     fontWeight: 'bold',
-  },
-  xpBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(245, 158, 11, 0.12)',
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(245, 158, 11, 0.25)',
-  },
-  xpIcon: {
-    marginRight: 4,
-  },
-  xpText: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#F59E0B',
-    fontFamily: 'System',
   },
   segmentedBar: {
     flexDirection: 'row',
