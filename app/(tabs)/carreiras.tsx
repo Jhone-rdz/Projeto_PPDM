@@ -17,6 +17,88 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { apiService } from '../_services/api';
 
+function getDetalhesCurso(nome: string, area: string) {
+  const n = nome.toLowerCase();
+  
+  if (n.includes('inteligência artificial')) {
+    return {
+      mercado: 'Empresas de tecnologia, startups inovadoras, institutos de pesquisa, consultorias e indústrias automotivas/robóticas.',
+      materiais: ['Cálculo e Álgebra Linear', 'Algoritmos e Programação', 'Machine Learning', 'Processamento de Linguagem Natural', 'Visão Computacional'],
+      salario: 'R$ 6.500,00 a R$ 12.000,00 inicial'
+    };
+  }
+  if (n.includes('ciência da computação') || n.includes('computação')) {
+    return {
+      mercado: 'Empresas de desenvolvimento de software, consultorias de TI, bancos e fintechs, infraestrutura e centros de pesquisa.',
+      materiais: ['Estruturas de Dados', 'Teoria da Computação', 'Sistemas Operacionais', 'Engenharia de Software', 'Arquitetura de Computadores'],
+      salario: 'R$ 5.000,00 a R$ 9.000,00 inicial'
+    };
+  }
+  if (n.includes('software')) {
+    return {
+      mercado: 'Fábricas de software, startups, grandes corporações, empresas de comércio eletrônico e gerenciamento de produtos digitais.',
+      materiais: ['Arquitetura de Software', 'DevOps & Nuvem', 'Gerência de Projetos', 'Qualidade e Testes de Software', 'Programação Web/Mobile'],
+      salario: 'R$ 4.800,00 a R$ 8.500,00 inicial'
+    };
+  }
+  if (n.includes('análise e desenvolvimento') || n.includes('ads')) {
+    return {
+      mercado: 'Desenvolvimento ágil de sistemas, agências digitais, suporte de TI, programação web e mobile em empresas de qualquer setor.',
+      materiais: ['Desenvolvimento Front-end/Back-end', 'Banco de Dados', 'Programação Orientada a Objetos', 'Análise de Sistemas', 'Engenharia de Requisitos'],
+      salario: 'R$ 3.500,00 a R$ 6.500,00 inicial'
+    };
+  }
+  if (n.includes('enfermagem')) {
+    return {
+      mercado: 'Hospitais públicos e privados, clínicas médicas, postos de saúde, unidades de terapia intensiva, atendimento home care e docência.',
+      materiais: ['Anatomia e Fisiologia Humana', 'Semiotécnica e Cuidado', 'Farmacologia aplicada', 'Saúde Coletiva', 'Gestão em Saúde'],
+      salario: 'R$ 3.800,00 a R$ 6.000,00 inicial'
+    };
+  }
+  if (n.includes('administração') || n.includes('adm')) {
+    return {
+      mercado: 'Setores administrativo, financeiro, recursos humanos e marketing de empresas comerciais, industriais e de serviços.',
+      materiais: ['Teoria Geral da Administração', 'Gestão Financeira e Orçamento', 'Marketing Estratégico', 'Gestão de Pessoas', 'Planejamento Estratégico'],
+      salario: 'R$ 3.200,00 a R$ 5.500,00 inicial'
+    };
+  }
+  if (n.includes('agronomi') || n.includes('agropecuári') || n.includes('agrícola')) {
+    return {
+      mercado: 'Propriedades rurais, cooperativas agrícolas, empresas de sementes e defensivos, órgãos de extensão rural e indústrias de alimentos.',
+      materiais: ['Química e Fertilidade do Solo', 'Fitotecnia (Produção Vegetal)', 'Zootecnia (Produção Animal)', 'Mecanização Agrícola', 'Gestão do Agronegócio'],
+      salario: 'R$ 4.500,00 a R$ 7.500,00 inicial'
+    };
+  }
+
+  if (area === 'tecnologia') {
+    return {
+      mercado: 'Setor de TI, startups, consultoria e departamentos de desenvolvimento em empresas.',
+      materiais: ['Lógica de Programação', 'Banco de Dados', 'Redes de Computadores', 'Segurança da Informação', 'Sistemas de Informação'],
+      salario: 'R$ 3.500,00 a R$ 7.000,00 inicial'
+    };
+  }
+  if (area === 'saude') {
+    return {
+      mercado: 'Hospitais, unidades básicas de saúde, clínicas integradas e serviços preventivos.',
+      materiais: ['Fisiologia', 'Patologia', 'Ética Profissional', 'Bioestatística', 'Saúde Pública'],
+      salario: 'R$ 3.000,00 a R$ 6.000,00 inicial'
+    };
+  }
+  if (area === 'negocios') {
+    return {
+      mercado: 'Empresas públicas e privadas, consultorias empresariais, escritórios de planejamento e empreendedorismo.',
+      materiais: ['Economia de Mercado', 'Contabilidade Básica', 'Comportamento Organizacional', 'Empreendedorismo', 'Matemática Financeira'],
+      salario: 'R$ 3.000,00 a R$ 6.000,00 inicial'
+    };
+  }
+
+  return {
+    mercado: 'Mercado de trabalho amplo, atuando em empresas públicas ou corporações privadas.',
+    materiais: ['Metodologia Científica', 'Ética e Cidadania', 'Fundamentos da Profissão', 'Trabalho em Equipe'],
+    salario: 'R$ 3.000,00 a R$ 5.500,00'
+  };
+}
+
 const DADOS_CURSOS = [
   // Tecnologia
   {
@@ -546,129 +628,163 @@ export default function CarreirasScreen() {
               </TouchableOpacity>
             </View>
 
-            {/* Match Badge */}
-            <View style={styles.modalMatchRow}>
-              <LinearGradient
-                colors={['#8B5CF6', '#4F46E5']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.modalMatchBadge}
-              >
-                <Ionicons name="sparkles" size={14} color="#FFFFFF" />
-                <Text style={styles.modalMatchText}>{selectedCurso?.match} compatível</Text>
-              </LinearGradient>
-              <View style={styles.modalTipoMatchBadge}>
-                <Text style={styles.modalTipoMatchText}>{selectedCurso?.tipoMatch}</Text>
-              </View>
-            </View>
-
-            {/* Description */}
-            <Text style={styles.modalLabel}>Sobre o Curso</Text>
-            <Text style={styles.modalDescription}>{selectedCurso?.descricao}</Text>
-
-            {/* Selo de Confiança */}
-            {selectedCurso?.confianca && (
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 6 }}>
-                <Ionicons 
-                  name={selectedCurso.confianca === 'ALTA CONFIANÇA' ? 'checkmark-circle-outline' : 'alert-circle-outline'} 
-                  size={16} 
-                  color={selectedCurso.confianca === 'ALTA CONFIANÇA' ? '#10B981' : '#F59E0B'} 
-                />
-                <Text style={{ fontSize: 11, fontWeight: 'bold', color: selectedCurso.confianca === 'ALTA CONFIANÇA' ? '#10B981' : '#F59E0B', marginLeft: 4 }}>
-                  {selectedCurso.confianca}
-                </Text>
-              </View>
-            )}
-
-            {/* Radar de Eixos (Barras de progresso para BT, PC, MP) */}
-            {selectedCurso?.scoreTecnico !== undefined && (
-              <View style={{ marginVertical: 8 }}>
-                <Text style={{ fontSize: 13, fontWeight: 'bold', color: '#E2E8F0', marginBottom: 6 }}>Eixos de Compatibilidade</Text>
-                
-                {/* Bagagem Técnica */}
-                <View style={{ marginBottom: 5 }}>
-                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 2 }}>
-                    <Text style={{ fontSize: 11, color: '#94A3B8' }}>Bagagem Técnica</Text>
-                    <Text style={{ fontSize: 11, color: '#FFFFFF', fontWeight: 'bold' }}>{selectedCurso.scoreTecnico}%</Text>
-                  </View>
-                  <View style={{ height: 6, backgroundColor: '#1E2937', borderRadius: 3 }}>
-                    <View style={{ width: `${selectedCurso.scoreTecnico}%`, height: 6, backgroundColor: '#4F46E5', borderRadius: 3 }} />
-                  </View>
-                </View>
-
-                {/* Perfil Comportamental */}
-                <View style={{ marginBottom: 5 }}>
-                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 2 }}>
-                    <Text style={{ fontSize: 11, color: '#94A3B8' }}>Perfil Comportamental</Text>
-                    <Text style={{ fontSize: 11, color: '#FFFFFF', fontWeight: 'bold' }}>{selectedCurso.scoreComportamental}%</Text>
-                  </View>
-                  <View style={{ height: 6, backgroundColor: '#1E2937', borderRadius: 3 }}>
-                    <View style={{ width: `${selectedCurso.scoreComportamental}%`, height: 6, backgroundColor: '#EC4899', borderRadius: 3 }} />
-                  </View>
-                </View>
-
-                {/* Metas Pragmáticas */}
-                <View style={{ marginBottom: 5 }}>
-                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 2 }}>
-                    <Text style={{ fontSize: 11, color: '#94A3B8' }}>Metas Pragmáticas</Text>
-                    <Text style={{ fontSize: 11, color: '#FFFFFF', fontWeight: 'bold' }}>{selectedCurso.scorePragmatico}%</Text>
-                  </View>
-                  <View style={{ height: 6, backgroundColor: '#1E2937', borderRadius: 3 }}>
-                    <View style={{ width: `${selectedCurso.scorePragmatico}%`, height: 6, backgroundColor: '#F59E0B', borderRadius: 3 }} />
-                  </View>
-                </View>
-              </View>
-            )}
-
-            {/* Explicabilidade (Resumo explicativo por que deu match) */}
-            {((selectedCurso?.explicacoes && selectedCurso.explicacoes.length > 0) || selectedCurso?.explicacaoIa) && (
-              <View style={{ backgroundColor: '#111827', padding: 12, borderRadius: 8, marginVertical: 6, borderWidth: 1, borderColor: '#1F2937' }}>
-                <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#10B981', marginBottom: 4 }}>Análise do Match:</Text>
-                {selectedCurso.explicacoes && selectedCurso.explicacoes.map((exp: string, idx: number) => (
-                  <Text key={idx} style={{ fontSize: 11, color: '#E2E8F0', marginVertical: 1 }}>
-                    • {exp}
-                  </Text>
-                ))}
-                {selectedCurso.explicacaoIa ? (
-                  <Text style={{ fontSize: 12, color: '#A78BFA', marginTop: 8, fontStyle: 'italic', lineHeight: 16 }}>
-                    &quot;{selectedCurso.explicacaoIa}&quot;
-                  </Text>
-                ) : null}
-              </View>
-            )}
-
-            {/* Tags */}
-            <Text style={styles.modalLabel}>Disciplinas e Foco</Text>
-            <View style={styles.modalTagsList}>
-              {selectedCurso?.tags?.map((tag: string, index: number) => (
-                <View key={index} style={styles.modalTag}>
-                  <Text style={styles.modalTagText}>{tag}</Text>
-                </View>
-              ))}
-            </View>
-
-            {/* Interconnected AI Chat Prompt Button */}
-            <TouchableOpacity
-              style={styles.modalAiBtn}
-              onPress={() => {
-                setIsModalOpen(false);
-                router.push({
-                  pathname: '/(tabs)/chat',
-                  params: { autoPrompt: `Quero saber mais sobre o curso de ${selectedCurso?.nome}. Quais são as principais matérias, o mercado de trabalho e a média salarial?` }
-                } as any);
-              }}
-              activeOpacity={0.8}
+            {/* Scrollable Content wrapper */}
+            <ScrollView 
+              showsVerticalScrollIndicator={false} 
+              style={{ maxHeight: 420 }}
+              contentContainerStyle={{ paddingBottom: 10 }}
             >
-              <LinearGradient
-                colors={['#10B981', '#059669']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.modalAiGradient}
+              {/* Match Badge */}
+              <View style={styles.modalMatchRow}>
+                <LinearGradient
+                  colors={['#8B5CF6', '#4F46E5']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.modalMatchBadge}
+                >
+                  <Ionicons name="sparkles" size={14} color="#FFFFFF" />
+                  <Text style={styles.modalMatchText}>{selectedCurso?.match} compatível</Text>
+                </LinearGradient>
+                <View style={styles.modalTipoMatchBadge}>
+                  <Text style={styles.modalTipoMatchText}>{selectedCurso?.tipoMatch}</Text>
+                </View>
+              </View>
+
+              {/* Description */}
+              <Text style={styles.modalLabel}>Sobre o Curso</Text>
+              <Text style={styles.modalDescription}>{selectedCurso?.descricao}</Text>
+
+              {/* Selo de Confiança */}
+              {selectedCurso?.confianca && (
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 6 }}>
+                  <Ionicons 
+                    name={selectedCurso.confianca === 'ALTA CONFIANÇA' ? 'checkmark-circle-outline' : 'alert-circle-outline'} 
+                    size={16} 
+                    color={selectedCurso.confianca === 'ALTA CONFIANÇA' ? '#10B981' : '#F59E0B'} 
+                  />
+                  <Text style={{ fontSize: 11, fontWeight: 'bold', color: selectedCurso.confianca === 'ALTA CONFIANÇA' ? '#10B981' : '#F59E0B', marginLeft: 4 }}>
+                    {selectedCurso.confianca}
+                  </Text>
+                </View>
+              )}
+
+              {/* Radar de Eixos (Barras de progresso para BT, PC, MP) */}
+              {selectedCurso?.scoreTecnico !== undefined && (
+                <View style={{ marginVertical: 8 }}>
+                  <Text style={{ fontSize: 13, fontWeight: 'bold', color: '#E2E8F0', marginBottom: 6 }}>Eixos de Compatibilidade</Text>
+                  
+                  {/* Bagagem Técnica */}
+                  <View style={{ marginBottom: 5 }}>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 2 }}>
+                      <Text style={{ fontSize: 11, color: '#94A3B8' }}>Bagagem Técnica</Text>
+                      <Text style={{ fontSize: 11, color: '#FFFFFF', fontWeight: 'bold' }}>{selectedCurso.scoreTecnico}%</Text>
+                    </View>
+                    <View style={{ height: 6, backgroundColor: '#1E2937', borderRadius: 3 }}>
+                      <View style={{ width: `${selectedCurso.scoreTecnico}%`, height: 6, backgroundColor: '#4F46E5', borderRadius: 3 }} />
+                    </View>
+                  </View>
+
+                  {/* Perfil Comportamental */}
+                  <View style={{ marginBottom: 5 }}>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 2 }}>
+                      <Text style={{ fontSize: 11, color: '#94A3B8' }}>Perfil Comportamental</Text>
+                      <Text style={{ fontSize: 11, color: '#FFFFFF', fontWeight: 'bold' }}>{selectedCurso.scoreComportamental}%</Text>
+                    </View>
+                    <View style={{ height: 6, backgroundColor: '#1E2937', borderRadius: 3 }}>
+                      <View style={{ width: `${selectedCurso.scoreComportamental}%`, height: 6, backgroundColor: '#EC4899', borderRadius: 3 }} />
+                    </View>
+                  </View>
+
+                  {/* Metas Pragmáticas */}
+                  <View style={{ marginBottom: 5 }}>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 2 }}>
+                      <Text style={{ fontSize: 11, color: '#94A3B8' }}>Metas Pragmáticas</Text>
+                      <Text style={{ fontSize: 11, color: '#FFFFFF', fontWeight: 'bold' }}>{selectedCurso.scorePragmatico}%</Text>
+                    </View>
+                    <View style={{ height: 6, backgroundColor: '#1E2937', borderRadius: 3 }}>
+                      <View style={{ width: `${selectedCurso.scorePragmatico}%`, height: 6, backgroundColor: '#F59E0B', borderRadius: 3 }} />
+                    </View>
+                  </View>
+                </View>
+              )}
+
+              {/* Explicabilidade (Resumo explicativo por que deu match) */}
+              {((selectedCurso?.explicacoes && selectedCurso.explicacoes.length > 0) || selectedCurso?.explicacaoIa) && (
+                <View style={{ backgroundColor: '#111827', padding: 12, borderRadius: 8, marginVertical: 6, borderWidth: 1, borderColor: '#1F2937' }}>
+                  <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#10B981', marginBottom: 4 }}>Análise do Match:</Text>
+                  {selectedCurso.explicacoes && selectedCurso.explicacoes.map((exp: string, idx: number) => (
+                    <Text key={idx} style={{ fontSize: 11, color: '#E2E8F0', marginVertical: 1 }}>
+                      • {exp}
+                    </Text>
+                  ))}
+                  {selectedCurso.explicacaoIa ? (
+                    <Text style={{ fontSize: 12, color: '#A78BFA', marginTop: 8, fontStyle: 'italic', lineHeight: 16 }}>
+                      &quot;{selectedCurso.explicacaoIa}&quot;
+                    </Text>
+                  ) : null}
+                </View>
+              )}
+
+              {/* Mercado de Trabalho / Grade / Salário */}
+              {(() => {
+                const detalhes = getDetalhesCurso(selectedCurso?.nome || '', selectedCurso?.area || '');
+                return (
+                  <>
+                    <Text style={styles.modalLabel}>Mercado de Trabalho</Text>
+                    <Text style={styles.modalSubDescription}>{detalhes.mercado}</Text>
+
+                    <Text style={styles.modalLabel}>Matérias Principais da Grade</Text>
+                    <View style={styles.disciplinesGrid}>
+                      {detalhes.materiais.map((mat, i) => (
+                        <View key={i} style={styles.disciplineItem}>
+                          <Ionicons name="book-outline" size={14} color="#00D4FF" style={{ marginRight: 6 }} />
+                          <Text style={styles.disciplineText}>{mat}</Text>
+                        </View>
+                      ))}
+                    </View>
+
+                    <Text style={styles.modalLabel}>Estimativa Salarial Inicial</Text>
+                    <View style={styles.salaryCard}>
+                      <Ionicons name="cash-outline" size={18} color="#10B981" style={{ marginRight: 8 }} />
+                      <Text style={styles.salaryText}>{detalhes.salario}</Text>
+                    </View>
+                  </>
+                );
+              })()}
+
+              {/* Tags */}
+              <Text style={styles.modalLabel}>Disciplinas e Foco</Text>
+              <View style={styles.modalTagsList}>
+                {selectedCurso?.tags?.map((tag: string, index: number) => (
+                  <View key={index} style={styles.modalTag}>
+                    <Text style={styles.modalTagText}>{tag}</Text>
+                  </View>
+                ))}
+              </View>
+
+              {/* Interconnected AI Chat Prompt Button */}
+              <TouchableOpacity
+                style={styles.modalAiBtn}
+                onPress={() => {
+                  setIsModalOpen(false);
+                  router.push({
+                    pathname: '/(tabs)/chat',
+                    params: { autoPrompt: `Quero saber mais sobre o curso de ${selectedCurso?.nome}. Quais são as principais matérias, o mercado de trabalho e a média salarial?` }
+                  } as any);
+                }}
+                activeOpacity={0.8}
               >
-                <Ionicons name="chatbubbles-outline" size={18} color="#FFFFFF" />
-                <Text style={styles.modalAiBtnText}>Perguntar à IA Nexo</Text>
-              </LinearGradient>
-            </TouchableOpacity>
+                <LinearGradient
+                  colors={['#10B981', '#059669']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.modalAiGradient}
+                >
+                  <Ionicons name="chatbubbles-outline" size={18} color="#FFFFFF" />
+                  <Text style={styles.modalAiBtnText}>Perguntar à IA Nexo</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            </ScrollView>
           </View>
         </TouchableOpacity>
       </Modal>
@@ -1180,6 +1296,49 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: 'bold',
     color: '#FFFFFF',
+    fontFamily: 'System',
+  },
+  modalSubDescription: {
+    fontSize: 14,
+    color: '#CBD5E1',
+    lineHeight: 20,
+    marginBottom: 12,
+    fontFamily: 'System',
+  },
+  disciplinesGrid: {
+    gap: 8,
+    marginBottom: 16,
+  },
+  disciplineItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#1E293B',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#334155',
+  },
+  disciplineText: {
+    fontSize: 13,
+    color: '#E2E8F0',
+    fontFamily: 'System',
+  },
+  salaryCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(16, 185, 129, 0.08)',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(16, 185, 129, 0.3)',
+    marginBottom: 16,
+  },
+  salaryText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#10B981',
     fontFamily: 'System',
   },
 });
