@@ -8,7 +8,7 @@
       "developmentClient": true,
       "distribution": "internal",
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://projeto-ppdm.onrender.com/api"
+        "EXPO_PUBLIC_API_URL": "https://nexocareer.169.58.181.73.nip.io/api"
       }
     },
     "preview": {
@@ -17,13 +17,13 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://projeto-ppdm.onrender.com/api"
+        "EXPO_PUBLIC_API_URL": "https://nexocareer.169.58.181.73.nip.io/api"
       }
     },
     "production": {
       "autoIncrement": true,
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://projeto-ppdm.onrender.com/api"
+        "EXPO_PUBLIC_API_URL": "https://nexocareer.169.58.181.73.nip.io/api"
       }
     }
   },

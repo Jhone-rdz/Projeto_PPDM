@@ -224,6 +224,8 @@ export default function CarreirasScreen() {
           scorePragmatico: c.scorePragmatico,
           explicacoes: c.explicacoes,
           confianca: c.confianca,
+          trilha: c.trilha,
+          explicacaoIa: c.explicacaoIa,
         }));
         const backendFound = mapped.find(c => c.id === Number(openCursoId));
         if (backendFound) {
@@ -283,6 +285,8 @@ export default function CarreirasScreen() {
           scorePragmatico: c.scorePragmatico,
           explicacoes: c.explicacoes,
           confianca: c.confianca,
+          trilha: c.trilha,
+          explicacaoIa: c.explicacaoIa,
         }));
         setCursos(mapped);
       } catch (err) {
@@ -617,14 +621,19 @@ export default function CarreirasScreen() {
             )}
 
             {/* Explicabilidade (Resumo explicativo por que deu match) */}
-            {selectedCurso?.explicacoes && selectedCurso.explicacoes.length > 0 && (
-              <View style={{ backgroundColor: '#111827', padding: 8, borderRadius: 8, marginVertical: 6, borderWidth: 1, borderColor: '#1F2937' }}>
+            {((selectedCurso?.explicacoes && selectedCurso.explicacoes.length > 0) || selectedCurso?.explicacaoIa) && (
+              <View style={{ backgroundColor: '#111827', padding: 12, borderRadius: 8, marginVertical: 6, borderWidth: 1, borderColor: '#1F2937' }}>
                 <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#10B981', marginBottom: 4 }}>Análise do Match:</Text>
-                {selectedCurso.explicacoes.map((exp: string, idx: number) => (
+                {selectedCurso.explicacoes && selectedCurso.explicacoes.map((exp: string, idx: number) => (
                   <Text key={idx} style={{ fontSize: 11, color: '#E2E8F0', marginVertical: 1 }}>
                     • {exp}
                   </Text>
                 ))}
+                {selectedCurso.explicacaoIa ? (
+                  <Text style={{ fontSize: 12, color: '#A78BFA', marginTop: 8, fontStyle: 'italic', lineHeight: 16 }}>
+                    "{selectedCurso.explicacaoIa}"
+                  </Text>
+                ) : null}
               </View>
             )}
 

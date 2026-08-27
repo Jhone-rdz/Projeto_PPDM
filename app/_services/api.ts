@@ -447,16 +447,32 @@ export const apiService = {
     }
   },
 
-  salvarRespostas: async (respostas: { [id: number]: string }): Promise<PerfilCalculado> => {
+  salvarRespostas: async (
+    respostas: { [id: number]: string },
+    freeText?: {
+      free_text_motivation?: string;
+      free_text_daily_life?: string;
+      free_text_dislikes?: string;
+    }
+  ): Promise<PerfilCalculado> => {
     try {
       const token = await getToken();
+      const payload = {
+        respostas: Object.keys(respostas).map((k) => ({
+          pergunta_id: Number(k),
+          opcao_chave: respostas[Number(k)]
+        })),
+        free_text_motivation: freeText?.free_text_motivation || '',
+        free_text_daily_life: freeText?.free_text_daily_life || '',
+        free_text_dislikes: freeText?.free_text_dislikes || '',
+      };
       const response = await fetch(`${API_BASE_URL}/questionario/respostas/`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ respostas }),
+        body: JSON.stringify(payload),
       });
 
       const data = await response.json();

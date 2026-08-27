@@ -7,6 +7,7 @@ import {
   ScrollView,
   Platform,
   Alert,
+  TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -43,6 +44,12 @@ export default function QuestionarioScreen() {
   const [perguntaAtual, setPerguntaAtual] = useState(0);
   const [respostas, setRespostas] = useState<{ [key: number]: string }>({});
   const [opcaoSelecionada, setOpcaoSelecionada] = useState<string | undefined>(undefined);
+
+  // New multi-step and free text states
+  const [step, setStep] = useState<'perguntas' | 'texto_livre'>('perguntas');
+  const [freeTextMotivation, setFreeTextMotivation] = useState('');
+  const [freeTextDailyLife, setFreeTextDailyLife] = useState('');
+  const [freeTextDislikes, setFreeTextDislikes] = useState('');
 
   // Fetch onboarding questions from Django on mount
   useEffect(() => {
@@ -93,14 +100,21 @@ export default function QuestionarioScreen() {
   };
 
   const handleProxima = async () => {
-    if (!opcaoSelecionada) return;
-
-    if (perguntaAtual < perguntas.length - 1) {
-      setPerguntaAtual((prev) => prev + 1);
+    if (step === 'perguntas') {
+      if (!opcaoSelecionada) return;
+      if (perguntaAtual < perguntas.length - 1) {
+        setPerguntaAtual((prev) => prev + 1);
+      } else {
+        setStep('texto_livre');
+      }
     } else {
       setIsLoading(true);
       try {
-        await apiService.salvarRespostas(respostas);
+        await apiService.salvarRespostas(respostas, {
+          free_text_motivation: freeTextMotivation,
+          free_text_daily_life: freeTextDailyLife,
+          free_text_dislikes: freeTextDislikes
+        });
         setIsLoading(false);
         router.replace('/(tabs)');
       } catch (error: any) {
@@ -115,7 +129,10 @@ export default function QuestionarioScreen() {
   };
 
   const handleAnterior = () => {
-    if (perguntaAtual > 0) {
+    if (step === 'texto_livre') {
+      setStep('perguntas');
+      setPerguntaAtual(perguntas.length - 1);
+    } else if (perguntaAtual > 0) {
       setPerguntaAtual((prev) => prev - 1);
     }
   };
@@ -144,122 +161,205 @@ export default function QuestionarioScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Cabeçalho */}
-        <View style={styles.headerRow}>
-          <View style={styles.headerLeft}>
-            <Text style={styles.headerTitle}>Questionário inicial</Text>
-            <Text style={styles.headerSubtitle}>
-              Vamos te conhecer melhor para recomendar o curso ideal para você!
-            </Text>
-          </View>
-
-
-        </View>
-
-        {/* Barra de Progresso da Pergunta */}
-        <View style={styles.progressContainer}>
-          <View style={styles.progressHeaderRow}>
-            <Text style={styles.progressText}>
-              Pergunta <Text style={styles.progressTextHighlight}>{perguntaAtual + 1}</Text> de {perguntas.length}
-            </Text>
-
-          </View>
-
-          {/* Segmented Progress Bar */}
-          <View style={styles.segmentedBar}>
-            {perguntas.map((_, index) => {
-              const isCompleted = index <= perguntaAtual;
-              if (isCompleted) {
-                return (
-                  <LinearGradient
-                    key={index}
-                    colors={['#6B21A8', '#4F46E5']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={styles.segmentActive}
-                  />
-                );
-              }
-              return <View key={index} style={styles.segmentInactive} />;
-            })}
-          </View>
-        </View>
-
-        {/* Card da Pergunta */}
-        <View style={styles.questionCard}>
-          {/* Large illustration watermark in the top right */}
-          <View style={styles.watermarkContainer}>
-            <Ionicons
-              name={perguntaInfo.iconeCategoria as any}
-              size={56}
-              color="#1F2937"
-            />
-          </View>
-
-          {/* Category info */}
-          <View style={styles.categoryRow}>
-            <View style={styles.categoryIconContainer}>
-              <Ionicons
-                name={perguntaInfo.iconeCategoria as any}
-                size={16}
-                color="#FFFFFF"
-              />
+        {step === 'perguntas' ? (
+          <>
+            {/* Cabeçalho */}
+            <View style={styles.headerRow}>
+              <View style={styles.headerLeft}>
+                <Text style={styles.headerTitle}>Questionário inicial</Text>
+                <Text style={styles.headerSubtitle}>
+                  Vamos te conhecer melhor para recomendar o curso ideal para você!
+                </Text>
+              </View>
             </View>
-            <Text style={styles.categoryText}>{perguntaInfo.categoria}</Text>
-          </View>
 
-          {/* Question text */}
-          <Text style={styles.questionText}>{perguntaInfo.pergunta}</Text>
-          <Text style={styles.instructionText}>{perguntaInfo.instrucao}</Text>
-        </View>
+            {/* Barra de Progresso da Pergunta */}
+            <View style={styles.progressContainer}>
+              <View style={styles.progressHeaderRow}>
+                <Text style={styles.progressText}>
+                  Pergunta <Text style={styles.progressTextHighlight}>{perguntaAtual + 1}</Text> de {perguntas.length}
+                </Text>
+              </View>
 
-        {/* Opções de Resposta */}
-        <View style={styles.optionsContainer}>
-          {perguntaInfo.opcoes.map((opcao) => {
-            const isSelected = opcaoSelecionada === opcao.id;
-            return (
-              <TouchableOpacity
-                key={opcao.id}
-                style={[
-                  styles.optionCard,
-                  isSelected ? styles.optionCardSelected : null,
-                ]}
-                onPress={() => handleSelectOption(opcao.id)}
-                activeOpacity={0.8}
-              >
-                {/* Option Left Icon */}
-                <View style={styles.optionIconContainer}>
+              {/* Segmented Progress Bar */}
+              <View style={styles.segmentedBar}>
+                {perguntas.map((_, index) => {
+                  const isCompleted = index <= perguntaAtual;
+                  if (isCompleted) {
+                    return (
+                      <LinearGradient
+                        key={index}
+                        colors={['#6B21A8', '#4F46E5']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                        style={styles.segmentActive}
+                      />
+                    );
+                  }
+                  return <View key={index} style={styles.segmentInactive} />;
+                })}
+              </View>
+            </View>
+
+            {/* Card da Pergunta */}
+            <View style={styles.questionCard}>
+              {/* Large illustration watermark in the top right */}
+              <View style={styles.watermarkContainer}>
+                <Ionicons
+                  name={perguntaInfo.iconeCategoria as any}
+                  size={56}
+                  color="#1F2937"
+                />
+              </View>
+
+              {/* Category info */}
+              <View style={styles.categoryRow}>
+                <View style={styles.categoryIconContainer}>
                   <Ionicons
-                    name={opcao.icone as any}
-                    size={20}
-                    color={opcao.corIcone}
+                    name={perguntaInfo.iconeCategoria as any}
+                    size={16}
+                    color="#FFFFFF"
                   />
                 </View>
+                <Text style={styles.categoryText}>{perguntaInfo.categoria}</Text>
+              </View>
 
-                {/* Option Label and Description */}
-                <View style={styles.optionContent}>
-                  <Text style={styles.optionLabel}>{opcao.label}</Text>
-                  <Text style={styles.optionDescription}>{opcao.descricao}</Text>
-                </View>
+              {/* Question text */}
+              <Text style={styles.questionText}>{perguntaInfo.pergunta}</Text>
+              <Text style={styles.instructionText}>{perguntaInfo.instrucao}</Text>
+            </View>
 
-                {/* Radio Button */}
-                <View
-                  style={[
-                    styles.radioButton,
-                    isSelected ? styles.radioButtonSelected : null,
-                  ]}
-                >
-                  {isSelected && <View style={styles.radioButtonDot} />}
-                </View>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
+            {/* Opções de Resposta */}
+            <View style={styles.optionsContainer}>
+              {perguntaInfo.opcoes.map((opcao) => {
+                const isSelected = opcaoSelecionada === opcao.id;
+                return (
+                  <TouchableOpacity
+                    key={opcao.id}
+                    style={[
+                      styles.optionCard,
+                      isSelected ? styles.optionCardSelected : null,
+                    ]}
+                    onPress={() => handleSelectOption(opcao.id)}
+                    activeOpacity={0.8}
+                  >
+                    {/* Option Left Icon */}
+                    <View style={styles.optionIconContainer}>
+                      <Ionicons
+                        name={opcao.icone as any}
+                        size={20}
+                        color={opcao.corIcone}
+                      />
+                    </View>
+
+                    {/* Option Label and Description */}
+                    <View style={styles.optionContent}>
+                      <Text style={styles.optionLabel}>{opcao.label}</Text>
+                      <Text style={styles.optionDescription}>{opcao.descricao}</Text>
+                    </View>
+
+                    {/* Radio Button */}
+                    <View
+                      style={[
+                        styles.radioButton,
+                        isSelected ? styles.radioButtonSelected : null,
+                      ]}
+                    >
+                      {isSelected && <View style={styles.radioButtonDot} />}
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </>
+        ) : (
+          <>
+            {/* Cabeçalho */}
+            <View style={styles.headerRow}>
+              <View style={styles.headerLeft}>
+                <Text style={styles.headerTitle}>Perguntas Livres</Text>
+                <Text style={styles.headerSubtitle}>
+                  Estas perguntas são livres e opcionais — quanto mais você contar, mais preciso fica seu perfil!
+                </Text>
+              </View>
+            </View>
+
+            {/* Campo 1 */}
+            <View style={styles.questionCard}>
+              <Text style={styles.freeTextLabel}>O que mais te motiva na hora de pensar numa futura profissão?</Text>
+              <TextInput
+                style={styles.freeTextInput}
+                placeholder="Ex: Ajudar as pessoas, criar tecnologias inovadoras, trabalhar com animais..."
+                placeholderTextColor="#6B7280"
+                multiline
+                maxLength={500}
+                value={freeTextMotivation}
+                onChangeText={setFreeTextMotivation}
+              />
+              <Text style={styles.charCounter}>{freeTextMotivation.length}/500</Text>
+            </View>
+
+            {/* Campo 2 */}
+            <View style={styles.questionCard}>
+              <Text style={styles.freeTextLabel}>Descreva como seria um dia de trabalho ideal para você.</Text>
+              <TextInput
+                style={styles.freeTextInput}
+                placeholder="Ex: Desenvolvendo soluções em equipe, gerindo projetos ou realizando pesquisas no campo..."
+                placeholderTextColor="#6B7280"
+                multiline
+                maxLength={500}
+                value={freeTextDailyLife}
+                onChangeText={setFreeTextDailyLife}
+              />
+              <Text style={styles.charCounter}>{freeTextDailyLife.length}/500</Text>
+            </View>
+
+            {/* Campo 3 */}
+            <View style={styles.questionCard}>
+              <Text style={styles.freeTextLabel}>Tem algo que você definitivamente NÃO quer no seu futuro trabalho?</Text>
+              <TextInput
+                style={styles.freeTextInput}
+                placeholder="Ex: Ambientes fechados sem contato com a natureza ou rotinas altamente repetitivas..."
+                placeholderTextColor="#6B7280"
+                multiline
+                maxLength={500}
+                value={freeTextDislikes}
+                onChangeText={setFreeTextDislikes}
+              />
+              <Text style={styles.charCounter}>{freeTextDislikes.length}/500</Text>
+            </View>
+          </>
+        )}
       </ScrollView>
 
       {/* Fixed Bottom Navigation Buttons */}
       <View style={styles.bottomBar}>
-        {perguntaAtual > 0 ? (
+        {step === 'texto_livre' ? (
+          <View style={styles.buttonsRow}>
+            <TouchableOpacity
+              style={styles.buttonBack}
+              onPress={handleAnterior}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.buttonBackText}>Anterior</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.buttonNextHalf}
+              onPress={handleProxima}
+              activeOpacity={0.8}
+            >
+              <LinearGradient
+                colors={['#6B21A8', '#4F46E5']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.gradientButtonContent}
+              >
+                <Text style={styles.buttonNextText}>Concluir ✓</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
+        ) : perguntaAtual > 0 ? (
           <View style={styles.buttonsRow}>
             <TouchableOpacity
               style={styles.buttonBack}
@@ -285,15 +385,11 @@ export default function QuestionarioScreen() {
                   end={{ x: 1, y: 0 }}
                   style={styles.gradientButtonContent}
                 >
-                  <Text style={styles.buttonNextText}>
-                    {perguntaAtual === perguntas.length - 1 ? 'Concluir ✓' : 'Próxima →'}
-                  </Text>
+                  <Text style={styles.buttonNextText}>Próxima →</Text>
                 </LinearGradient>
               ) : (
                 <View style={styles.disabledButtonContent}>
-                  <Text style={styles.buttonNextTextDisabled}>
-                    {perguntaAtual === perguntas.length - 1 ? 'Concluir ✓' : 'Próxima →'}
-                  </Text>
+                  <Text style={styles.buttonNextTextDisabled}>Próxima →</Text>
                 </View>
               )}
             </TouchableOpacity>
@@ -642,6 +738,33 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: 'bold',
+    fontFamily: 'System',
+  },
+  freeTextLabel: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginBottom: 10,
+    lineHeight: 20,
+    fontFamily: 'System',
+  },
+  freeTextInput: {
+    backgroundColor: '#111827',
+    borderWidth: 1,
+    borderColor: '#374151',
+    borderRadius: 12,
+    color: '#FFFFFF',
+    padding: 12,
+    minHeight: 100,
+    fontSize: 14,
+    textAlignVertical: 'top',
+    fontFamily: 'System',
+  },
+  charCounter: {
+    alignSelf: 'flex-end',
+    fontSize: 11,
+    color: '#6B7280',
+    marginTop: 6,
     fontFamily: 'System',
   },
 });

@@ -26,6 +26,26 @@ class CustomUser(AbstractUser):
         default=1,
         verbose_name="Sequência de dias logado"
     )
+    
+    # Novos campos de texto livre do questionário
+    free_text_motivation = models.TextField(
+        max_length=500,
+        blank=True,
+        null=True,
+        verbose_name="Motivação Profissional"
+    )
+    free_text_daily_life = models.TextField(
+        max_length=500,
+        blank=True,
+        null=True,
+        verbose_name="Dia de Trabalho Ideal"
+    )
+    free_text_dislikes = models.TextField(
+        max_length=500,
+        blank=True,
+        null=True,
+        verbose_name="O que não deseja no trabalho"
+    )
 
     def __str__(self):
         return f"{self.username} (Nível {self.nivel})"
@@ -93,6 +113,9 @@ class Curso(models.Model):
     icone = models.CharField(max_length=100, default='school-outline', verbose_name="Ícone Ionicons")
     cor_icone = models.CharField(max_length=20, default='#6B21A8', verbose_name="Cor do Ícone")
     cor_fundo = models.CharField(max_length=20, default='#111827', verbose_name="Cor de Fundo da Caixa de Ícone")
+    
+    # Store description vector embedding (precalculated once)
+    embedding = models.JSONField(blank=True, null=True, verbose_name="Embedding da Descrição")
 
     @property
     def tags(self):
@@ -100,6 +123,38 @@ class Curso(models.Model):
 
     def __str__(self):
         return f"[{self.get_area_display()}] {self.nome}"
+
+
+class CursoMatch(models.Model):
+    user = models.ForeignKey('CustomUser', on_delete=models.CASCADE, related_name='curso_matches', verbose_name="Usuário")
+    curso = models.ForeignKey(Curso, on_delete=models.CASCADE, related_name='user_matches', verbose_name="Curso")
+    
+    score_final = models.IntegerField(default=0, verbose_name="Score Final")
+    score_tecnico = models.IntegerField(default=0, verbose_name="Score Técnico")
+    score_comportamental = models.IntegerField(default=0, verbose_name="Score Comportamental")
+    score_pragmatico = models.IntegerField(default=0, verbose_name="Score Pragmático")
+    
+    # Stores detailed sub-scores (MEC, disciplines, etc.) as JSON
+    sub_scores = models.JSONField(default=dict, verbose_name="Sub-scores Detalhados")
+    
+    # AI Explainability fields
+    explicacao = models.TextField(blank=True, null=True, verbose_name="Explicabilidade da IA")
+    explicacao_status = models.CharField(
+        max_length=20,
+        choices=[('pending', 'Pendente'), ('completed', 'Concluído'), ('failed', 'Falhou')],
+        default='pending',
+        verbose_name="Status da Explicabilidade"
+    )
+    
+    created_at = models.DateTimeField(auto_now=True, verbose_name="Calculado em")
+
+    class Meta:
+        verbose_name = "Match de Curso"
+        verbose_name_plural = "Matches de Cursos"
+        unique_together = ('user', 'curso')
+
+    def __str__(self):
+        return f"{self.user.username} - {self.curso.nome} ({self.score_final}%)"
 
 
 class Desafio(models.Model):
