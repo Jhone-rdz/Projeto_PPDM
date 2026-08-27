@@ -191,13 +191,6 @@ export default function HomeScreen() {
               <Text style={styles.objectiveDesc}>
                 Continue aprendendo e evoluindo para alcançar seu objetivo.
               </Text>
-              <TouchableOpacity
-                style={styles.objectiveButton}
-                onPress={handleNavigatePerfil}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.objectiveButtonText}>Ver meu progresso →</Text>
-              </TouchableOpacity>
             </View>
 
             <Image
@@ -234,24 +227,6 @@ export default function HomeScreen() {
               <Ionicons name="chatbubble-ellipses-outline" size={28} color="#8B5CF6" />
               <Text style={styles.shortcutTitle}>Falar com a IA Nexo</Text>
               <Text style={styles.shortcutDesc}>Tire dúvidas</Text>
-              <Text style={styles.shortcutArrow}>→</Text>
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.gridRow}>
-            {/* Shortcut 3 */}
-            <TouchableOpacity
-              style={[styles.shortcutCard, styles.fullWidthShortcutCard]}
-              onPress={() => router.push('/configuracoes')}
-              activeOpacity={0.8}
-            >
-              <View style={styles.fullWidthShortcutContent}>
-                <Ionicons name="settings-outline" size={28} color="#94A3B8" />
-                <View style={styles.fullWidthTextContainer}>
-                  <Text style={styles.shortcutTitle}>Configurações</Text>
-                  <Text style={styles.shortcutDesc}>Gerenciar conta</Text>
-                </View>
-              </View>
               <Text style={styles.shortcutArrow}>→</Text>
             </TouchableOpacity>
           </View>
