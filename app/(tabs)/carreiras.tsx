@@ -631,7 +631,7 @@ export default function CarreirasScreen() {
                 ))}
                 {selectedCurso.explicacaoIa ? (
                   <Text style={{ fontSize: 12, color: '#A78BFA', marginTop: 8, fontStyle: 'italic', lineHeight: 16 }}>
-                    "{selectedCurso.explicacaoIa}"
+                    &quot;{selectedCurso.explicacaoIa}&quot;
                   </Text>
                 ) : null}
               </View>
