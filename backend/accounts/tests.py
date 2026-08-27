@@ -1,10 +1,15 @@
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.contrib.auth import get_user_model
 from .models import Curso, PerfilUsuario, CursoMatch
 from .compatibility_service import calcular_e_persistir_matches, get_user_base_scores, calcular_confianca_questionario
 
 User = get_user_model()
 
+@override_settings(
+    CELERY_TASK_ALWAYS_EAGER=True,
+    CELERY_BROKER_URL='memory://',
+    CELERY_RESULT_BACKEND='cache+memory://'
+)
 class CompatibilityScoringTestCase(TestCase):
     def setUp(self):
         # Create user
