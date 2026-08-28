@@ -279,10 +279,19 @@ class RespostaQuestionarioSerializer(serializers.Serializer):
         created_objects = []
         
         with transaction.atomic():
-            # Update user free text fields
+            # Update user free text fields and objetivo_carreira based on Question 1 selection
             user.free_text_motivation = free_motivation
             user.free_text_daily_life = free_daily_life
             user.free_text_dislikes = free_dislikes
+            
+            # Map question 1 selection to objective
+            for item in respostas_data:
+                if item['pergunta_id'] == 1:
+                    opcao = Opcao.objects.filter(pergunta_id=1, chave=item['opcao_chave']).first()
+                    if opcao:
+                        user.objetivo_carreira = opcao.label
+                    break
+            
             user.save()
 
             for item in respostas_data:

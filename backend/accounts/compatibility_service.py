@@ -7,9 +7,9 @@ import os
 
 # Weights of pilares per path
 PESOS_TRILHAS = {
-    'natural': {'tecnica': 0.50, 'comportamental': 0.30, 'pragmatica': 0.20},
-    'hibrido': {'tecnica': 0.30, 'comportamental': 0.40, 'pragmatica': 0.30},
-    'novos_horizontes': {'tecnica': 0.10, 'comportamental': 0.60, 'pragmatica': 0.30}
+    'natural': {'tecnica': 0.50, 'comportamental': 0.35, 'pragmatica': 0.15},
+    'hibrido': {'tecnica': 0.35, 'comportamental': 0.45, 'pragmatica': 0.20},
+    'novos_horizontes': {'tecnica': 0.25, 'comportamental': 0.55, 'pragmatica': 0.20}
 }
 
 PISO_CRITICO_COMPORTAMENTAL = 25.0
@@ -129,16 +129,35 @@ def calcular_e_persistir_matches(user):
         course_area = curso.area.lower()
         
         # 1. Bagagem Técnica Pilar
+        # Area from objective_carreira mapping
+        objetivo_map = {
+            'tecnologia': 'tecnologia',
+            'saúde': 'saude',
+            'negócios': 'negocios',
+            'artes e design': 'artes',
+            'direito e justiça': 'direito',
+            'agronomia e meio ambiente': 'agronomia',
+        }
+        user_pref_area = (user.objetivo_carreira or "").strip().lower()
+        mapped_pref_area = objetivo_map.get(user_pref_area, None)
+
         if "desenvolvimento" in user_tech or "informática" in user_tech or "redes" in user_tech:
-            eixo_mec_fit = 100 if course_area == 'tecnologia' else (35 if course_area in ['negocios', 'agronomia'] else 15)
+            eixo_mec_fit = 100 if course_area == 'tecnologia' else (25 if course_area in ['negocios', 'agronomia'] else 5)
         elif "administração" in user_tech:
-            eixo_mec_fit = 100 if course_area == 'negocios' else (45 if course_area == 'tecnologia' else 25)
+            eixo_mec_fit = 100 if course_area == 'negocios' else (35 if course_area == 'tecnologia' else 10)
         elif "enfermagem" in user_tech:
-            eixo_mec_fit = 100 if course_area == 'saude' else 25
+            eixo_mec_fit = 100 if course_area == 'saude' else 10
         elif "agropecuária" in user_tech:
-            eixo_mec_fit = 100 if course_area == 'agronomia' else 25
+            eixo_mec_fit = 100 if course_area == 'agronomia' else 10
         else:
-            eixo_mec_fit = 55
+            eixo_mec_fit = 40
+
+        # Adjust based on explicit career objective area selection
+        if mapped_pref_area:
+            if course_area == mapped_pref_area:
+                eixo_mec_fit = min(100, eixo_mec_fit + 30)
+            else:
+                eixo_mec_fit = max(0, eixo_mec_fit - 40)
 
         # Overlapping disciplines calculation
         from accounts.serializers import get_course_requirements
@@ -208,13 +227,13 @@ def calcular_e_persistir_matches(user):
             is_related = (course_area in ['saude'])
 
         if is_same_area:
-            w_tec, w_comp, w_prag = 0.50, 0.30, 0.20
+            w_tec, w_comp, w_prag = 0.50, 0.35, 0.15
             trilha = 'Natural'
         elif is_related:
-            w_tec, w_comp, w_prag = 0.30, 0.40, 0.30
+            w_tec, w_comp, w_prag = 0.35, 0.45, 0.20
             trilha = 'Híbrido'
         else:
-            w_tec, w_comp, w_prag = 0.10, 0.60, 0.30
+            w_tec, w_comp, w_prag = 0.25, 0.55, 0.20
             trilha = 'Novos Horizontes'
 
         score_geral = (score_tecnico * w_tec) + (score_comportamental * w_comp) + (score_pragmatico * w_prag)
