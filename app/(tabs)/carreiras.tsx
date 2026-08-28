@@ -631,8 +631,8 @@ export default function CarreirasScreen() {
             {/* Scrollable Content wrapper */}
             <ScrollView 
               showsVerticalScrollIndicator={false} 
-              style={{ maxHeight: 420 }}
-              contentContainerStyle={{ paddingBottom: 10 }}
+              style={styles.modalScrollView}
+              contentContainerStyle={{ paddingBottom: 16 }}
             >
               {/* Match Badge */}
               <View style={styles.modalMatchRow}>
@@ -1167,6 +1167,7 @@ const styles = StyleSheet.create({
   },
   modalCard: {
     width: '100%',
+    maxHeight: '85%',
     backgroundColor: '#0F172A',
     borderRadius: 24,
     borderWidth: 1,
@@ -1177,6 +1178,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.5,
     shadowRadius: 16,
     elevation: 10,
+  },
+  modalScrollView: {
+    flexShrink: 1,
   },
   modalHeaderRow: {
     flexDirection: 'row',
