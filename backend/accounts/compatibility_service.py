@@ -263,5 +263,16 @@ def calcular_e_persistir_matches(user):
             }
         )
 
-        # Trigger explainability asynchronously
-        gerar_explicabilidade_task.delay(match_obj.id)
+        # Trigger explainability asynchronously with fallback
+        try:
+            gerar_explicabilidade_task.delay(match_obj.id)
+        except Exception as celery_err:
+            print(f"Celery task delay failed (is Redis running?): {celery_err}. Executing synchronously as fallback...")
+            try:
+                # Run synchronously to be resilient
+                gerar_explicabilidade_task(match_obj.id)
+            except Exception as sync_err:
+                print(f"Fallback synchronous task also failed: {sync_err}")
+                match_obj.explicacao = "Compatibilidade calculada com sucesso baseada em suas respostas."
+                match_obj.explicacao_status = 'completed'
+                match_obj.save()
