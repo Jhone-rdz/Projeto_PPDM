@@ -219,34 +219,21 @@ class RespostasQuestionarioView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
-        respostas_data = request.data.get('respostas', {})
-        if not respostas_data:
-            return Response({"detail": "Dicionário de respostas vazio ou ausente."}, status=status.HTTP_400_BAD_REQUEST)
+        from .serializers import RespostaQuestionarioSerializer
+        serializer = RespostaQuestionarioSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(user=request.user)
 
-        user = request.user
-        created_objects = []
-
-        with transaction.atomic():
-            for p_id, o_key in respostas_data.items():
-                try:
-                    pergunta = Pergunta.objects.get(id=int(p_id))
-                    opcao = Opcao.objects.get(pergunta=pergunta, chave=o_key)
-                except (Pergunta.DoesNotExist, Opcao.DoesNotExist, ValueError):
-                    return Response({"detail": f"Pergunta ID {p_id} ou opção '{o_key}' inválida."}, status=status.HTTP_400_BAD_REQUEST)
-
-                resposta, created = RespostaUsuario.objects.update_or_create(
-                    user=user,
-                    pergunta=pergunta,
-                    defaults={'opcao': opcao}
-                )
-                created_objects.append(resposta)
+        # Build dictionary for profile calculation
+        respostas_data = request.data.get('respostas', [])
+        respostas_dict = {str(item['pergunta_id']): item['opcao_chave'] for item in respostas_data}
 
         # Re-calculate profile weights
-        profile_data = calcular_perfil_usuario(respostas_data)
+        profile_data = calcular_perfil_usuario(respostas_dict)
         
         # Save or update PerfilUsuario
         perfil, created = PerfilUsuario.objects.update_or_create(
-            user=user,
+            user=request.user,
             defaults={
                 'logica': profile_data['forcas']['logica'],
                 'criatividade': profile_data['forcas']['criatividade'],

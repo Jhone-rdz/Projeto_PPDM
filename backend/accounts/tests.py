@@ -119,3 +119,30 @@ class CompatibilityScoringTestCase(TestCase):
         # Behavioral subscore is outlier (< 25)
         # Score final should be low
         self.assertLess(match.score_final, 50)
+
+    def test_api_submit_questionnaire_array_format(self):
+        from rest_framework.test import APIClient
+        from accounts.models import Pergunta, Opcao
+        
+        # Create questions/options in database
+        pergunta1 = Pergunta.objects.create(id=1, pergunta="Questão 1", categoria="Geral", icone_categoria="star")
+        Opcao.objects.create(pergunta=pergunta1, chave="a", label="Opção A", descricao="Desc A", icone="star", peso={"logica": 10})
+        
+        client = APIClient()
+        client.force_authenticate(user=self.user)
+        
+        payload = {
+            "respostas": [
+                {"pergunta_id": 1, "opcao_chave": "a"}
+            ],
+            "free_text_motivation": "Adoro programar softwares novos e resolver desafios lógicos.",
+            "free_text_daily_life": "Em um escritório escrevendo código e tomando café.",
+            "free_text_dislikes": "Não gosto de tarefas físicas repetitivas ou ambientes barulhentos."
+        }
+        
+        response = client.post("/api/questionario/respostas/", payload, format="json")
+        self.assertEqual(response.status_code, 200)
+        
+        # Reload user from DB to verify free text fields saved
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.free_text_motivation, "Adoro programar softwares novos e resolver desafios lógicos.")
