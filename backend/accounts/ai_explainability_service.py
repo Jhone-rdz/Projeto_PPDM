@@ -5,6 +5,15 @@ import os
 from django.conf import settings
 from .models import CursoMatch
 
+CANDIDATE_MODELS = [
+    "gemini-3.5-flash-lite",
+    "gemini-3.5-flash",
+    "gemini-3.1-flash-lite",
+    "gemini-3.6-flash",
+    "gemini-2.0-flash-lite",
+    "gemini-2.0-flash",
+]
+
 def extrair_scores_texto_livre(user):
     """
     Extracts behavioral sub-scores from the user's free text fields using Gemini Structured Output.
@@ -35,40 +44,41 @@ def extrair_scores_texto_livre(user):
         f"Responda APENAS com o bloco JSON válido. Não inclua nenhuma introdução ou texto explicativo."
     )
 
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key={api_key}"
-    payload = {
-        "contents": [{
-            "parts": [{"text": prompt}]
-        }],
-        "generationConfig": {
-            "responseMimeType": "application/json"
+    for model_name in CANDIDATE_MODELS:
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={api_key}"
+        payload = {
+            "contents": [{
+                "parts": [{"text": prompt}]
+            }],
+            "generationConfig": {
+                "responseMimeType": "application/json"
+            }
         }
-    }
 
-    try:
-        response = requests.post(url, json=payload, headers={"Content-Type": "application/json"}, timeout=12)
-        if response.status_code == 200:
-            res_data = response.json()
-            parts = res_data.get("candidates", [])[0].get("content", {}).get("parts", [])
-            if parts:
-                raw_text = parts[0].get("text", "").strip()
-                # Clean markdown JSON tags if present
-                clean_json = re.sub(r"^```json\s*|\s*```$", "", raw_text, flags=re.MULTILINE).strip()
-                scores = json.loads(clean_json)
-                return {
-                    'analitico_criativo': int(scores.get('analitico_criativo', 50)),
-                    'lideranca_tecnico': int(scores.get('lideranca_tecnico', 50)),
-                    'pratica_teoria': int(scores.get('pratica_teoria', 50)),
-                    'rotina_autonomia': int(scores.get('rotina_autonomia', 50))
-                }
-    except Exception as e:
-        print(f"Error extracting structured scores from free text: {e}")
+        try:
+            response = requests.post(url, json=payload, headers={"Content-Type": "application/json"}, timeout=12)
+            if response.status_code == 200:
+                res_data = response.json()
+                parts = res_data.get("candidates", [])[0].get("content", {}).get("parts", [])
+                if parts:
+                    raw_text = parts[0].get("text", "").strip()
+                    # Clean markdown JSON tags if present
+                    clean_json = re.sub(r"^```json\s*|\s*```$", "", raw_text, flags=re.MULTILINE).strip()
+                    scores = json.loads(clean_json)
+                    return {
+                        'analitico_criativo': int(scores.get('analitico_criativo', 50)),
+                        'lideranca_tecnico': int(scores.get('lideranca_tecnico', 50)),
+                        'pratica_teoria': int(scores.get('pratica_teoria', 50)),
+                        'rotina_autonomia': int(scores.get('rotina_autonomia', 50))
+                    }
+        except Exception as e:
+            print(f"Error calling {model_name} for extrair_scores_texto_livre: {e}")
     return None
+
 
 def gerar_explicabilidade_match(match_id):
     """
-    Uses Gemini Structured Output to refine the match score (providing high contrast)
-    and generate a welcoming explanation.
+    Uses Gemini Structured Output to generate a welcoming explanation.
     """
     try:
         match_obj = CursoMatch.objects.get(id=match_id)
@@ -106,43 +116,41 @@ def gerar_explicabilidade_match(match_id):
         f"Responda apenas com o JSON válido."
     )
 
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key={api_key}"
-    payload = {
-        "contents": [{
-            "parts": [{"text": prompt}]
-        }],
-        "generationConfig": {
-            "responseMimeType": "application/json"
+    for model_name in CANDIDATE_MODELS:
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={api_key}"
+        payload = {
+            "contents": [{
+                "parts": [{"text": prompt}]
+            }],
+            "generationConfig": {
+                "responseMimeType": "application/json"
+            }
         }
-    }
 
-    try:
-        response = requests.post(url, json=payload, headers={"Content-Type": "application/json"}, timeout=12)
-        if response.status_code == 200:
-            res_data = response.json()
-            parts = res_data.get("candidates", [])[0].get("content", {}).get("parts", [])
-            if parts:
-                import json
-                import re
-                raw_text = parts[0].get("text", "").strip()
-                clean_json = re.sub(r"^```json\s*|\s*```$", "", raw_text, flags=re.MULTILINE).strip()
-                result = json.loads(clean_json)
-                
-                explicacao = result.get("explicacao", "Compatibilidade calculada com sucesso.")
-                
-                # Update match explanation values only
-                match_obj.explicacao = explicacao
-                match_obj.explicacao_status = 'completed'
-                match_obj.save()
-                return True
-        
-        match_obj.explicacao = "Compatibilidade calculada com base em suas afinidades de grade e objetivo de carreira."
-        match_obj.explicacao_status = 'completed'
-        match_obj.save()
-    except Exception as e:
-        print(f"Error generating match explanation: {e}")
-        match_obj.explicacao = "Compatibilidade calculada com base em suas afinidades de grade e objetivo de carreira."
-        match_obj.explicacao_status = 'completed'
-        match_obj.save()
-
+        try:
+            response = requests.post(url, json=payload, headers={"Content-Type": "application/json"}, timeout=12)
+            if response.status_code == 200:
+                res_data = response.json()
+                parts = res_data.get("candidates", [])[0].get("content", {}).get("parts", [])
+                if parts:
+                    import json
+                    import re
+                    raw_text = parts[0].get("text", "").strip()
+                    clean_json = re.sub(r"^```json\s*|\s*```$", "", raw_text, flags=re.MULTILINE).strip()
+                    result = json.loads(clean_json)
+                    
+                    explicacao = result.get("explicacao", "Compatibilidade calculada com sucesso.")
+                    
+                    # Update match explanation values only
+                    match_obj.explicacao = explicacao
+                    match_obj.explicacao_status = 'completed'
+                    match_obj.save()
+                    return True
+        except Exception as e:
+            print(f"Error calling {model_name} for match explanation: {e}")
+            
+    # Fallback if all models failed
+    match_obj.explicacao = "Compatibilidade calculada com base em suas afinidades de grade e objetivo de carreira."
+    match_obj.explicacao_status = 'completed'
+    match_obj.save()
     return False

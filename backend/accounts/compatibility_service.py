@@ -229,64 +229,74 @@ def calcular_e_persistir_matches(user):
         f"Responda apenas com o array JSON válido, sem introdução ou tags de bloco de código."
     )
 
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key={api_key}"
-    payload = {
-        "contents": [{
-            "parts": [{"text": prompt}]
-        }],
-        "generationConfig": {
-            "responseMimeType": "application/json"
+    CANDIDATE_MODELS = [
+        "gemini-3.5-flash-lite",
+        "gemini-3.5-flash",
+        "gemini-3.1-flash-lite",
+        "gemini-3.6-flash",
+        "gemini-2.0-flash-lite",
+        "gemini-2.0-flash",
+    ]
+
+    for model_name in CANDIDATE_MODELS:
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={api_key}"
+        payload = {
+            "contents": [{
+                "parts": [{"text": prompt}]
+            }],
+            "generationConfig": {
+                "responseMimeType": "application/json"
+            }
         }
-    }
 
-    try:
-        response = requests.post(url, json=payload, headers={"Content-Type": "application/json"}, timeout=25)
-        if response.status_code == 200:
-            res_data = response.json()
-            parts = res_data.get("candidates", [])[0].get("content", {}).get("parts", [])
-            if parts:
-                raw_text = parts[0].get("text", "").strip()
-                clean_json = re.sub(r"^```json\s*|\s*```$", "", raw_text, flags=re.MULTILINE).strip()
-                results = json.loads(clean_json)
+        try:
+            response = requests.post(url, json=payload, headers={"Content-Type": "application/json"}, timeout=25)
+            if response.status_code == 200:
+                res_data = response.json()
+                parts = res_data.get("candidates", [])[0].get("content", {}).get("parts", [])
+                if parts:
+                    raw_text = parts[0].get("text", "").strip()
+                    clean_json = re.sub(r"^```json\s*|\s*```$", "", raw_text, flags=re.MULTILINE).strip()
+                    results = json.loads(clean_json)
 
-                # Map responses to dict by course_id
-                results_map = {}
-                for item in results:
-                    c_id = item.get("curso_id")
-                    if c_id is not None:
-                        results_map[int(c_id)] = item
+                    # Map responses to dict by course_id
+                    results_map = {}
+                    for item in results:
+                        c_id = item.get("curso_id")
+                        if c_id is not None:
+                            results_map[int(c_id)] = item
 
-                # Update database for all courses
-                for curso in cursos:
-                    item = results_map.get(curso.id)
-                    if item:
-                        score_final = max(10, min(98, int(item.get("score_final", 50))))
-                        score_tecnico = max(10, min(100, int(item.get("score_tecnico", 50))))
-                        score_comportamental = max(10, min(100, int(item.get("score_comportamental", 50))))
-                        score_pragmatico = max(10, min(100, int(item.get("score_pragmatico", 50))))
-                    else:
-                        # Fallback for individual course if missing in JSON list
-                        score_final = 50
-                        score_tecnico = 50
-                        score_comportamental = 50
-                        score_pragmatico = 50
+                    # Update database for all courses
+                    for curso in cursos:
+                        item = results_map.get(curso.id)
+                        if item:
+                            score_final = max(10, min(98, int(item.get("score_final", 50))))
+                            score_tecnico = max(10, min(100, int(item.get("score_tecnico", 50))))
+                            score_comportamental = max(10, min(100, int(item.get("score_comportamental", 50))))
+                            score_pragmatico = max(10, min(100, int(item.get("score_pragmatico", 50))))
+                        else:
+                            # Fallback for individual course if missing in JSON list
+                            score_final = 50
+                            score_tecnico = 50
+                            score_comportamental = 50
+                            score_pragmatico = 50
 
-                    CursoMatch.objects.update_or_create(
-                        user=user,
-                        curso=curso,
-                        defaults={
-                            'score_final': score_final,
-                            'score_tecnico': score_tecnico,
-                            'score_comportamental': score_comportamental,
-                            'score_pragmatico': score_pragmatico,
-                            'sub_scores': {
-                                'trilha': 'Natural' if curso.area.lower() == 'tecnologia' else 'Novos Horizontes'
+                        CursoMatch.objects.update_or_create(
+                            user=user,
+                            curso=curso,
+                            defaults={
+                                'score_final': score_final,
+                                'score_tecnico': score_tecnico,
+                                'score_comportamental': score_comportamental,
+                                'score_pragmatico': score_pragmatico,
+                                'sub_scores': {
+                                    'trilha': 'Natural' if curso.area.lower() == 'tecnologia' else 'Novos Horizontes'
+                                }
                             }
-                        }
-                    )
-                return
-    except Exception as e:
-        print(f"Error in Gemini bulk matches calculation: {e}. Running fallback...")
+                        )
+                    return
+        except Exception as e:
+            print(f"Error calling model {model_name} for bulk compatibility: {e}")
     
-    # If API call fails or times out, run fallback
+    # If all API calls fail or time out, run fallback
     run_fallback_calculation(user)
