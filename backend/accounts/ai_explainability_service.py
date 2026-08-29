@@ -35,7 +35,7 @@ def extrair_scores_texto_livre(user):
         f"Responda APENAS com o bloco JSON válido. Não inclua nenhuma introdução ou texto explicativo."
     )
 
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={api_key}"
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key={api_key}"
     payload = {
         "contents": [{
             "parts": [{"text": prompt}]
@@ -106,7 +106,7 @@ def gerar_explicabilidade_match(match_id):
         f"Responda apenas com o JSON válido."
     )
 
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={api_key}"
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key={api_key}"
     payload = {
         "contents": [{
             "parts": [{"text": prompt}]

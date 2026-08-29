@@ -229,7 +229,7 @@ def calcular_e_persistir_matches(user):
         f"Responda apenas com o array JSON válido, sem introdução ou tags de bloco de código."
     )
 
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={api_key}"
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key={api_key}"
     payload = {
         "contents": [{
             "parts": [{"text": prompt}]
