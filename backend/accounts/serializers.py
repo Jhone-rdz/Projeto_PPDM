@@ -516,8 +516,9 @@ class CursoComMatchSerializer(serializers.ModelSerializer):
                 match_obj = CursoMatch.objects.filter(user=user, curso=obj).first()
 
             if match_obj:
-                # Generate AI explanation síncronamente on demand if missing or not completed
-                if not match_obj.explicacao or match_obj.explicacao_status != 'completed':
+                # Generate AI explanation síncronamente on demand if missing or not completed (only if not loading list)
+                is_list = self.context.get('is_list', False)
+                if not is_list and (not match_obj.explicacao or match_obj.explicacao_status != 'completed'):
                     try:
                         from .ai_explainability_service import gerar_explicabilidade_match
                         gerar_explicabilidade_match(match_obj.id)

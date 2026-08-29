@@ -194,6 +194,11 @@ class CursoListView(generics.ListAPIView):
             
         return queryset
 
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['is_list'] = True
+        return context
+
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
         serializer = self.get_serializer(queryset, many=True)
@@ -212,6 +217,11 @@ class CursoListView(generics.ListAPIView):
                 pass
                 
         return Response(data)
+
+class CursoDetailView(generics.RetrieveAPIView):
+    queryset = Curso.objects.all()
+    serializer_class = CursoComMatchSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
 from rest_framework.views import APIView
 

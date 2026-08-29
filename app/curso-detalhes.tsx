@@ -105,10 +105,9 @@ export default function CursoDetalhesScreen() {
   const fetchCursoDetalhes = async () => {
     try {
       setLoading(true);
-      const cursos = await apiService.getCursos();
-      const found = cursos.find(c => c.id === Number(id));
-      if (found) {
-        setCurso(found);
+      const data = await apiService.getCurso(Number(id));
+      if (data) {
+        setCurso(data);
       }
     } catch (err) {
       console.error('Erro ao buscar detalhes do curso:', err);

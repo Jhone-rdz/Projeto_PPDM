@@ -563,6 +563,27 @@ export const apiService = {
     }
   },
 
+  getCurso: async (id: number): Promise<CursoComMatch> => {
+    try {
+      const token = await getToken();
+      const response = await fetch(`${API_BASE_URL}/cursos/${id}/`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.detail || 'Falha ao buscar detalhes do curso.');
+      }
+      return data as CursoComMatch;
+    } catch (error: any) {
+      console.error('getCurso API Error:', error);
+      throw error;
+    }
+  },
+
   getPerfil: async (): Promise<PerfilUsuario> => {
     try {
       const token = await getToken();

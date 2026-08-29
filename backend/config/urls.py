@@ -16,13 +16,14 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from accounts.views import CursoListView, ChatView, ListarDesafiosView, ConcluirDesafioView, RespostasQuestionarioView, PerfilView
+from accounts.views import CursoListView, CursoDetailView, ChatView, ListarDesafiosView, ConcluirDesafioView, RespostasQuestionarioView, PerfilView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/accounts/', include('accounts.urls')),
     path('api/questionario/respostas/', RespostasQuestionarioView.as_view(), name='questionario-respostas'),
     path('api/cursos/', CursoListView.as_view(), name='curso-list'),
+    path('api/cursos/<int:pk>/', CursoDetailView.as_view(), name='curso-detail'),
     path('api/chat/', ChatView.as_view(), name='chat-ai'),
     path('api/desafios/', ListarDesafiosView.as_view(), name='desafio-list'),
     path('api/desafios/<int:pk>/concluir/', ConcluirDesafioView.as_view(), name='desafio-concluir'),

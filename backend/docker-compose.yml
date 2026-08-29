@@ -47,6 +47,7 @@ services:
       dockerfile: Dockerfile
     container_name: nexocareer_celery
     restart: unless-stopped
+    entrypoint: []
     env_file:
       - .env
     environment:
