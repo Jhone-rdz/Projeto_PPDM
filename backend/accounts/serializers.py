@@ -516,6 +516,15 @@ class CursoComMatchSerializer(serializers.ModelSerializer):
                 match_obj = CursoMatch.objects.filter(user=user, curso=obj).first()
 
             if match_obj:
+                # Generate AI explanation síncronamente on demand if missing or not completed
+                if not match_obj.explicacao or match_obj.explicacao_status != 'completed':
+                    try:
+                        from .ai_explainability_service import gerar_explicabilidade_match
+                        gerar_explicabilidade_match(match_obj.id)
+                        match_obj.refresh_from_db()
+                    except Exception as e:
+                        print(f"Error generating explanation on-demand: {e}")
+
                 explicacoes = []
                 sub = match_obj.sub_scores
                 

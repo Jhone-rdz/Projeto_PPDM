@@ -101,46 +101,28 @@ def calcular_confianca_questionario(user):
     std_dev = math.sqrt(variance)
     return "ALTA CONFIANÇA" if std_dev >= 8.0 else "RESULTADO IMPRECISO"
 
-def calcular_e_persistir_matches(user):
+def run_fallback_calculation(user):
     """
-    Computes matches for all courses, checks trilha configurations, applies
-    multiplicative outlier discount, incorporates free-text embeddings, and persists.
+    Simple, robust mathematical fallback if Gemini API is offline.
     """
-    from .tasks import gerar_explicabilidade_task  # Celery task imported here
-    from .ai_explainability_service import extrair_scores_texto_livre
-
-    # Extract behavioral scores from free text if present
-    extraido_scores = extrair_scores_texto_livre(user)
-
-    # Get user closed-question scores
     scores = get_user_base_scores(user)
     user_tech = (user.curso_tecnico or "").strip().lower()
     
-    # Calculate user answers embedding from free text motivation & Daily life (if present)
-    user_free_text = " ".join(filter(None, [user.free_text_motivation, user.free_text_daily_life, user.free_text_dislikes])).strip()
-    user_embedding = get_embedding(user_free_text) if user_free_text else None
-    
-    # Confidence level
-    confianca = calcular_confianca_questionario(user)
-    
-    # Process all courses
-    cursos = Curso.objects.all()
-    for curso in cursos:
+    objetivo_map = {
+        'tecnologia': 'tecnologia',
+        'saúde': 'saude',
+        'negócios': 'negocios',
+        'artes e design': 'artes',
+        'direito e justiça': 'direito',
+        'agronomia e meio ambiente': 'agronomia',
+    }
+    user_pref_area = (user.objetivo_carreira or "").strip().lower()
+    mapped_pref_area = objetivo_map.get(user_pref_area, None)
+
+    for curso in Curso.objects.all():
         course_area = curso.area.lower()
         
-        # 1. Bagagem Técnica Pilar
-        # Area from objective_carreira mapping
-        objetivo_map = {
-            'tecnologia': 'tecnologia',
-            'saúde': 'saude',
-            'negócios': 'negocios',
-            'artes e design': 'artes',
-            'direito e justiça': 'direito',
-            'agronomia e meio ambiente': 'agronomia',
-        }
-        user_pref_area = (user.objetivo_carreira or "").strip().lower()
-        mapped_pref_area = objetivo_map.get(user_pref_area, None)
-
+        # Base technical fit
         if "desenvolvimento" in user_tech or "informática" in user_tech or "redes" in user_tech:
             eixo_mec_fit = 100 if course_area == 'tecnologia' else (25 if course_area in ['negocios', 'agronomia'] else 5)
         elif "administração" in user_tech:
@@ -152,125 +134,27 @@ def calcular_e_persistir_matches(user):
         else:
             eixo_mec_fit = 40
 
-        # Adjust based on explicit career objective area selection
+        # Adjust based on explicit preference
         if mapped_pref_area:
             if course_area == mapped_pref_area:
                 eixo_mec_fit = min(100, eixo_mec_fit + 30)
             else:
                 eixo_mec_fit = max(0, eixo_mec_fit - 40)
 
-        # Overlapping disciplines calculation
-        from accounts.serializers import get_course_requirements
-        reqs = get_course_requirements(curso.nome, course_area)
-        if reqs:
-            disciplinas_fit = sum(scores.get(attr, 50) for attr in reqs.keys()) / len(reqs)
+        score_tecnico = int(max(10, min(100, (eixo_mec_fit * 0.6) + (scores.get('logica', 50) * 0.4))))
+        score_comportamental = int(max(10, min(100, (scores.get('logica', 50) + scores.get('foco', 50)) / 2)))
+        score_pragmatico = 85 if "tecnólogo" in curso.tipo.lower() else 75
+        
+        # Combine
+        if course_area == mapped_pref_area or (course_area == 'tecnologia' and ("desenvolvimento" in user_tech or "informática" in user_tech or "redes" in user_tech)):
+            # Aligned path
+            score_final = int(max(10, min(98, (score_tecnico * 0.50) + (score_comportamental * 0.35) + (score_pragmatico * 0.15))))
         else:
-            disciplinas_fit = scores.get(course_area, 50)
-            
-        maturidade_pratica = min(100, 35 + (user.xp // 5))
-        score_tecnico = round((eixo_mec_fit * 0.4) + (disciplinas_fit * 0.4) + (maturidade_pratica * 0.2))
-
-        # 2. Perfil Comportamental Pilar
-        if course_area in ['tecnologia', 'saude', 'agronomia']:
-            eixo_analitico_criativo = (scores.get('logica', 50) * 0.6) + (scores.get('matematica', 50) * 0.4)
-        else:
-            eixo_analitico_criativo = (scores.get('criatividade', 50) * 0.6) + (scores.get('desenho', 50) * 0.4)
-
-        if course_area == 'negocios':
-            eixo_lideranca_tecnico = (scores.get('lideranca', 50) * 0.5) + (scores.get('comunicacao', 50) * 0.5)
-        else:
-            eixo_lideranca_tecnico = (scores.get('logica', 50) * 0.7) + (scores.get('foco', 50) * 0.3)
-
-        eixo_pratica_teoria = (scores.get('foco', 50) * 0.6) + (scores.get('programacao', 50) * 0.4)
-        eixo_rotina_autonomia = (scores.get('logica', 50) * 0.5) + (scores.get('foco', 50) * 0.5)
-
-        # Complement closed questions with structured output from free text if present
-        if extraido_scores:
-            eixo_analitico_criativo = (eixo_analitico_criativo * 0.70) + (extraido_scores.get('analitico_criativo', 50) * 0.30)
-            eixo_lideranca_tecnico = (eixo_lideranca_tecnico * 0.70) + (extraido_scores.get('lideranca_tecnico', 50) * 0.30)
-            eixo_pratica_teoria = (eixo_pratica_teoria * 0.70) + (extraido_scores.get('pratica_teoria', 50) * 0.30)
-            eixo_rotina_autonomia = (eixo_rotina_autonomia * 0.70) + (extraido_scores.get('rotina_autonomia', 50) * 0.30)
-
-        # Embedding Semantic Similarity Sub-axis
-        similarity_score = 50.0
-        if user_embedding and curso.embedding:
-            similarity = cosine_similarity(user_embedding, curso.embedding)
-            # Scale cosine similarity [-1, 1] or [0, 1] to [0, 100] range
-            similarity_score = max(0.0, min(100.0, similarity * 100.0))
-
-        # Average behavioral scores incorporating semantic matching if present
-        if user_embedding and curso.embedding:
-            score_comportamental = round((eixo_analitico_criativo * 0.25) + (eixo_lideranca_tecnico * 0.25) + (eixo_pratica_teoria * 0.2) + (eixo_rotina_autonomia * 0.2) + (similarity_score * 0.1))
-        else:
-            score_comportamental = round((eixo_analitico_criativo + eixo_lideranca_tecnico + eixo_pratica_teoria + eixo_rotina_autonomia) / 4)
-
-        # 3. Metas Pragmáticas Pilar
-        fit_modalidade = 90
-        fit_duracao = 95 if "tecnólogo" in curso.tipo.lower() else 75
-        fit_financeiro = 85
-        score_pragmatico = round((fit_modalidade * 0.4) + (fit_duracao * 0.4) + (fit_financeiro * 0.2))
-
-        # 4. Auto-detect path
-        is_same_area = False
-        is_related = False
-        if "desenvolvimento" in user_tech or "informática" in user_tech or "redes" in user_tech:
-            is_same_area = (course_area == 'tecnologia')
-            is_related = (course_area in ['negocios', 'direito'])
-        elif "administração" in user_tech:
-            is_same_area = (course_area == 'negocios')
-            is_related = (course_area in ['tecnologia', 'direito'])
-        elif "enfermagem" in user_tech:
-            is_same_area = (course_area == 'saude')
-            is_related = (course_area in ['agronomia'])
-        elif "agropecuária" in user_tech:
-            is_same_area = (course_area == 'agronomia')
-            is_related = (course_area in ['saude'])
-
-        if is_same_area:
-            w_tec, w_comp, w_prag = 0.50, 0.35, 0.15
-            trilha = 'Natural'
-        elif is_related:
-            w_tec, w_comp, w_prag = 0.35, 0.45, 0.20
-            trilha = 'Híbrido'
-        else:
-            w_tec, w_comp, w_prag = 0.25, 0.55, 0.20
-            trilha = 'Novos Horizontes'
-
-        score_geral = (score_tecnico * w_tec) + (score_comportamental * w_comp) + (score_pragmatico * w_prag)
-
-        # 5. Outliers Behavioral Penalty (floor 25%)
-        has_outlier = (
-            eixo_analitico_criativo < PISO_CRITICO_COMPORTAMENTAL or
-            eixo_lideranca_tecnico < PISO_CRITICO_COMPORTAMENTAL or
-            eixo_pratica_teoria < PISO_CRITICO_COMPORTAMENTAL or
-            eixo_rotina_autonomia < PISO_CRITICO_COMPORTAMENTAL
-        )
-        if has_outlier:
-            score_final_val = score_geral * FATOR_DESCONTO_OUTLIER
-        else:
-            score_final_val = score_geral
-
-        # Normalize score limits
-        score_final = int(max(10, min(100, score_final_val)))
-
-        # Sub-scores structure to save
-        sub_scores_data = {
-            'eixo_mec_fit': eixo_mec_fit,
-            'disciplinas_fit': disciplinas_fit,
-            'maturidade_pratica': maturidade_pratica,
-            'eixo_analitico_criativo': eixo_analitico_criativo,
-            'eixo_lideranca_tecnico': eixo_lideranca_tecnico,
-            'eixo_pratica_teoria': eixo_pratica_teoria,
-            'eixo_rotina_autonomia': eixo_rotina_autonomia,
-            'eixo_semantico_embeddings': similarity_score,
-            'fit_modalidade': fit_modalidade,
-            'fit_duracao': fit_duracao,
-            'fit_financeiro': fit_financeiro,
-            'trilha': trilha
-        }
+            # Unrelated path
+            score_final = int(max(10, min(98, (score_tecnico * 0.25) + (score_comportamental * 0.55) + (score_pragmatico * 0.20))))
 
         # Save to database
-        match_obj, created = CursoMatch.objects.update_or_create(
+        CursoMatch.objects.update_or_create(
             user=user,
             curso=curso,
             defaults={
@@ -278,20 +162,131 @@ def calcular_e_persistir_matches(user):
                 'score_tecnico': score_tecnico,
                 'score_comportamental': score_comportamental,
                 'score_pragmatico': score_pragmatico,
-                'sub_scores': sub_scores_data
+                'sub_scores': {
+                    'eixo_mec_fit': eixo_mec_fit,
+                    'trilha': 'Natural' if course_area == 'tecnologia' else 'Novos Horizontes'
+                }
             }
         )
 
-        # Trigger explainability asynchronously with fallback
-        try:
-            gerar_explicabilidade_task.delay(match_obj.id)
-        except Exception as celery_err:
-            print(f"Celery task delay failed (is Redis running?): {celery_err}. Executing synchronously as fallback...")
-            try:
-                # Run synchronously to be resilient
-                gerar_explicabilidade_task(match_obj.id)
-            except Exception as sync_err:
-                print(f"Fallback synchronous task also failed: {sync_err}")
-                match_obj.explicacao = "Compatibilidade calculada com sucesso baseada em suas respostas."
-                match_obj.explicacao_status = 'completed'
-                match_obj.save()
+def calcular_e_persistir_matches(user):
+    """
+    Computes matches for all courses by calling Gemini API in a single bulk request.
+    Stores results in CursoMatch. If API is down or key is missing, falls back to a basic local formula.
+    """
+    import json
+    import re
+    import requests
+    from django.conf import settings
+    from .models import Curso, CursoMatch
+
+    api_key = os.environ.get("GEMINI_API_KEY") or getattr(settings, "GEMINI_API_KEY", None)
+    if not api_key:
+        print("Gemini API key not found. Running fallback deterministic calculation...")
+        run_fallback_calculation(user)
+        return
+
+    scores = get_user_base_scores(user)
+    
+    # Gather course details
+    cursos = Curso.objects.all()
+    if not cursos.exists():
+        return
+
+    cursos_info = []
+    for c in cursos:
+        cursos_info.append(f"ID: {c.id} | Nome: {c.nome} | Área: {c.area} | Tipo: {c.tipo} | Descrição: {c.descricao[:200]}")
+
+    prompt = (
+        f"Você é o Nexo, um especialista de IA em orientação profissional para estudantes de ensino médio.\n"
+        f"Analise o seguinte perfil de estudante e avalie a compatibilidade dele com uma lista de cursos superiores.\n\n"
+        f"Perfil do Estudante:\n"
+        f"- Curso Técnico Atual: {user.curso_tecnico or 'Nenhum'}\n"
+        f"- Objetivo de Carreira Declarado: {user.objetivo_carreira or 'Indefinido'}\n"
+        f"- Motivação: {user.free_text_motivation or ''}\n"
+        f"- Rotina de Trabalho Ideal: {user.free_text_daily_life or ''}\n"
+        f"- O que detesta no trabalho: {user.free_text_dislikes or ''}\n"
+        f"- Notas de Competências (de 0 a 100): {scores}\n\n"
+        f"Cursos para avaliar:\n"
+        + "\n".join(cursos_info)
+        + f"\n\nInstruções Importantes:\n"
+        f"1. Você deve retornar exclusivamente um array JSON contendo um objeto para cada um dos cursos listados.\n"
+        f"2. Para cada curso, calcule e retorne 4 scores inteiros (de 10 a 98):\n"
+        f"   - 'score_final': nota final geral de compatibilidade. Amplie ao máximo o contraste (diferenciação): "
+        f"se o curso estiver muito alinhado com a área técnica, com o objetivo declarado do estudante e com o que ele gosta, dê nota entre 85 e 98. "
+        f"Se for de outra área sem relação, dê nota entre 10 e 50. Evite notas genéricas (como 70-80) para cursos não alinhados.\n"
+        f"   - 'score_tecnico': fit de bagagem técnica e conhecimentos acadêmicos.\n"
+        f"   - 'score_comportamental': fit de soft skills, preferências de rotina e estilo de trabalho.\n"
+        f"   - 'score_pragmatico': fit de metas práticas de modalidade e inserção rápida.\n"
+        f"3. O formato esperado para cada objeto do array JSON é:\n"
+        f"   {{\n"
+        f"     \"curso_id\": <int>,\n"
+        f"     \"score_final\": <int>,\n"
+        f"     \"score_tecnico\": <int>,\n"
+        f"     \"score_comportamental\": <int>,\n"
+        f"     \"score_pragmatico\": <int>\n"
+        f"   }}\n\n"
+        f"Responda apenas com o array JSON válido, sem introdução ou tags de bloco de código."
+    )
+
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={api_key}"
+    payload = {
+        "contents": [{
+            "parts": [{"text": prompt}]
+        }],
+        "generationConfig": {
+            "responseMimeType": "application/json"
+        }
+    }
+
+    try:
+        response = requests.post(url, json=payload, headers={"Content-Type": "application/json"}, timeout=25)
+        if response.status_code == 200:
+            res_data = response.json()
+            parts = res_data.get("candidates", [])[0].get("content", {}).get("parts", [])
+            if parts:
+                raw_text = parts[0].get("text", "").strip()
+                clean_json = re.sub(r"^```json\s*|\s*```$", "", raw_text, flags=re.MULTILINE).strip()
+                results = json.loads(clean_json)
+
+                # Map responses to dict by course_id
+                results_map = {}
+                for item in results:
+                    c_id = item.get("curso_id")
+                    if c_id is not None:
+                        results_map[int(c_id)] = item
+
+                # Update database for all courses
+                for curso in cursos:
+                    item = results_map.get(curso.id)
+                    if item:
+                        score_final = max(10, min(98, int(item.get("score_final", 50))))
+                        score_tecnico = max(10, min(100, int(item.get("score_tecnico", 50))))
+                        score_comportamental = max(10, min(100, int(item.get("score_comportamental", 50))))
+                        score_pragmatico = max(10, min(100, int(item.get("score_pragmatico", 50))))
+                    else:
+                        # Fallback for individual course if missing in JSON list
+                        score_final = 50
+                        score_tecnico = 50
+                        score_comportamental = 50
+                        score_pragmatico = 50
+
+                    CursoMatch.objects.update_or_create(
+                        user=user,
+                        curso=curso,
+                        defaults={
+                            'score_final': score_final,
+                            'score_tecnico': score_tecnico,
+                            'score_comportamental': score_comportamental,
+                            'score_pragmatico': score_pragmatico,
+                            'sub_scores': {
+                                'trilha': 'Natural' if curso.area.lower() == 'tecnologia' else 'Novos Horizontes'
+                            }
+                        }
+                    )
+                return
+    except Exception as e:
+        print(f"Error in Gemini bulk matches calculation: {e}. Running fallback...")
+    
+    # If API call fails or times out, run fallback
+    run_fallback_calculation(user)

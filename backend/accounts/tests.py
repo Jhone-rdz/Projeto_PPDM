@@ -1,5 +1,6 @@
 from django.test import TestCase, override_settings
 from django.contrib.auth import get_user_model
+from unittest.mock import patch, MagicMock
 from .models import Curso, PerfilUsuario, CursoMatch
 from .compatibility_service import calcular_e_persistir_matches, get_user_base_scores, calcular_confianca_questionario
 
@@ -38,6 +39,7 @@ class CompatibilityScoringTestCase(TestCase):
         )
         # Create courses
         self.curso_tech = Curso.objects.create(
+            id=1,
             nome="Ciência da Computação",
             tipo="Bacharelado",
             duracao="4 anos",
@@ -46,6 +48,7 @@ class CompatibilityScoringTestCase(TestCase):
             tags_raw="Tecnologia, Lógica, Programação"
         )
         self.curso_art = Curso.objects.create(
+            id=2,
             nome="Design Gráfico",
             tipo="Bacharelado",
             duracao="4 anos",
@@ -82,48 +85,52 @@ class CompatibilityScoringTestCase(TestCase):
         conf_neutral = calcular_confianca_questionario(self.user)
         self.assertEqual(conf_neutral, "RESULTADO IMPRECISO")
 
-    def test_compatibility_outlier_penalty(self):
-        # Create another user where a behavioral subscore will drop below 25%
-        outlier_user = User.objects.create_user(
-            username="outlierstudent",
-            email="outlier@nexo.com",
-            password="testpassword123",
-            curso_tecnico="Desenvolvimento de Sistemas"
-        )
-        # Create PerfilUsuario with extremely low logica/foco resulting in outlier penalty
-        PerfilUsuario.objects.create(
-            user=outlier_user,
-            logica=10, # Outlier behavior
-            criatividade=50,
-            foco=10, # Outlier behavior
-            comunicacao=50,
-            lideranca=50,
-            matematica=50,
-            fisica=50,
-            programacao=50,
-            desenho=50,
-            portugues=50,
-            biologia=50,
-            quimica=50,
-            historia=50
-        )
+    @patch('requests.post')
+    def test_compatibility_ai_scoring(self, mock_post):
+        # Mock Gemini API response for bulk courses matching
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "candidates": [{
+                "content": {
+                    "parts": [{
+                        "text": '[{"curso_id": 1, "score_final": 95, "score_tecnico": 90, "score_comportamental": 98, "score_pragmatico": 85}, {"curso_id": 2, "score_final": 40, "score_tecnico": 35, "score_comportamental": 45, "score_pragmatico": 50}]'
+                    }]
+                }
+            }]
+        }
+        mock_post.return_value = mock_response
 
-        calcular_e_persistir_matches(outlier_user)
-        
-        # Check match with computer science
-        match = CursoMatch.objects.get(user=outlier_user, curso=self.curso_tech)
-        
-        # Verify that score incorporates the 0.75 penalty discount
-        # CS is tech-based, so it will fall in the Natural path (weights 50% tech, 30% comp, 20% prag)
-        # Tech subscore: MEC fit (100) + disciplinas (CS reqs: logica, mat, prog average = 10+50+50=36.6) + maturity (35) -> tec = 100*0.4 + 36.6*0.4 + 35*0.2 = 61.64
-        # Behavioral subscore is outlier (< 25)
-        # Score final should be low
-        self.assertLess(match.score_final, 50)
+        # Temporarily ensure API key is present in environment so API flow is tested
+        with patch.dict('os.environ', {'GEMINI_API_KEY': 'testkey'}):
+            calcular_e_persistir_matches(self.user)
 
-    def test_api_submit_questionnaire_array_format(self):
+        # Check matches in DB
+        match_tech = CursoMatch.objects.get(user=self.user, curso=self.curso_tech)
+        match_art = CursoMatch.objects.get(user=self.user, curso=self.curso_art)
+
+        self.assertEqual(match_tech.score_final, 95)
+        self.assertEqual(match_art.score_final, 40)
+
+    @patch('requests.post')
+    def test_api_submit_questionnaire_array_format(self, mock_post):
         from rest_framework.test import APIClient
         from accounts.models import Pergunta, Opcao
         
+        # Mock Gemini API response for bulk courses matching
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "candidates": [{
+                "content": {
+                    "parts": [{
+                        "text": '[{"curso_id": 1, "score_final": 95, "score_tecnico": 90, "score_comportamental": 98, "score_pragmatico": 85}, {"curso_id": 2, "score_final": 40, "score_tecnico": 35, "score_comportamental": 45, "score_pragmatico": 50}]'
+                    }]
+                }
+            }]
+        }
+        mock_post.return_value = mock_response
+
         # Create questions/options in database
         pergunta1 = Pergunta.objects.create(id=1, pergunta="Questão 1", categoria="Geral", icone_categoria="star")
         Opcao.objects.create(pergunta=pergunta1, chave="a", label="Opção A", descricao="Desc A", icone="star", peso={"logica": 10})
@@ -140,7 +147,8 @@ class CompatibilityScoringTestCase(TestCase):
             "free_text_dislikes": "Não gosto de tarefas físicas repetitivas ou ambientes barulhentos."
         }
         
-        response = client.post("/api/questionario/respostas/", payload, format="json")
+        with patch.dict('os.environ', {'GEMINI_API_KEY': 'testkey'}):
+            response = client.post("/api/questionario/respostas/", payload, format="json")
         self.assertEqual(response.status_code, 200)
         
         # Reload user from DB to verify free text fields saved
