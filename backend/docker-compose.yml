@@ -12,6 +12,7 @@ services:
       - DEBUG=True
       - SECRET_KEY=django-local-development-secret-key-1234
       - DATABASE_URL=postgres://nexo_user:nexo_pass@db:5432/nexo_db
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
     depends_on:
       - db
 

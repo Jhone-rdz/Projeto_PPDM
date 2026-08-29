@@ -277,72 +277,22 @@ export default function CarreirasScreen() {
   useEffect(() => {
     if (!openCursoId) return;
 
-    const findAndOpenCourse = async () => {
-      // 1. Try finding in currently loaded list
-      let found = cursos.find(c => c.id === Number(openCursoId));
-      if (found) {
-        setSelectedCurso(found);
-        setIsModalOpen(true);
-        router.setParams({ openCursoId: undefined } as any);
-        return;
-      }
-
-      // 2. Try fetching all courses from backend
-      try {
-        const data = await apiService.getCursos();
-        const mapped = data.map((c: any) => ({
-          id: c.id,
-          tipo: c.tipo,
-          duracao: c.duracao,
-          nome: c.nome,
-          descricao: c.descricao,
-          tags: c.tags,
-          match: `${c.match}%`,
-          icone: c.icone,
-          corIcone: c.corIcone || c.cor_icone,
-          corFundo: c.corFundo || c.cor_fundo,
-          scoreTecnico: c.scoreTecnico,
-          scoreComportamental: c.scoreComportamental,
-          scorePragmatico: c.scorePragmatico,
-          explicacoes: c.explicacoes,
-          confianca: c.confianca,
-          trilha: c.trilha,
-          explicacaoIa: c.explicacaoIa,
-        }));
-        const backendFound = mapped.find(c => c.id === Number(openCursoId));
-        if (backendFound) {
-          setSelectedCurso(backendFound);
-          setIsModalOpen(true);
-          router.setParams({ openCursoId: undefined } as any);
-          return;
-        }
-      } catch (err) {
-        console.warn('Failed to fetch fallback courses:', err);
-      }
-
-      // 3. Fallback to static mock courses
-      const staticFound = DADOS_CURSOS.find(c => c.id === Number(openCursoId));
-      if (staticFound) {
-        setSelectedCurso(staticFound);
-        setIsModalOpen(true);
-        router.setParams({ openCursoId: undefined } as any);
-      }
-    };
-
-    findAndOpenCourse();
-  }, [openCursoId, cursos, router]);
-
-
-
-
+    router.push({
+      pathname: '/curso-detalhes',
+      params: { id: openCursoId }
+    });
+    router.setParams({ openCursoId: undefined } as any);
+  }, [openCursoId, router]);
 
   const handleBack = () => {
     router.back();
   };
 
   const handleSaibaMais = (curso: any) => {
-    setSelectedCurso(curso);
-    setIsModalOpen(true);
+    router.push({
+      pathname: '/curso-detalhes',
+      params: { id: curso.id }
+    });
   };
 
   // Fetch courses from Django backend with area and search params (debounced)
@@ -601,193 +551,7 @@ export default function CarreirasScreen() {
         </View>
       </ScrollView>
 
-      {/* DETALHES DO CURSO MODAL */}
-      <Modal
-        visible={isModalOpen}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setIsModalOpen(false)}
-      >
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setIsModalOpen(false)}
-        >
-          <View style={styles.modalCard} onStartShouldSetResponder={() => true}>
-            {/* Header */}
-            <View style={styles.modalHeaderRow}>
-              <View style={[styles.courseIconContainer, { backgroundColor: selectedCurso?.corFundo || '#1E1B4B' }]}>
-                <Ionicons name={selectedCurso?.icone || 'school-outline'} size={24} color={selectedCurso?.corIcone || '#8B5CF6'} />
-              </View>
-              <View style={styles.modalTitleContainer}>
-                <Text style={styles.modalCourseName}>{selectedCurso?.nome}</Text>
-                <Text style={styles.modalCourseMeta}>{selectedCurso?.tipo} • {selectedCurso?.duracao}</Text>
-              </View>
-              <TouchableOpacity onPress={() => setIsModalOpen(false)} style={styles.modalCloseBtn}>
-                <Ionicons name="close" size={24} color="#94A3B8" />
-              </TouchableOpacity>
-            </View>
 
-            {/* Scrollable Content wrapper */}
-            <ScrollView 
-              showsVerticalScrollIndicator={false} 
-              style={styles.modalScrollView}
-              contentContainerStyle={{ paddingBottom: 16 }}
-            >
-              {/* Match Badge */}
-              <View style={styles.modalMatchRow}>
-                <LinearGradient
-                  colors={['#8B5CF6', '#4F46E5']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.modalMatchBadge}
-                >
-                  <Ionicons name="sparkles" size={14} color="#FFFFFF" />
-                  <Text style={styles.modalMatchText}>{selectedCurso?.match} compatível</Text>
-                </LinearGradient>
-                <View style={styles.modalTipoMatchBadge}>
-                  <Text style={styles.modalTipoMatchText}>{selectedCurso?.tipoMatch}</Text>
-                </View>
-              </View>
-
-              {/* Description */}
-              <Text style={styles.modalLabel}>Sobre o Curso</Text>
-              <Text style={styles.modalDescription}>{selectedCurso?.descricao}</Text>
-
-              {/* Selo de Confiança */}
-              {selectedCurso?.confianca && (
-                <View style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 6 }}>
-                  <Ionicons 
-                    name={selectedCurso.confianca === 'ALTA CONFIANÇA' ? 'checkmark-circle-outline' : 'alert-circle-outline'} 
-                    size={16} 
-                    color={selectedCurso.confianca === 'ALTA CONFIANÇA' ? '#10B981' : '#F59E0B'} 
-                  />
-                  <Text style={{ fontSize: 11, fontWeight: 'bold', color: selectedCurso.confianca === 'ALTA CONFIANÇA' ? '#10B981' : '#F59E0B', marginLeft: 4 }}>
-                    {selectedCurso.confianca}
-                  </Text>
-                </View>
-              )}
-
-              {/* Radar de Eixos (Barras de progresso para BT, PC, MP) */}
-              {selectedCurso?.scoreTecnico !== undefined && (
-                <View style={{ marginVertical: 8 }}>
-                  <Text style={{ fontSize: 13, fontWeight: 'bold', color: '#E2E8F0', marginBottom: 6 }}>Eixos de Compatibilidade</Text>
-                  
-                  {/* Bagagem Técnica */}
-                  <View style={{ marginBottom: 5 }}>
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 2 }}>
-                      <Text style={{ fontSize: 11, color: '#94A3B8' }}>Bagagem Técnica</Text>
-                      <Text style={{ fontSize: 11, color: '#FFFFFF', fontWeight: 'bold' }}>{selectedCurso.scoreTecnico}%</Text>
-                    </View>
-                    <View style={{ height: 6, backgroundColor: '#1E2937', borderRadius: 3 }}>
-                      <View style={{ width: `${selectedCurso.scoreTecnico}%`, height: 6, backgroundColor: '#4F46E5', borderRadius: 3 }} />
-                    </View>
-                  </View>
-
-                  {/* Perfil Comportamental */}
-                  <View style={{ marginBottom: 5 }}>
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 2 }}>
-                      <Text style={{ fontSize: 11, color: '#94A3B8' }}>Perfil Comportamental</Text>
-                      <Text style={{ fontSize: 11, color: '#FFFFFF', fontWeight: 'bold' }}>{selectedCurso.scoreComportamental}%</Text>
-                    </View>
-                    <View style={{ height: 6, backgroundColor: '#1E2937', borderRadius: 3 }}>
-                      <View style={{ width: `${selectedCurso.scoreComportamental}%`, height: 6, backgroundColor: '#EC4899', borderRadius: 3 }} />
-                    </View>
-                  </View>
-
-                  {/* Metas Pragmáticas */}
-                  <View style={{ marginBottom: 5 }}>
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 2 }}>
-                      <Text style={{ fontSize: 11, color: '#94A3B8' }}>Metas Pragmáticas</Text>
-                      <Text style={{ fontSize: 11, color: '#FFFFFF', fontWeight: 'bold' }}>{selectedCurso.scorePragmatico}%</Text>
-                    </View>
-                    <View style={{ height: 6, backgroundColor: '#1E2937', borderRadius: 3 }}>
-                      <View style={{ width: `${selectedCurso.scorePragmatico}%`, height: 6, backgroundColor: '#F59E0B', borderRadius: 3 }} />
-                    </View>
-                  </View>
-                </View>
-              )}
-
-              {/* Explicabilidade (Resumo explicativo por que deu match) */}
-              {((selectedCurso?.explicacoes && selectedCurso.explicacoes.length > 0) || selectedCurso?.explicacaoIa) && (
-                <View style={{ backgroundColor: '#111827', padding: 12, borderRadius: 8, marginVertical: 6, borderWidth: 1, borderColor: '#1F2937' }}>
-                  <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#10B981', marginBottom: 4 }}>Análise do Match:</Text>
-                  {selectedCurso.explicacoes && selectedCurso.explicacoes.map((exp: string, idx: number) => (
-                    <Text key={idx} style={{ fontSize: 11, color: '#E2E8F0', marginVertical: 1 }}>
-                      • {exp}
-                    </Text>
-                  ))}
-                  {selectedCurso.explicacaoIa ? (
-                    <Text style={{ fontSize: 12, color: '#A78BFA', marginTop: 8, fontStyle: 'italic', lineHeight: 16 }}>
-                      &quot;{selectedCurso.explicacaoIa}&quot;
-                    </Text>
-                  ) : null}
-                </View>
-              )}
-
-              {/* Mercado de Trabalho / Grade / Salário */}
-              {(() => {
-                const detalhes = getDetalhesCurso(selectedCurso?.nome || '', selectedCurso?.area || '');
-                return (
-                  <>
-                    <Text style={styles.modalLabel}>Mercado de Trabalho</Text>
-                    <Text style={styles.modalSubDescription}>{detalhes.mercado}</Text>
-
-                    <Text style={styles.modalLabel}>Matérias Principais da Grade</Text>
-                    <View style={styles.disciplinesGrid}>
-                      {detalhes.materiais.map((mat, i) => (
-                        <View key={i} style={styles.disciplineItem}>
-                          <Ionicons name="book-outline" size={14} color="#00D4FF" style={{ marginRight: 6 }} />
-                          <Text style={styles.disciplineText}>{mat}</Text>
-                        </View>
-                      ))}
-                    </View>
-
-                    <Text style={styles.modalLabel}>Estimativa Salarial Inicial</Text>
-                    <View style={styles.salaryCard}>
-                      <Ionicons name="cash-outline" size={18} color="#10B981" style={{ marginRight: 8 }} />
-                      <Text style={styles.salaryText}>{detalhes.salario}</Text>
-                    </View>
-                  </>
-                );
-              })()}
-
-              {/* Tags */}
-              <Text style={styles.modalLabel}>Disciplinas e Foco</Text>
-              <View style={styles.modalTagsList}>
-                {selectedCurso?.tags?.map((tag: string, index: number) => (
-                  <View key={index} style={styles.modalTag}>
-                    <Text style={styles.modalTagText}>{tag}</Text>
-                  </View>
-                ))}
-              </View>
-
-              {/* Interconnected AI Chat Prompt Button */}
-              <TouchableOpacity
-                style={styles.modalAiBtn}
-                onPress={() => {
-                  setIsModalOpen(false);
-                  router.push({
-                    pathname: '/(tabs)/chat',
-                    params: { autoPrompt: `Quero saber mais sobre o curso de ${selectedCurso?.nome}. Quais são as principais matérias, o mercado de trabalho e a média salarial?` }
-                  } as any);
-                }}
-                activeOpacity={0.8}
-              >
-                <LinearGradient
-                  colors={['#10B981', '#059669']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.modalAiGradient}
-                >
-                  <Ionicons name="chatbubbles-outline" size={18} color="#FFFFFF" />
-                  <Text style={styles.modalAiBtnText}>Perguntar à IA Nexo</Text>
-                </LinearGradient>
-              </TouchableOpacity>
-            </ScrollView>
-          </View>
-        </TouchableOpacity>
-      </Modal>
     </SafeAreaView>
   );
 }
