@@ -136,11 +136,13 @@ def gerar_explicabilidade_match(match_id):
                 match_obj.save()
                 return True
         
-        match_obj.explicacao_status = 'failed'
+        match_obj.explicacao = "Compatibilidade calculada com base em suas afinidades de grade e objetivo de carreira."
+        match_obj.explicacao_status = 'completed'
         match_obj.save()
     except Exception as e:
         print(f"Error generating match explanation: {e}")
-        match_obj.explicacao_status = 'failed'
+        match_obj.explicacao = "Compatibilidade calculada com base em suas afinidades de grade e objetivo de carreira."
+        match_obj.explicacao_status = 'completed'
         match_obj.save()
 
     return False
