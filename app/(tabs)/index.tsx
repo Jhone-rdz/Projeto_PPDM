@@ -115,8 +115,8 @@ export default function HomeScreen() {
 
   const handleOpenCourseDetails = (curso: any) => {
     router.push({
-      pathname: '/(tabs)/carreiras',
-      params: { openCursoId: curso.id }
+      pathname: '/(tabs)/curso-detalhes',
+      params: { id: curso.id }
     });
   };
 

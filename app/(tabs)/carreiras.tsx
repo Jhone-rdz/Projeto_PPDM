@@ -246,10 +246,64 @@ const DADOS_CURSOS = [
     icone: 'water-outline',
     corIcone: '#3B82F6',
     corFundo: '#1E3A8A',
+  },
+  // Artes & Design
+  {
+    id: 40,
+    area: 'artes',
+    tipo: 'BACHARELADO',
+    duracao: '4 anos',
+    nome: 'Design Gráfico',
+    descricao: 'Criação de projetos visuais, identidades de marca, interfaces digitais e tipografia.',
+    tags: ['Identidade Visual', 'UI/UX', 'Tipografia'],
+    match: '91%',
+    icone: 'color-palette-outline',
+    corIcone: '#A855F7',
+    corFundo: '#3B0764',
+  },
+  {
+    id: 41,
+    area: 'artes',
+    tipo: 'BACHARELADO',
+    duracao: '5 anos',
+    nome: 'Arquitetura e Urbanismo',
+    descricao: 'Planejamento e concepção de espaços humanos, edificações sustentáveis e cidades planejadas.',
+    tags: ['Projetos Urbanos', 'Edificações', 'Sustentabilidade'],
+    match: '88%',
+    icone: 'business-outline',
+    corIcone: '#EC4899',
+    corFundo: '#831843',
+  },
+  // Direito & Humanas
+  {
+    id: 50,
+    area: 'direito',
+    tipo: 'BACHARELADO',
+    duracao: '5 anos',
+    nome: 'Direito',
+    descricao: 'Estudo das leis, mediação de litígios jurídicos e defesa dos direitos na sociedade.',
+    tags: ['Legislação', 'Mediação', 'Justiça'],
+    match: '93%',
+    icone: 'scale-outline',
+    corIcone: '#3B82F6',
+    corFundo: '#1E3A8A',
+  },
+  {
+    id: 51,
+    area: 'direito',
+    tipo: 'BACHARELADO',
+    duracao: '4 anos',
+    nome: 'Relações Internacionais',
+    descricao: 'Análise de conjunturas globais, acordos diplomáticos e comércio exterior.',
+    tags: ['Diplomacia', 'Comércio Exterior', 'Política Global'],
+    match: '86%',
+    icone: 'globe-outline',
+    corIcone: '#10B981',
+    corFundo: '#064E3B',
   }
 ];
 
-type AreaType = 'tecnologia' | 'saude' | 'negocios' | 'agronomia';
+type AreaType = 'todos' | 'tecnologia' | 'saude' | 'negocios' | 'artes' | 'direito' | 'agronomia';
 
 interface CursoItem {
   id: number;
@@ -262,12 +316,13 @@ interface CursoItem {
   icone: string;
   corIcone: string;
   corFundo: string;
+  area?: string;
 }
 
 export default function CarreirasScreen() {
   const router = useRouter();
   const { openCursoId } = useLocalSearchParams<{ openCursoId?: string }>();
-  const [areaAtiva, setAreaAtiva] = useState<AreaType>('tecnologia');
+  const [areaAtiva, setAreaAtiva] = useState<AreaType>('todos');
   const [busca, setBusca] = useState('');
   const [cursos, setCursos] = useState<CursoItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -278,7 +333,7 @@ export default function CarreirasScreen() {
     if (!openCursoId) return;
 
     router.push({
-      pathname: '/curso-detalhes',
+      pathname: '/(tabs)/curso-detalhes',
       params: { id: openCursoId }
     });
     router.setParams({ openCursoId: undefined } as any);
@@ -290,7 +345,7 @@ export default function CarreirasScreen() {
 
   const handleSaibaMais = (curso: any) => {
     router.push({
-      pathname: '/curso-detalhes',
+      pathname: '/(tabs)/curso-detalhes',
       params: { id: curso.id }
     });
   };
@@ -300,7 +355,11 @@ export default function CarreirasScreen() {
     const delayDebounce = setTimeout(async () => {
       setIsLoading(true);
       try {
-        const data = await apiService.getCursos({ area: areaAtiva, busca });
+        const queryParams: any = { busca };
+        if (areaAtiva !== 'todos') {
+          queryParams.area = areaAtiva;
+        }
+        const data = await apiService.getCursos(queryParams);
         const mapped = data.map((c: any) => ({
           id: c.id,
           tipo: c.tipo,
@@ -312,6 +371,7 @@ export default function CarreirasScreen() {
           icone: c.icone,
           corIcone: c.corIcone || c.cor_icone,
           corFundo: c.corFundo || c.cor_fundo,
+          area: c.area,
           scoreTecnico: c.scoreTecnico,
           scoreComportamental: c.scoreComportamental,
           scorePragmatico: c.scorePragmatico,
@@ -325,7 +385,7 @@ export default function CarreirasScreen() {
         console.warn('Failed to load courses from API:', err);
         // Fallback to static mock filter by area and search query
         const filtered = DADOS_CURSOS.filter((curso) => {
-          const matchesArea = curso.area === areaAtiva;
+          const matchesArea = areaAtiva === 'todos' || curso.area === areaAtiva;
           const matchesBusca = 
             curso.nome.toLowerCase().includes(busca.toLowerCase()) ||
             curso.descricao.toLowerCase().includes(busca.toLowerCase()) ||
@@ -394,6 +454,22 @@ export default function CarreirasScreen() {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.areaScrollContent}
           >
+            {/* Card 0 — Todos os Cursos */}
+            <TouchableOpacity
+              style={[
+                styles.areaCard,
+                areaAtiva === 'todos' ? styles.areaCardTodosActive : styles.areaCardInactive,
+              ]}
+              onPress={() => setAreaAtiva('todos')}
+              activeOpacity={0.8}
+            >
+              <View style={styles.areaIconContainer}>
+                <Ionicons name="sparkles-outline" size={22} color="#6366F1" />
+              </View>
+              <Text style={styles.areaTitle}>Todos os Cursos</Text>
+              <Text style={styles.areaDesc}>54 cursos • Ranking geral dos seus matches.</Text>
+            </TouchableOpacity>
+
             {/* Card 1 — Tecnologia & Inovação */}
             <TouchableOpacity
               style={[
@@ -407,7 +483,7 @@ export default function CarreirasScreen() {
                 <Ionicons name="hardware-chip-outline" size={22} color="#4F46E5" />
               </View>
               <Text style={styles.areaTitle}>Tecnologia & Inovação</Text>
-              <Text style={styles.areaDesc}>6 cursos • Para perfis lógicos, criativos e curiosos.</Text>
+              <Text style={styles.areaDesc}>9 cursos • Para perfis lógicos e curiosos.</Text>
             </TouchableOpacity>
 
             {/* Card 2 — Saúde & Bem-Estar */}
@@ -423,7 +499,7 @@ export default function CarreirasScreen() {
                 <Ionicons name="heart-outline" size={22} color="#EC4899" />
               </View>
               <Text style={styles.areaTitle}>Saúde & Bem-Estar</Text>
-              <Text style={styles.areaDesc}>5 cursos • Para quem quer cuidar de pessoas.</Text>
+              <Text style={styles.areaDesc}>9 cursos • Para quem quer cuidar de pessoas.</Text>
             </TouchableOpacity>
 
             {/* Card 3 — Negócios, Finanças & Gestão */}
@@ -438,11 +514,43 @@ export default function CarreirasScreen() {
               <View style={styles.areaIconContainer}>
                 <Ionicons name="briefcase-outline" size={22} color="#F59E0B" />
               </View>
-              <Text style={styles.areaTitle}>Negócios, Finanças & Gestão</Text>
-              <Text style={styles.areaDesc}>4 cursos • Para perfis estratégicos e empreendedores.</Text>
+              <Text style={styles.areaTitle}>Negócios & Gestão</Text>
+              <Text style={styles.areaDesc}>9 cursos • Para perfis estratégicos e líderes.</Text>
             </TouchableOpacity>
 
-            {/* Card 4 — Agropecuária & Ciências Agrárias */}
+            {/* Card 4 — Artes, Design & Comunicação */}
+            <TouchableOpacity
+              style={[
+                styles.areaCard,
+                areaAtiva === 'artes' ? styles.areaCardArtesActive : styles.areaCardInactive,
+              ]}
+              onPress={() => setAreaAtiva('artes')}
+              activeOpacity={0.8}
+            >
+              <View style={styles.areaIconContainer}>
+                <Ionicons name="color-palette-outline" size={22} color="#A855F7" />
+              </View>
+              <Text style={styles.areaTitle}>Artes & Comunicação</Text>
+              <Text style={styles.areaDesc}>9 cursos • Para mentes criativas e visuais.</Text>
+            </TouchableOpacity>
+
+            {/* Card 5 — Direito & Humanas */}
+            <TouchableOpacity
+              style={[
+                styles.areaCard,
+                areaAtiva === 'direito' ? styles.areaCardDireitoActive : styles.areaCardInactive,
+              ]}
+              onPress={() => setAreaAtiva('direito')}
+              activeOpacity={0.8}
+            >
+              <View style={styles.areaIconContainer}>
+                <Ionicons name="scale-outline" size={22} color="#3B82F6" />
+              </View>
+              <Text style={styles.areaTitle}>Direito & Humanas</Text>
+              <Text style={styles.areaDesc}>9 cursos • Argumentação, justiça e sociedade.</Text>
+            </TouchableOpacity>
+
+            {/* Card 6 — Agropecuária & Ciências Agrárias */}
             <TouchableOpacity
               style={[
                 styles.areaCard,
@@ -454,8 +562,8 @@ export default function CarreirasScreen() {
               <View style={styles.areaIconContainer}>
                 <Ionicons name="leaf-outline" size={22} color="#10B981" />
               </View>
-              <Text style={styles.areaTitle}>Agropecuária & Ciências Agrárias</Text>
-              <Text style={styles.areaDesc}>9 cursos • Para quem gosta da natureza, plantas e animais.</Text>
+              <Text style={styles.areaTitle}>Agropecuária & Agrárias</Text>
+              <Text style={styles.areaDesc}>9 cursos • Para contato com natureza e animais.</Text>
             </TouchableOpacity>
           </ScrollView>
         </View>
@@ -468,12 +576,18 @@ export default function CarreirasScreen() {
               value={busca}
               onChangeText={setBusca}
               placeholder={
-                areaAtiva === 'tecnologia'
+                areaAtiva === 'todos'
+                  ? 'Buscar em todos os cursos...'
+                  : areaAtiva === 'tecnologia'
                   ? 'Buscar em Tecnologia & Inovação...'
                   : areaAtiva === 'saude'
                   ? 'Buscar em Saúde & Bem-Estar...'
                   : areaAtiva === 'negocios'
-                  ? 'Buscar em Negócios, Finanças & Gestão...'
+                  ? 'Buscar em Negócios & Gestão...'
+                  : areaAtiva === 'artes'
+                  ? 'Buscar em Artes & Comunicação...'
+                  : areaAtiva === 'direito'
+                  ? 'Buscar em Direito & Humanas...'
                   : 'Buscar em Agropecuária & Ciências Agrárias...'
               }
               placeholderTextColor="#64748B"
@@ -696,6 +810,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#2D1B69',
   },
+  areaCardTodosActive: {
+    backgroundColor: '#1e1b4b',
+    borderWidth: 1.5,
+    borderColor: '#6366F1',
+  },
   areaCardTecnologiaActive: {
     backgroundColor: '#1a1040',
     borderWidth: 1.5,
@@ -720,6 +839,16 @@ const styles = StyleSheet.create({
     backgroundColor: '#1a1200',
     borderWidth: 1.5,
     borderColor: '#F59E0B',
+  },
+  areaCardArtesActive: {
+    backgroundColor: '#2a0a38',
+    borderWidth: 1.5,
+    borderColor: '#A855F7',
+  },
+  areaCardDireitoActive: {
+    backgroundColor: '#0a1938',
+    borderWidth: 1.5,
+    borderColor: '#3B82F6',
   },
   areaCardAgronomiaInactive: {
     backgroundColor: '#051f15',

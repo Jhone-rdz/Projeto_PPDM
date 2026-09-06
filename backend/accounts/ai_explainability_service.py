@@ -151,6 +151,6 @@ def gerar_explicabilidade_match(match_id):
             
     # Fallback if all models failed
     match_obj.explicacao = "Compatibilidade calculada com base em suas afinidades de grade e objetivo de carreira."
-    match_obj.explicacao_status = 'completed'
+    match_obj.explicacao_status = 'failed'
     match_obj.save()
     return False

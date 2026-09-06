@@ -9,6 +9,7 @@ export interface CursoComMatch {
   duracao: string;
   descricao: string;
   tags: string[];
+  area?: string;
   icone: string;
   corIcone: string;
   corFundo: string;
@@ -19,6 +20,10 @@ export interface CursoComMatch {
   scorePragmatico?: number;
   explicacoes?: string[];
   confianca?: string;
+  explicacao?: string;
+  explicacaoIa?: string;
+  explicacao_status?: 'pending' | 'completed' | 'failed';
+  explicacaoStatus?: 'pending' | 'completed' | 'failed';
 }
 
 export interface PerfilUsuario {

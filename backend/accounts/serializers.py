@@ -462,6 +462,7 @@ class CursoComMatchSerializer(serializers.ModelSerializer):
     tags = serializers.ReadOnlyField()
     corIcone = serializers.CharField(source='cor_icone')
     corFundo = serializers.CharField(source='cor_fundo')
+    area = serializers.CharField()
     match = serializers.SerializerMethodField()
     tipoMatch = serializers.SerializerMethodField()
     scoreTecnico = serializers.SerializerMethodField()
@@ -470,15 +471,19 @@ class CursoComMatchSerializer(serializers.ModelSerializer):
     explicacoes = serializers.SerializerMethodField()
     confianca = serializers.SerializerMethodField()
     trilha = serializers.SerializerMethodField()
+    explicacao = serializers.SerializerMethodField()
     explicacaoIa = serializers.SerializerMethodField()
+    explicacao_status = serializers.SerializerMethodField()
+    explicacaoStatus = serializers.SerializerMethodField()
 
     class Meta:
         model = Curso
         fields = [
-            'id', 'nome', 'tipo', 'duracao', 'descricao', 'tags',
+            'id', 'nome', 'tipo', 'duracao', 'descricao', 'tags', 'area',
             'icone', 'corIcone', 'corFundo', 'match', 'tipoMatch',
             'scoreTecnico', 'scoreComportamental', 'scorePragmatico',
-            'explicacoes', 'confianca', 'trilha', 'explicacaoIa'
+            'explicacoes', 'confianca', 'trilha', 'explicacao', 'explicacaoIa',
+            'explicacao_status', 'explicacaoStatus'
         ]
 
     def _get_detailed_match(self, obj):
@@ -499,7 +504,9 @@ class CursoComMatchSerializer(serializers.ModelSerializer):
                 'explicacoes': ["Sem informações de perfil suficientes."],
                 'confianca': "RESULTADO IMPRECISO",
                 'trilha': "Novos Horizontes",
-                'explicacao_ia': ""
+                'explicacao': "",
+                'explicacao_ia': "",
+                'explicacao_status': "failed"
             }
             self._detailed_match_cache[obj.id] = result
             return result
@@ -516,15 +523,19 @@ class CursoComMatchSerializer(serializers.ModelSerializer):
                 match_obj = CursoMatch.objects.filter(user=user, curso=obj).first()
 
             if match_obj:
-                # Generate AI explanation síncronamente on demand if missing or not completed (only if not loading list)
+                # Generate AI explanation on demand if missing or pending (only if not loading list)
                 is_list = self.context.get('is_list', False)
-                if not is_list and (not match_obj.explicacao or match_obj.explicacao_status != 'completed'):
+                if not is_list and (not match_obj.explicacao and match_obj.explicacao_status != 'failed'):
                     try:
-                        from .ai_explainability_service import gerar_explicabilidade_match
-                        gerar_explicabilidade_match(match_obj.id)
-                        match_obj.refresh_from_db()
-                    except Exception as e:
-                        print(f"Error generating explanation on-demand: {e}")
+                        from .tasks import gerar_explicabilidade_task
+                        gerar_explicabilidade_task.delay(match_obj.id)
+                    except Exception:
+                        try:
+                            from .ai_explainability_service import gerar_explicabilidade_match
+                            gerar_explicabilidade_match(match_obj.id)
+                            match_obj.refresh_from_db()
+                        except Exception as e:
+                            print(f"Error generating explanation on-demand: {e}")
 
                 explicacoes = []
                 sub = match_obj.sub_scores
@@ -561,7 +572,9 @@ class CursoComMatchSerializer(serializers.ModelSerializer):
                     'explicacoes': explicacoes[:2],
                     'confianca': calcular_confianca_questionario(user),
                     'trilha': sub.get('trilha', 'Novos Horizontes'),
-                    'explicacao_ia': match_obj.explicacao or ""
+                    'explicacao': match_obj.explicacao or "",
+                    'explicacao_ia': match_obj.explicacao or "",
+                    'explicacao_status': match_obj.explicacao_status or "pending"
                 }
             else:
                 result = {
@@ -572,7 +585,9 @@ class CursoComMatchSerializer(serializers.ModelSerializer):
                     'explicacoes': ["Erro ao carregar compatibilidade."],
                     'confianca': "RESULTADO IMPRECISO",
                     'trilha': "Novos Horizontes",
-                    'explicacao_ia': ""
+                    'explicacao': "",
+                    'explicacao_ia': "",
+                    'explicacao_status': "failed"
                 }
             
             self._detailed_match_cache[obj.id] = result
@@ -587,7 +602,9 @@ class CursoComMatchSerializer(serializers.ModelSerializer):
                 'explicacoes': ["Erro ao calcular detalhes de match."],
                 'confianca': "RESULTADO IMPRECISO",
                 'trilha': "Novos Horizontes",
-                'explicacao_ia': ""
+                'explicacao': "",
+                'explicacao_ia': "",
+                'explicacao_status': "failed"
             }
             self._detailed_match_cache[obj.id] = result
             return result
@@ -629,7 +646,18 @@ class CursoComMatchSerializer(serializers.ModelSerializer):
         res = self._get_detailed_match(obj)
         return res['trilha']
 
+    def get_explicacao(self, obj):
+        res = self._get_detailed_match(obj)
+        return res.get('explicacao', '')
+
     def get_explicacaoIa(self, obj):
         res = self._get_detailed_match(obj)
-        return res['explicacao_ia']
+        return res.get('explicacao_ia', '')
+
+    def get_explicacao_status(self, obj):
+        res = self._get_detailed_match(obj)
+        return res.get('explicacao_status', 'pending')
+
+    def get_explicacaoStatus(self, obj):
+        return self.get_explicacao_status(obj)
 
