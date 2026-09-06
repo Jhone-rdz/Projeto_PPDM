@@ -9,10 +9,9 @@ import {
   Image,
   useWindowDimensions,
 } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { Ionicons } from '@expo/vector-icons';
 import CustomInput from '../_components/CustomInput';
 import BotaoCustom from '../_components/BotaoCustom';
 import KeyboardScreenWrapper from '../_components/KeyboardScreenWrapper';
@@ -86,57 +85,36 @@ export default function LoginScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
-      <StatusBar style="light" backgroundColor="#0A0F1E" />
-
-      {/* Header Estruturado Padrão Nexo */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => {
-            if (router.canGoBack()) router.back();
-            else router.replace('/');
-          }}
-          style={styles.backButton}
-          activeOpacity={0.7}
-        >
-          <Ionicons name="arrow-back" size={20} color="#FFFFFF" />
-        </TouchableOpacity>
-        <View style={styles.headerTitleContainer}>
-          <Text style={styles.headerBrand}>NEXO<Text style={styles.headerBrandSub}>CAREER</Text></Text>
-        </View>
-        <View style={{ width: 40 }} />
-      </View>
+    <View style={styles.container}>
+      <StatusBar style="light" />
+      <Image
+        source={require('../../assets/images/tela de login.png')}
+        style={[
+          styles.backgroundImage,
+          {
+            width: screenWidth,
+            height: screenWidth * (1550 / 1080),
+          }
+        ]}
+        resizeMode="cover"
+      />
 
       <KeyboardScreenWrapper
-        contentContainerStyle={styles.scrollContainer}
-        extraScrollPadding={80}
+        contentContainerStyle={[
+          styles.scrollContainer,
+          { paddingTop: Math.max(insets.top, 20) }
+        ]}
+        extraScrollPadding={100}
       >
-        {/* Banner Ilustrativo com efeito Dark */}
-        <View style={styles.bannerWrapper}>
-          <Image
-            source={require('../../assets/images/tela de login.png')}
-            style={[
-              styles.bannerImage,
-              { width: screenWidth, height: screenWidth * 0.7 }
-            ]}
-            resizeMode="cover"
-          />
-          <View style={styles.bannerOverlay} />
-        </View>
+        {/* Spacer to push card below the image's critical content */}
+        <View style={{ height: screenWidth * (1550 / 1080) - Math.max(insets.top, 20) - 80 }} />
 
-        {/* Form Card Dark */}
-        <View style={styles.formCard}>
-          <View style={styles.welcomeContainer}>
-            <Text style={styles.welcomeTitle}>Bem-vindo de volta 👋</Text>
-            <Text style={styles.welcomeSubtitle}>
-              Entre com suas credenciais para continuar sua jornada
-            </Text>
-          </View>
-
+        {/* Form Card wrapper */}
+        <View style={[styles.formCard, { paddingBottom: 40 + insets.bottom }]}>
           {/* Form Section */}
           <View style={styles.formContainer}>
             <CustomInput
-              label="E-mail"
+              variant="light"
               placeholder="Digite seu e-mail"
               value={email}
               onChangeText={setEmail}
@@ -147,7 +125,7 @@ export default function LoginScreen() {
             />
 
             <CustomInput
-              label="Senha"
+              variant="light"
               placeholder="Digite sua senha"
               value={password}
               onChangeText={setPassword}
@@ -192,7 +170,7 @@ export default function LoginScreen() {
           </View>
 
           {/* Footer Section */}
-          <View style={[styles.footerContainer, { paddingBottom: 24 + insets.bottom }]}>
+          <View style={styles.footerContainer}>
             <Text style={styles.footerText}>Ainda não tem uma conta? </Text>
             <TouchableOpacity onPress={() => router.push('/auth/cadastro' as any)} activeOpacity={0.7}>
               <Text style={styles.footerLinkText}>Criar conta</Text>
@@ -200,117 +178,66 @@ export default function LoginScreen() {
           </View>
         </View>
       </KeyboardScreenWrapper>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
+  container: {
     flex: 1,
-    backgroundColor: '#0A0F1E',
+    backgroundColor: '#FFFFFF',
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    height: 56,
-    borderBottomWidth: 1,
-    borderBottomColor: '#1F2937',
-    backgroundColor: '#0A0F1E',
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#1E293B',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  headerTitleContainer: {
-    alignItems: 'center',
-  },
-  headerBrand: {
-    fontSize: 18,
-    fontWeight: '900',
-    color: '#FFFFFF',
-    letterSpacing: 1.5,
-  },
-  headerBrandSub: {
-    color: '#A78BFA',
-    fontWeight: '700',
+  backgroundImage: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
   },
   scrollContainer: {
     flexGrow: 1,
   },
-  bannerWrapper: {
-    width: '100%',
-    position: 'relative',
-    backgroundColor: '#0A0F1E',
-  },
-  bannerImage: {
-    width: '100%',
-  },
-  bannerOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(10, 15, 30, 0.45)',
-  },
   formCard: {
     flex: 1,
-    backgroundColor: '#0F172A',
+    backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
-    paddingTop: 24,
-    borderTopWidth: 1,
-    borderColor: '#1E293B',
-    marginTop: -20,
-  },
-  welcomeContainer: {
-    paddingHorizontal: 24,
-    marginBottom: 20,
-  },
-  welcomeTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    letterSpacing: -0.5,
-  },
-  welcomeSubtitle: {
-    fontSize: 14,
-    color: '#94A3B8',
-    marginTop: 4,
-    lineHeight: 20,
+    paddingTop: 32,
+    paddingBottom: 40,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 8,
   },
   formContainer: {
     width: '100%',
     paddingHorizontal: 24,
   },
   forgotPasswordContainer: {
-    alignSelf: 'flex-end',
-    marginTop: -4,
-    marginBottom: 20,
+    alignSelf: 'center',
+    marginTop: 4,
+    marginBottom: 24,
     padding: 4,
   },
   forgotPasswordText: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '600',
-    color: '#A78BFA',
+    color: '#4F46E5',
   },
   dividerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 18,
+    marginVertical: 20,
     width: '100%',
   },
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: '#1F2937',
+    backgroundColor: '#E5E7EB',
   },
   dividerText: {
     marginHorizontal: 12,
-    fontSize: 13,
-    color: '#64748B',
+    fontSize: 14,
+    color: '#9CA3AF',
     fontWeight: '500',
   },
   footerContainer: {
@@ -318,15 +245,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 24,
-    marginTop: 12,
+    marginTop: 16,
   },
   footerText: {
     fontSize: 14,
-    color: '#94A3B8',
+    color: '#6B7280',
   },
   footerLinkText: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#A78BFA',
+    color: '#6B21A8',
   },
 });
