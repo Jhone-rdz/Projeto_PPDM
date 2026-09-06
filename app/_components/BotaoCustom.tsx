@@ -12,7 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 interface BotaoCustomProps {
   title: string;
   onPress: () => void;
-  type?: 'primary' | 'secondary';
+  type?: 'primary' | 'secondary' | 'danger';
   iconName?: keyof typeof Ionicons.glyphMap;
   iconPosition?: 'left' | 'right';
   loading?: boolean;
@@ -29,10 +29,11 @@ export default function BotaoCustom({
   disabled = false,
 }: BotaoCustomProps) {
   const isSecondary = type === 'secondary';
+  const isDanger = type === 'danger';
 
   const renderContent = () => {
     if (loading) {
-      return <ActivityIndicator size="small" color={isSecondary ? '#4F46E5' : '#FFFFFF'} />;
+      return <ActivityIndicator size="small" color="#FFFFFF" />;
     }
 
     return (
@@ -41,7 +42,7 @@ export default function BotaoCustom({
           <Ionicons
             name={iconName}
             size={20}
-            color={isSecondary ? '#4F46E5' : '#FFFFFF'}
+            color="#FFFFFF"
             style={styles.leftIcon}
           />
         )}
@@ -52,7 +53,7 @@ export default function BotaoCustom({
           <Ionicons
             name={iconName}
             size={20}
-            color={isSecondary ? '#4F46E5' : '#FFFFFF'}
+            color="#FFFFFF"
             style={styles.rightIcon}
           />
         )}
@@ -66,6 +67,19 @@ export default function BotaoCustom({
         onPress={onPress}
         disabled={disabled || loading}
         style={[styles.button, styles.buttonSecondary, (disabled || loading) && styles.disabled]}
+        activeOpacity={0.8}
+      >
+        {renderContent()}
+      </TouchableOpacity>
+    );
+  }
+
+  if (isDanger) {
+    return (
+      <TouchableOpacity
+        onPress={onPress}
+        disabled={disabled || loading}
+        style={[styles.button, styles.buttonDanger, (disabled || loading) && styles.disabled]}
         activeOpacity={0.8}
       >
         {renderContent()}
@@ -103,16 +117,12 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   buttonSecondary: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#1E293B',
     borderWidth: 1.5,
-    borderColor: '#E5E7EB',
-    // iOS shadow
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.03,
-    shadowRadius: 4,
-    // Android elevation
-    elevation: 1,
+    borderColor: '#334155',
+  },
+  buttonDanger: {
+    backgroundColor: '#EF4444',
   },
   gradient: {
     width: '100%',
@@ -134,7 +144,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   textSecondary: {
-    color: '#1F2937',
+    color: '#F8FAFC',
   },
   leftIcon: {
     marginRight: 8,

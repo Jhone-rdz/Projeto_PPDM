@@ -103,7 +103,7 @@ export default function CadastroScreen() {
       await apiService.register(nome, email, senha, curso);
       setIsLoading(false);
       
-      router.replace('/onboarding/questionario');
+      router.replace('/onboarding/questionario' as any);
     } catch (error: any) {
       setIsLoading(false);
       const errorMsg = error.message || 'Falha ao realizar cadastro. Verifique os dados e tente novamente.';
@@ -119,58 +119,64 @@ export default function CadastroScreen() {
     setIsLoading(true);
     setTimeout(() => {
       setIsLoading(false);
-      router.push('/auth/login?fromCadastro=true');
+      router.push('/auth/login?fromCadastro=true' as any);
     }, 1000);
   };
 
   return (
     <View style={styles.container}>
-      <StatusBar style="light" />
-      <Image
-        source={require('../../assets/images/icone tela de cadastro e home.png')}
-        style={[
-          styles.backgroundImage,
-          {
-            width: screenWidth,
-            height: screenWidth * (1536 / 1024),
-          }
-        ]}
-        resizeMode="cover"
-      />
+      <StatusBar style="light" backgroundColor="#0A0F1E" />
 
-      {/* Top Header Row with Back Button */}
-      <View style={[styles.navigationHeader, { top: insets.top }]}>
+      {/* Header Estruturado Padrão Nexo */}
+      <View style={[styles.header, { paddingTop: insets.top }]}>
         <TouchableOpacity
-          onPress={() => router.back()}
+          onPress={() => {
+            if (router.canGoBack()) router.back();
+            else router.replace('/auth/login' as any);
+          }}
           style={styles.backButton}
           activeOpacity={0.7}
         >
-          <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+          <Ionicons name="arrow-back" size={20} color="#FFFFFF" />
         </TouchableOpacity>
+        <View style={styles.headerTitleContainer}>
+          <Text style={styles.headerBrand}>NEXO<Text style={styles.headerBrandSub}>CAREER</Text></Text>
+        </View>
+        <View style={{ width: 40 }} />
       </View>
 
       <KeyboardScreenWrapper
         contentContainerStyle={styles.scrollContainer}
         extraScrollPadding={120}
-        keyboardVerticalOffset={Platform.select({ ios: 20, android: 0 })}
       >
-        {/* Spacer to push card below the image's critical content */}
-        <View style={{ height: screenWidth * (1536 / 1024) - Math.max(insets.top + 56, 76) - 60 }} />
+        {/* Banner Ilustrativo com efeito Dark */}
+        <View style={styles.bannerWrapper}>
+          <Image
+            source={require('../../assets/images/icone tela de cadastro e home.png')}
+            style={[
+              styles.bannerImage,
+              { width: screenWidth, height: screenWidth * 0.55 }
+            ]}
+            resizeMode="cover"
+          />
+          <View style={styles.bannerOverlay} />
+        </View>
 
-        {/* Form Card wrapper */}
-        <View style={[styles.formCard, { paddingBottom: 40 + insets.bottom }]}>
+        {/* Form Card Dark */}
+        <View style={styles.formCard}>
           {/* Header Title Section inside Card */}
-          <View style={styles.headerTitleContainer}>
-            <Text style={styles.welcomeText}>
-              Bem-vindo ao <Text style={styles.highlightText}>NexoCareer</Text>
+          <View style={styles.welcomeContainer}>
+            <Text style={styles.welcomeTitle}>
+              Crie sua conta no <Text style={styles.highlightText}>Nexo</Text>
             </Text>
-            <Text style={styles.subtitleText}>Vamos construir seu futuro juntos!</Text>
+            <Text style={styles.welcomeSubtitle}>Vamos construir seu futuro profissional juntos!</Text>
           </View>
 
           {/* Form Fields */}
           <View style={styles.formContainer}>
             <CustomInput
-              placeholder="Nome completo"
+              label="Nome completo"
+              placeholder="Digite seu nome completo"
               value={nome}
               onChangeText={setNome}
               iconName="person-outline"
@@ -179,7 +185,8 @@ export default function CadastroScreen() {
             />
 
             <CustomInput
-              placeholder="E-mail"
+              label="E-mail"
+              placeholder="Digite seu e-mail"
               value={email}
               onChangeText={setEmail}
               iconName="mail-outline"
@@ -189,6 +196,7 @@ export default function CadastroScreen() {
 
             {/* Custom select/dropdown trigger */}
             <View style={styles.dropdownWrapper}>
+              <Text style={styles.inputLabel}>Curso técnico atual</Text>
               <TouchableOpacity
                 style={[
                   styles.selectTrigger,
@@ -202,7 +210,7 @@ export default function CadastroScreen() {
                   <Ionicons
                     name="school-outline"
                     size={20}
-                    color={errors.curso ? '#EF4444' : modalVisible ? '#6B21A8' : '#9CA3AF'}
+                    color={errors.curso ? '#EF4444' : modalVisible ? '#A78BFA' : '#64748B'}
                     style={styles.selectIcon}
                   />
                   <Text
@@ -211,16 +219,17 @@ export default function CadastroScreen() {
                       curso ? styles.selectTextSelected : styles.selectTextPlaceholder,
                     ]}
                   >
-                    {curso ? curso : 'Curso técnico atual'}
+                    {curso ? curso : 'Selecione seu curso técnico'}
                   </Text>
                 </View>
-                <Ionicons name="chevron-down" size={20} color="#9CA3AF" />
+                <Ionicons name="chevron-down" size={18} color="#94A3B8" />
               </TouchableOpacity>
               {errors.curso ? <Text style={styles.errorText}>{errors.curso}</Text> : null}
             </View>
 
             <CustomInput
-              placeholder="Senha"
+              label="Senha"
+              placeholder="Crie uma senha segura (mín. 6 caracteres)"
               value={senha}
               onChangeText={setSenha}
               iconName="lock-closed-outline"
@@ -230,7 +239,8 @@ export default function CadastroScreen() {
             />
 
             <CustomInput
-              placeholder="Confirmar senha"
+              label="Confirmar senha"
+              placeholder="Digite novamente sua senha"
               value={confirmarSenha}
               onChangeText={setConfirmarSenha}
               iconName="lock-closed-outline"
@@ -266,16 +276,16 @@ export default function CadastroScreen() {
           </View>
 
           {/* Footer Navigation Link */}
-          <View style={styles.footerContainer}>
+          <View style={[styles.footerContainer, { paddingBottom: 24 + insets.bottom }]}>
             <Text style={styles.footerText}>Já tem uma conta? </Text>
-            <TouchableOpacity onPress={() => router.push('/auth/login')} activeOpacity={0.7}>
+            <TouchableOpacity onPress={() => router.push('/auth/login' as any)} activeOpacity={0.7}>
               <Text style={styles.footerLinkText}>Fazer login</Text>
             </TouchableOpacity>
           </View>
         </View>
       </KeyboardScreenWrapper>
 
-      {/* Select Dropdown Modal (Bottom Sheet style) */}
+      {/* Select Dropdown Modal (Bottom Sheet style Dark) */}
       <Modal
         visible={modalVisible}
         animationType="slide"
@@ -291,7 +301,7 @@ export default function CadastroScreen() {
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Selecione seu curso técnico</Text>
               <TouchableOpacity onPress={() => setModalVisible(false)} style={styles.modalCloseButton}>
-                <Ionicons name="close" size={24} color="#6B7280" />
+                <Ionicons name="close" size={24} color="#94A3B8" />
               </TouchableOpacity>
             </View>
 
@@ -321,7 +331,7 @@ export default function CadastroScreen() {
                     {item}
                   </Text>
                   {curso === item && (
-                    <Ionicons name="checkmark-sharp" size={20} color="#6B21A8" />
+                    <Ionicons name="checkmark-circle" size={20} color="#10B981" />
                   )}
                 </TouchableOpacity>
               )}
@@ -336,98 +346,113 @@ export default function CadastroScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#0A0F1E',
   },
-  backgroundImage: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-  },
-  navigationHeader: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    zIndex: 10,
-    height: 56,
-    justifyContent: 'center',
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 16,
+    height: 56,
+    borderBottomWidth: 1,
+    borderBottomColor: '#1F2937',
+    backgroundColor: '#0A0F1E',
   },
   backButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
+    backgroundColor: '#1E293B',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(15, 23, 42, 0.6)',
+  },
+  headerTitleContainer: {
+    alignItems: 'center',
+  },
+  headerBrand: {
+    fontSize: 18,
+    fontWeight: '900',
+    color: '#FFFFFF',
+    letterSpacing: 1.5,
+  },
+  headerBrandSub: {
+    color: '#A78BFA',
+    fontWeight: '700',
   },
   scrollContainer: {
     flexGrow: 1,
   },
+  bannerWrapper: {
+    width: '100%',
+    position: 'relative',
+    backgroundColor: '#0A0F1E',
+  },
+  bannerImage: {
+    width: '100%',
+  },
+  bannerOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(10, 15, 30, 0.45)',
+  },
   formCard: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#0F172A',
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
-    paddingTop: 32,
-    paddingBottom: 40,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 8,
+    paddingTop: 24,
+    borderTopWidth: 1,
+    borderColor: '#1E293B',
+    marginTop: -20,
   },
-  headerTitleContainer: {
-    alignItems: 'center',
-    marginBottom: 20,
+  welcomeContainer: {
     paddingHorizontal: 24,
+    marginBottom: 20,
   },
-  welcomeText: {
-    fontSize: 26,
+  welcomeTitle: {
+    fontSize: 24,
     fontWeight: 'bold',
-    color: '#1F2937',
+    color: '#FFFFFF',
     letterSpacing: -0.5,
-    fontFamily: 'System',
-    textAlign: 'center',
   },
   highlightText: {
-    color: '#6B21A8',
+    color: '#A78BFA',
   },
-  subtitleText: {
-    fontSize: 15,
-    color: '#6B7280',
-    marginTop: 6,
-    fontFamily: 'System',
-    textAlign: 'center',
+  welcomeSubtitle: {
+    fontSize: 14,
+    color: '#94A3B8',
+    marginTop: 4,
+    lineHeight: 20,
   },
   formContainer: {
     width: '100%',
     paddingHorizontal: 24,
-    marginBottom: 20,
+    marginBottom: 16,
   },
   dropdownWrapper: {
     marginBottom: 16,
     width: '100%',
   },
+  inputLabel: {
+    fontSize: 13,
+    color: '#94A3B8',
+    marginBottom: 6,
+    fontWeight: '600',
+    fontFamily: 'System',
+  },
   selectTrigger: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#111827',
     borderWidth: 1.5,
-    borderColor: '#E5E7EB',
+    borderColor: '#1F2937',
     borderRadius: 14,
     height: 56,
     paddingHorizontal: 16,
-    // iOS shadow
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    // Android elevation
-    elevation: 2,
   },
   selectTriggerActive: {
     borderColor: '#6B21A8',
+    backgroundColor: '#131B2E',
   },
   selectTriggerError: {
     borderColor: '#EF4444',
@@ -441,14 +466,14 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   selectText: {
-    fontSize: 16,
+    fontSize: 15,
     fontFamily: 'System',
   },
   selectTextPlaceholder: {
-    color: '#9CA3AF',
+    color: '#64748B',
   },
   selectTextSelected: {
-    color: '#1F2937',
+    color: '#FFFFFF',
   },
   errorText: {
     color: '#EF4444',
@@ -460,18 +485,18 @@ const styles = StyleSheet.create({
   dividerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 20,
+    marginVertical: 18,
     width: '100%',
   },
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: '#E5E7EB',
+    backgroundColor: '#1F2937',
   },
   dividerText: {
     marginHorizontal: 12,
-    fontSize: 14,
-    color: '#9CA3AF',
+    fontSize: 13,
+    color: '#64748B',
     fontWeight: '500',
   },
   footerContainer: {
@@ -482,29 +507,27 @@ const styles = StyleSheet.create({
   },
   footerText: {
     fontSize: 14,
-    color: '#6B7280',
+    color: '#94A3B8',
   },
   footerLinkText: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#6B21A8',
+    color: '#A78BFA',
   },
+  // Modal Bottom Sheet Dark styles
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#0F172A',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingTop: 20,
     maxHeight: '60%',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 10,
+    borderTopWidth: 1,
+    borderColor: '#1E293B',
   },
   modalHeader: {
     flexDirection: 'row',
@@ -513,12 +536,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
+    borderBottomColor: '#1E293B',
   },
   modalTitle: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: 'bold',
-    color: '#1F2937',
+    color: '#FFFFFF',
   },
   modalCloseButton: {
     padding: 4,
@@ -532,19 +555,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingVertical: 16,
-    paddingHorizontal: 8,
+    paddingHorizontal: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
+    borderBottomColor: '#1E293B',
+    borderRadius: 8,
   },
   optionItemSelected: {
-    backgroundColor: '#F9F5FF',
+    backgroundColor: '#1E1B4B',
   },
   optionText: {
-    fontSize: 16,
-    color: '#4B5563',
+    fontSize: 15,
+    color: '#94A3B8',
   },
   optionTextSelected: {
-    color: '#6B21A8',
+    color: '#FFFFFF',
     fontWeight: '600',
   },
 });

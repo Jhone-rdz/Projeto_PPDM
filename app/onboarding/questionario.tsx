@@ -14,6 +14,7 @@ import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import KeyboardScreenWrapper, { useKeyboardScroll } from '../_components/KeyboardScreenWrapper';
+import CustomInput from '../_components/CustomInput';
 import { apiService } from '../_services/api';
 
 import { perguntas as PERGUNTAS_ESTATICAS } from '../_constants/perguntas';
@@ -46,26 +47,17 @@ function FreeTextCard({
   value: string;
   onChangeText: (text: string) => void;
 }) {
-  const cardRef = useRef<View>(null);
-  const { registerFocusedInput, unregisterFocusedInput } = useKeyboardScroll();
-
   return (
-    <View ref={cardRef} style={styles.questionCard}>
-      <Text style={styles.freeTextLabel}>{label}</Text>
-      <TextInput
-        style={styles.freeTextInput}
+    <View style={styles.questionCard}>
+      <CustomInput
+        label={label}
         placeholder={placeholder}
-        placeholderTextColor="#6B7280"
-        multiline
-        maxLength={500}
         value={value}
         onChangeText={onChangeText}
-        onFocus={() => {
-          if (cardRef.current) registerFocusedInput(cardRef.current);
-        }}
-        onBlur={() => {
-          if (cardRef.current) unregisterFocusedInput(cardRef.current);
-        }}
+        multiline={true}
+        numberOfLines={4}
+        maxLength={500}
+        iconName="pencil-outline"
       />
       <Text style={styles.charCounter}>{value.length}/500</Text>
     </View>

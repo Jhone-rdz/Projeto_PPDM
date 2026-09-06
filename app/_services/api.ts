@@ -20,6 +20,7 @@ export interface CursoComMatch {
   scorePragmatico?: number;
   explicacoes?: string[];
   confianca?: string;
+  trilha?: string;
   explicacao?: string;
   explicacaoIa?: string;
   explicacao_status?: 'pending' | 'completed' | 'failed';

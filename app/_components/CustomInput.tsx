@@ -6,23 +6,32 @@ import {
   Text,
   TouchableOpacity,
   TextInputProps,
+  StyleProp,
+  ViewStyle,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useKeyboardScroll } from './KeyboardScreenWrapper';
 
-interface CustomInputProps extends TextInputProps {
+export interface CustomInputProps extends TextInputProps {
+  label?: string;
   iconName?: keyof typeof Ionicons.glyphMap;
   error?: string;
   isPassword?: boolean;
+  containerStyle?: StyleProp<ViewStyle>;
 }
 
 export default function CustomInput({
+  label,
   iconName,
   error,
   isPassword,
   secureTextEntry,
+  multiline = false,
+  containerStyle,
   onFocus,
   onBlur,
+  style,
+  placeholderTextColor = '#64748B',
   ...rest
 }: CustomInputProps) {
   const containerRef = useRef<View>(null);
@@ -49,10 +58,12 @@ export default function CustomInput({
   const showPasswordToggle = isPassword && secureTextEntry !== false;
 
   return (
-    <View ref={containerRef} style={styles.container}>
+    <View ref={containerRef} style={[styles.wrapper, containerStyle]}>
+      {label && <Text style={styles.label}>{label}</Text>}
       <View
         style={[
           styles.inputContainer,
+          multiline && styles.inputContainerMultiline,
           isFocused && styles.inputContainerFocused,
           error ? styles.inputContainerError : null,
         ]}
@@ -61,14 +72,19 @@ export default function CustomInput({
           <Ionicons
             name={iconName}
             size={20}
-            color={error ? '#EF4444' : isFocused ? '#6B21A8' : '#9CA3AF'}
-            style={styles.leftIcon}
+            color={error ? '#EF4444' : isFocused ? '#A78BFA' : '#64748B'}
+            style={[styles.leftIcon, multiline && styles.leftIconMultiline]}
           />
         )}
         <TextInput
-          style={styles.textInput}
-          placeholderTextColor="#9CA3AF"
+          style={[
+            styles.textInput,
+            multiline && styles.textInputMultiline,
+            style,
+          ]}
+          placeholderTextColor={placeholderTextColor}
           secureTextEntry={isPassword ? hidePassword : secureTextEntry}
+          multiline={multiline}
           onFocus={handleFocus}
           onBlur={handleBlur}
           autoCapitalize="none"
@@ -83,7 +99,7 @@ export default function CustomInput({
             <Ionicons
               name={hidePassword ? 'eye-off-outline' : 'eye-outline'}
               size={20}
-              color="#9CA3AF"
+              color="#64748B"
             />
           </TouchableOpacity>
         )}
@@ -94,31 +110,36 @@ export default function CustomInput({
 }
 
 const styles = StyleSheet.create({
-  container: {
+  wrapper: {
     marginBottom: 16,
     width: '100%',
+  },
+  label: {
+    fontSize: 13,
+    color: '#94A3B8',
+    marginBottom: 6,
+    fontWeight: '600',
+    fontFamily: 'System',
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#111827',
     borderWidth: 1.5,
-    borderColor: '#E5E7EB',
+    borderColor: '#1F2937',
     borderRadius: 14,
     height: 56,
     paddingHorizontal: 16,
-    // iOS shadow
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    // Android elevation
-    elevation: 2,
+  },
+  inputContainerMultiline: {
+    height: 'auto',
+    minHeight: 110,
+    alignItems: 'flex-start',
+    paddingVertical: 12,
   },
   inputContainerFocused: {
     borderColor: '#6B21A8',
-    shadowColor: '#6B21A8',
-    shadowOpacity: 0.08,
+    backgroundColor: '#131B2E',
   },
   inputContainerError: {
     borderColor: '#EF4444',
@@ -126,12 +147,20 @@ const styles = StyleSheet.create({
   leftIcon: {
     marginRight: 12,
   },
+  leftIconMultiline: {
+    marginTop: 2,
+  },
   textInput: {
     flex: 1,
-    color: '#1F2937',
-    fontSize: 16,
+    color: '#FFFFFF',
+    fontSize: 15,
     height: '100%',
     textAlignVertical: 'center',
+    fontFamily: 'System',
+  },
+  textInputMultiline: {
+    textAlignVertical: 'top',
+    minHeight: 84,
   },
   rightIconButton: {
     padding: 4,
@@ -142,5 +171,6 @@ const styles = StyleSheet.create({
     marginTop: 4,
     marginLeft: 4,
     fontWeight: '500',
+    fontFamily: 'System',
   },
 });

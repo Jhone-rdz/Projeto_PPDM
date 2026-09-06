@@ -383,7 +383,7 @@ export default function HomeScreen() {
                 style={styles.drawerLinkRow}
                 onPress={() => {
                   setIsDrawerOpen(false);
-                  router.push('/configuracoes');
+                  router.push('/(tabs)/configuracoes' as any);
                 }}
               >
                 <Ionicons name="settings-outline" size={20} color="#94A3B8" />
