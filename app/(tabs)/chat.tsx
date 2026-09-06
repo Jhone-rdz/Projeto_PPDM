@@ -11,7 +11,7 @@ import {
   Platform,
   Animated,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
@@ -81,6 +81,7 @@ const clientFallback = (mensagem: string): string => {
 
 export default function ChatScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ autoPrompt?: string }>();
   const flatListRef = useRef<FlatList>(null);
 
@@ -297,9 +298,9 @@ export default function ChatScreen() {
       </View>
 
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.keyboardView}
-        keyboardVerticalOffset={Platform.select({ ios: 60, android: 0 })}
+        keyboardVerticalOffset={Platform.select({ ios: 60 + insets.bottom, android: 0 })}
       >
         {/* FlatList for messages */}
         <FlatList
@@ -309,6 +310,8 @@ export default function ChatScreen() {
           renderItem={renderItem}
           contentContainerStyle={styles.chatListContent}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="interactive"
           ListHeaderComponent={
             /* SEÇÃO 1 — BANNER DO NEXO AI */
             <View style={styles.bannerContainer}>

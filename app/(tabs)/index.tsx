@@ -115,7 +115,7 @@ export default function HomeScreen() {
 
   const handleOpenCourseDetails = (curso: any) => {
     router.push({
-      pathname: '/(tabs)/curso-detalhes',
+      pathname: '/(tabs)/curso-detalhes' as any,
       params: { id: curso.id }
     });
   };

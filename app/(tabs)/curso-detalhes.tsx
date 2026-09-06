@@ -133,7 +133,7 @@ export default function CursoDetalhesScreen() {
   const [curso, setCurso] = useState<CursoComMatch | null>(null);
 
   const pollAttempts = useRef(0);
-  const pollTimer = useRef<NodeJS.Timeout | null>(null);
+  const pollTimer = useRef<any>(null);
 
   const fetchCursoDetalhes = useCallback(async (isSilent = false) => {
     if (!id) return;
@@ -269,7 +269,7 @@ export default function CursoDetalhesScreen() {
                   <Text style={styles.progressVal}>{curso.scoreTecnico}%</Text>
                 </View>
                 <View style={styles.progressBarBg}>
-                  <View style={[styles.progressBarFill, { width: `${curso.scoreTecnico}%`, backgroundColor: '#6366F1' }]} />
+                  <View style={[styles.progressBarFill, { width: `${curso.scoreTecnico ?? 0}%` as any, backgroundColor: '#6366F1' }]} />
                 </View>
               </View>
 
@@ -279,7 +279,7 @@ export default function CursoDetalhesScreen() {
                   <Text style={styles.progressVal}>{curso.scoreComportamental}%</Text>
                 </View>
                 <View style={styles.progressBarBg}>
-                  <View style={[styles.progressBarFill, { width: `${curso.scoreComportamental}%`, backgroundColor: '#EC4899' }]} />
+                  <View style={[styles.progressBarFill, { width: `${curso.scoreComportamental ?? 0}%` as any, backgroundColor: '#EC4899' }]} />
                 </View>
               </View>
 
@@ -289,7 +289,7 @@ export default function CursoDetalhesScreen() {
                   <Text style={styles.progressVal}>{curso.scorePragmatico}%</Text>
                 </View>
                 <View style={styles.progressBarBg}>
-                  <View style={[styles.progressBarFill, { width: `${curso.scorePragmatico}%`, backgroundColor: '#F59E0B' }]} />
+                  <View style={[styles.progressBarFill, { width: `${curso.scorePragmatico ?? 0}%` as any, backgroundColor: '#F59E0B' }]} />
                 </View>
               </View>
             </View>

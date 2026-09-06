@@ -4,9 +4,7 @@ import {
   View,
   Text,
   TouchableOpacity,
-  KeyboardAvoidingView,
   Platform,
-  ScrollView,
   Alert,
   Modal,
   FlatList,
@@ -19,6 +17,7 @@ import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import CustomInput from '../_components/CustomInput';
 import BotaoCustom from '../_components/BotaoCustom';
+import KeyboardScreenWrapper from '../_components/KeyboardScreenWrapper';
 import { apiService } from '../_services/api';
 
 const CURSOS_TECNICOS = [
@@ -150,137 +149,131 @@ export default function CadastroScreen() {
         </TouchableOpacity>
       </View>
 
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardView}
-        keyboardVerticalOffset={Platform.select({ ios: 64, android: 0 })}
+      <KeyboardScreenWrapper
+        contentContainerStyle={styles.scrollContainer}
+        extraScrollPadding={120}
+        keyboardVerticalOffset={Platform.select({ ios: 20, android: 0 })}
       >
-        <ScrollView
-          contentContainerStyle={styles.scrollContainer}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-        >
-          {/* Spacer to push card below the image's critical content */}
-          <View style={{ height: screenWidth * (1536 / 1024) - Math.max(insets.top + 56, 76) - 60 }} />
+        {/* Spacer to push card below the image's critical content */}
+        <View style={{ height: screenWidth * (1536 / 1024) - Math.max(insets.top + 56, 76) - 60 }} />
 
-          {/* Form Card wrapper */}
-          <View style={[styles.formCard, { paddingBottom: 40 + insets.bottom }]}>
-            {/* Header Title Section inside Card */}
-            <View style={styles.headerTitleContainer}>
-              <Text style={styles.welcomeText}>
-                Bem-vindo ao <Text style={styles.highlightText}>NexoCareer</Text>
-              </Text>
-              <Text style={styles.subtitleText}>Vamos construir seu futuro juntos!</Text>
-            </View>
-
-            {/* Form Fields */}
-            <View style={styles.formContainer}>
-              <CustomInput
-                placeholder="Nome completo"
-                value={nome}
-                onChangeText={setNome}
-                iconName="person-outline"
-                autoCapitalize="words"
-                error={errors.nome}
-              />
-
-              <CustomInput
-                placeholder="E-mail"
-                value={email}
-                onChangeText={setEmail}
-                iconName="mail-outline"
-                keyboardType="email-address"
-                error={errors.email}
-              />
-
-              {/* Custom select/dropdown trigger */}
-              <View style={styles.dropdownWrapper}>
-                <TouchableOpacity
-                  style={[
-                    styles.selectTrigger,
-                    modalVisible && styles.selectTriggerActive,
-                    errors.curso ? styles.selectTriggerError : null,
-                  ]}
-                  onPress={() => setModalVisible(true)}
-                  activeOpacity={0.8}
-                >
-                  <View style={styles.selectLeftSection}>
-                    <Ionicons
-                      name="school-outline"
-                      size={20}
-                      color={errors.curso ? '#EF4444' : modalVisible ? '#6B21A8' : '#9CA3AF'}
-                      style={styles.selectIcon}
-                    />
-                    <Text
-                      style={[
-                        styles.selectText,
-                        curso ? styles.selectTextSelected : styles.selectTextPlaceholder,
-                      ]}
-                    >
-                      {curso ? curso : 'Curso técnico atual'}
-                    </Text>
-                  </View>
-                  <Ionicons name="chevron-down" size={20} color="#9CA3AF" />
-                </TouchableOpacity>
-                {errors.curso ? <Text style={styles.errorText}>{errors.curso}</Text> : null}
-              </View>
-
-              <CustomInput
-                placeholder="Senha"
-                value={senha}
-                onChangeText={setSenha}
-                iconName="lock-closed-outline"
-                secureTextEntry
-                isPassword
-                error={errors.senha}
-              />
-
-              <CustomInput
-                placeholder="Confirmar senha"
-                value={confirmarSenha}
-                onChangeText={setConfirmarSenha}
-                iconName="lock-closed-outline"
-                secureTextEntry
-                isPassword
-                error={errors.confirmarSenha}
-              />
-
-              <BotaoCustom
-                title="Criar conta"
-                onPress={handleCadastro}
-                iconName="arrow-forward-outline"
-                iconPosition="right"
-                loading={isLoading}
-              />
-
-              {/* Divider */}
-              <View style={styles.dividerContainer}>
-                <View style={styles.dividerLine} />
-                <Text style={styles.dividerText}>ou</Text>
-                <View style={styles.dividerLine} />
-              </View>
-
-              {/* Google Signup Button */}
-              <BotaoCustom
-                title="Cadastrar com Google"
-                onPress={handleGoogleCadastro}
-                type="secondary"
-                iconName="logo-google"
-                iconPosition="left"
-                disabled={isLoading}
-              />
-            </View>
-
-            {/* Footer Navigation Link */}
-            <View style={styles.footerContainer}>
-              <Text style={styles.footerText}>Já tem uma conta? </Text>
-              <TouchableOpacity onPress={() => router.push('/auth/login')} activeOpacity={0.7}>
-                <Text style={styles.footerLinkText}>Fazer login</Text>
-              </TouchableOpacity>
-            </View>
+        {/* Form Card wrapper */}
+        <View style={[styles.formCard, { paddingBottom: 40 + insets.bottom }]}>
+          {/* Header Title Section inside Card */}
+          <View style={styles.headerTitleContainer}>
+            <Text style={styles.welcomeText}>
+              Bem-vindo ao <Text style={styles.highlightText}>NexoCareer</Text>
+            </Text>
+            <Text style={styles.subtitleText}>Vamos construir seu futuro juntos!</Text>
           </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+
+          {/* Form Fields */}
+          <View style={styles.formContainer}>
+            <CustomInput
+              placeholder="Nome completo"
+              value={nome}
+              onChangeText={setNome}
+              iconName="person-outline"
+              autoCapitalize="words"
+              error={errors.nome}
+            />
+
+            <CustomInput
+              placeholder="E-mail"
+              value={email}
+              onChangeText={setEmail}
+              iconName="mail-outline"
+              keyboardType="email-address"
+              error={errors.email}
+            />
+
+            {/* Custom select/dropdown trigger */}
+            <View style={styles.dropdownWrapper}>
+              <TouchableOpacity
+                style={[
+                  styles.selectTrigger,
+                  modalVisible && styles.selectTriggerActive,
+                  errors.curso ? styles.selectTriggerError : null,
+                ]}
+                onPress={() => setModalVisible(true)}
+                activeOpacity={0.8}
+              >
+                <View style={styles.selectLeftSection}>
+                  <Ionicons
+                    name="school-outline"
+                    size={20}
+                    color={errors.curso ? '#EF4444' : modalVisible ? '#6B21A8' : '#9CA3AF'}
+                    style={styles.selectIcon}
+                  />
+                  <Text
+                    style={[
+                      styles.selectText,
+                      curso ? styles.selectTextSelected : styles.selectTextPlaceholder,
+                    ]}
+                  >
+                    {curso ? curso : 'Curso técnico atual'}
+                  </Text>
+                </View>
+                <Ionicons name="chevron-down" size={20} color="#9CA3AF" />
+              </TouchableOpacity>
+              {errors.curso ? <Text style={styles.errorText}>{errors.curso}</Text> : null}
+            </View>
+
+            <CustomInput
+              placeholder="Senha"
+              value={senha}
+              onChangeText={setSenha}
+              iconName="lock-closed-outline"
+              secureTextEntry
+              isPassword
+              error={errors.senha}
+            />
+
+            <CustomInput
+              placeholder="Confirmar senha"
+              value={confirmarSenha}
+              onChangeText={setConfirmarSenha}
+              iconName="lock-closed-outline"
+              secureTextEntry
+              isPassword
+              error={errors.confirmarSenha}
+            />
+
+            <BotaoCustom
+              title="Criar conta"
+              onPress={handleCadastro}
+              iconName="arrow-forward-outline"
+              iconPosition="right"
+              loading={isLoading}
+            />
+
+            {/* Divider */}
+            <View style={styles.dividerContainer}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>ou</Text>
+              <View style={styles.dividerLine} />
+            </View>
+
+            {/* Google Signup Button */}
+            <BotaoCustom
+              title="Cadastrar com Google"
+              onPress={handleGoogleCadastro}
+              type="secondary"
+              iconName="logo-google"
+              iconPosition="left"
+              disabled={isLoading}
+            />
+          </View>
+
+          {/* Footer Navigation Link */}
+          <View style={styles.footerContainer}>
+            <Text style={styles.footerText}>Já tem uma conta? </Text>
+            <TouchableOpacity onPress={() => router.push('/auth/login')} activeOpacity={0.7}>
+              <Text style={styles.footerLinkText}>Fazer login</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </KeyboardScreenWrapper>
 
       {/* Select Dropdown Modal (Bottom Sheet style) */}
       <Modal
@@ -366,9 +359,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'rgba(15, 23, 42, 0.6)',
-  },
-  keyboardView: {
-    flex: 1,
   },
   scrollContainer: {
     flexGrow: 1,
@@ -499,7 +489,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#6B21A8',
   },
-  // Modal Bottom Sheet styles
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.4)',

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   TextInput,
@@ -8,6 +8,7 @@ import {
   TextInputProps,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useKeyboardScroll } from './KeyboardScreenWrapper';
 
 interface CustomInputProps extends TextInputProps {
   iconName?: keyof typeof Ionicons.glyphMap;
@@ -24,23 +25,31 @@ export default function CustomInput({
   onBlur,
   ...rest
 }: CustomInputProps) {
+  const containerRef = useRef<View>(null);
+  const { registerFocusedInput, unregisterFocusedInput } = useKeyboardScroll();
   const [isFocused, setIsFocused] = useState(false);
   const [hidePassword, setHidePassword] = useState(true);
 
   const handleFocus = (e: any) => {
     setIsFocused(true);
+    if (containerRef.current && registerFocusedInput) {
+      registerFocusedInput(containerRef.current);
+    }
     if (onFocus) onFocus(e);
   };
 
   const handleBlur = (e: any) => {
     setIsFocused(false);
+    if (containerRef.current && unregisterFocusedInput) {
+      unregisterFocusedInput(containerRef.current);
+    }
     if (onBlur) onBlur(e);
   };
 
   const showPasswordToggle = isPassword && secureTextEntry !== false;
 
   return (
-    <View style={styles.container}>
+    <View ref={containerRef} style={styles.container}>
       <View
         style={[
           styles.inputContainer,

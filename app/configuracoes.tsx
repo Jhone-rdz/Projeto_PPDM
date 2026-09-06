@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   StyleSheet,
   View,
@@ -6,16 +6,17 @@ import {
   TouchableOpacity,
   TextInput,
   Switch,
-  ScrollView,
   Alert,
   ActivityIndicator,
   Platform,
   Modal,
+  ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
+import KeyboardScreenWrapper, { useKeyboardScroll } from './_components/KeyboardScreenWrapper';
 import { apiService, UserProfile } from './_services/api';
 
 const OPCOES_CURSOS_TECNICOS = [
@@ -27,6 +28,165 @@ const OPCOES_CURSOS_TECNICOS = [
   'Administração',
   'Outro',
 ];
+
+interface FormProps {
+  user: UserProfile | null;
+  username: string;
+  setUsername: (val: string) => void;
+  cursoTecnico: string;
+  setCursoTecnico: (val: string) => void;
+  objetivoCarreira: string;
+  setObjetivoCarreira: (val: string) => void;
+  showCursoPicker: boolean;
+  setShowCursoPicker: (val: boolean) => void;
+  saving: boolean;
+  handleSave: () => void;
+  modoOffline: boolean;
+  setModoOffline: (val: boolean) => void;
+  handleResetProgress: () => void;
+  handleLogout: () => void;
+}
+
+function ConfiguracoesFormContent({
+  user,
+  username,
+  setUsername,
+  cursoTecnico,
+  objetivoCarreira,
+  setObjetivoCarreira,
+  setShowCursoPicker,
+  saving,
+  handleSave,
+  modoOffline,
+  setModoOffline,
+  handleResetProgress,
+  handleLogout,
+}: FormProps) {
+  const { registerFocusedInput, unregisterFocusedInput } = useKeyboardScroll();
+  const usernameRef = useRef<View>(null);
+  const objetivoRef = useRef<View>(null);
+
+  return (
+    <View style={styles.formWrapper}>
+      {/* SEÇÃO 1: INFORMAÇÕES DE CADASTRO */}
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Dados Cadastrais</Text>
+        <View ref={usernameRef} style={styles.inputGroup}>
+          <Text style={styles.label}>Nome de Usuário</Text>
+          <TextInput
+            style={styles.textInput}
+            value={username}
+            onChangeText={setUsername}
+            placeholder="Digite seu nome..."
+            placeholderTextColor="#4B5563"
+            onFocus={() => {
+              if (usernameRef.current) registerFocusedInput(usernameRef.current);
+            }}
+            onBlur={() => {
+              if (usernameRef.current) unregisterFocusedInput(usernameRef.current);
+            }}
+          />
+        </View>
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>E-mail</Text>
+          <View style={styles.disabledInput}>
+            <Text style={styles.disabledText}>{user?.email}</Text>
+          </View>
+        </View>
+      </View>
+
+      {/* SEÇÃO 2: DADOS DE ORIENTAÇÃO PROFISSIONAL */}
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Orientação de Carreira</Text>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Curso Técnico Atual</Text>
+          <TouchableOpacity
+            style={styles.pickerTrigger}
+            onPress={() => setShowCursoPicker(true)}
+          >
+            <Text style={styles.pickerTriggerText}>
+              {cursoTecnico || 'Selecione seu curso técnico...'}
+            </Text>
+            <Ionicons name="chevron-down" size={16} color="#94A3B8" />
+          </TouchableOpacity>
+        </View>
+
+        <View ref={objetivoRef} style={styles.inputGroup}>
+          <Text style={styles.label}>Objetivo de Carreira</Text>
+          <TextInput
+            style={styles.textInput}
+            value={objetivoCarreira}
+            onChangeText={setObjetivoCarreira}
+            placeholder="Ex: Desenvolvedor Mobile, Médico, Gerente..."
+            placeholderTextColor="#4B5563"
+            onFocus={() => {
+              if (objetivoRef.current) registerFocusedInput(objetivoRef.current);
+            }}
+            onBlur={() => {
+              if (objetivoRef.current) unregisterFocusedInput(objetivoRef.current);
+            }}
+          />
+        </View>
+
+        <TouchableOpacity
+          style={styles.saveBtn}
+          onPress={handleSave}
+          disabled={saving}
+        >
+          {saving ? (
+            <ActivityIndicator size="small" color="#FFFFFF" />
+          ) : (
+            <Text style={styles.saveBtnText}>Salvar Alterações</Text>
+          )}
+        </TouchableOpacity>
+      </View>
+
+      {/* SEÇÃO 3: PREFERÊNCIAS DO APLICATIVO */}
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Preferências</Text>
+
+        <View style={styles.preferenceRow}>
+          <View style={styles.preferenceTexts}>
+            <Text style={styles.preferenceLabel}>Modo Off-line</Text>
+            <Text style={styles.preferenceDesc}>Guardar respostas localmente se sem conexão.</Text>
+          </View>
+          <Switch
+            value={modoOffline}
+            onValueChange={setModoOffline}
+            trackColor={{ false: '#1E293B', true: '#4F46E5' }}
+            thumbColor={modoOffline ? '#FFFFFF' : '#94A3B8'}
+          />
+        </View>
+
+        <View style={styles.preferenceRow}>
+          <View style={styles.preferenceTexts}>
+            <Text style={styles.preferenceLabel}>Tema Visual</Text>
+            <Text style={styles.preferenceDesc}>Nexo Premium Dark (Padrão)</Text>
+          </View>
+          <View style={styles.themeBadge}>
+            <Text style={styles.themeBadgeText}>ATIVO</Text>
+          </View>
+        </View>
+      </View>
+
+      {/* SEÇÃO 4: AÇÕES DA CONTA (PERIGOSAS) */}
+      <View style={styles.card}>
+        <Text style={[styles.cardTitle, { color: '#EF4444' }]}>Zona de Risco</Text>
+
+        <TouchableOpacity style={styles.dangerBtn} onPress={handleResetProgress}>
+          <Ionicons name="refresh" size={18} color="#EF4444" />
+          <Text style={styles.dangerBtnText}>Redefinir Perfil Profissional</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
+          <Ionicons name="log-out-outline" size={18} color="#FFFFFF" />
+          <Text style={styles.logoutBtnText}>Sair da Conta</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+}
 
 export default function ConfiguracoesScreen() {
   const router = useRouter();
@@ -70,7 +230,6 @@ export default function ConfiguracoesScreen() {
         curso_tecnico: cursoTecnico,
         objetivo_carreira: objetivoCarreira,
       });
-      // Update local user state representation as well
       if (user) {
         setUser({
           ...user,
@@ -156,112 +315,28 @@ export default function ConfiguracoesScreen() {
         <View style={{ width: 40 }} />
       </View>
 
-      <ScrollView style={styles.content} contentContainerStyle={styles.scrollContent}>
-        {/* SEÇÃO 1: INFORMAÇÕES DE CADASTRO */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Dados Cadastrais</Text>
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Nome de Usuário</Text>
-            <TextInput
-              style={styles.textInput}
-              value={username}
-              onChangeText={setUsername}
-              placeholder="Digite seu nome..."
-              placeholderTextColor="#4B5563"
-            />
-          </View>
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>E-mail</Text>
-            <View style={styles.disabledInput}>
-              <Text style={styles.disabledText}>{user?.email}</Text>
-            </View>
-          </View>
-        </View>
-
-        {/* SEÇÃO 2: DADOS DE ORIENTAÇÃO PROFISSIONAL */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Orientação de Carreira</Text>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Curso Técnico Atual</Text>
-            <TouchableOpacity
-              style={styles.pickerTrigger}
-              onPress={() => setShowCursoPicker(true)}
-            >
-              <Text style={styles.pickerTriggerText}>
-                {cursoTecnico || 'Selecione seu curso técnico...'}
-              </Text>
-              <Ionicons name="chevron-down" size={16} color="#94A3B8" />
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Objetivo de Carreira</Text>
-            <TextInput
-              style={styles.textInput}
-              value={objetivoCarreira}
-              onChangeText={setObjetivoCarreira}
-              placeholder="Ex: Desenvolvedor Mobile, Médico, Gerente..."
-              placeholderTextColor="#4B5563"
-            />
-          </View>
-
-          <TouchableOpacity
-            style={styles.saveBtn}
-            onPress={handleSave}
-            disabled={saving}
-          >
-            {saving ? (
-              <ActivityIndicator size="small" color="#FFFFFF" />
-            ) : (
-              <Text style={styles.saveBtnText}>Salvar Alterações</Text>
-            )}
-          </TouchableOpacity>
-        </View>
-
-        {/* SEÇÃO 3: PREFERÊNCIAS DO APLICATIVO */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Preferências</Text>
-
-          <View style={styles.preferenceRow}>
-            <View style={styles.preferenceTexts}>
-              <Text style={styles.preferenceLabel}>Modo Off-line</Text>
-              <Text style={styles.preferenceDesc}>Guardar respostas localmente se sem conexão.</Text>
-            </View>
-            <Switch
-              value={modoOffline}
-              onValueChange={setModoOffline}
-              trackColor={{ false: '#1E293B', true: '#4F46E5' }}
-              thumbColor={modoOffline ? '#FFFFFF' : '#94A3B8'}
-            />
-          </View>
-
-          <View style={styles.preferenceRow}>
-            <View style={styles.preferenceTexts}>
-              <Text style={styles.preferenceLabel}>Tema Visual</Text>
-              <Text style={styles.preferenceDesc}>Nexo Premium Dark (Padrão)</Text>
-            </View>
-            <View style={styles.themeBadge}>
-              <Text style={styles.themeBadgeText}>ATIVO</Text>
-            </View>
-          </View>
-        </View>
-
-        {/* SEÇÃO 4: AÇÕES DA CONTA (PERIGOSAS) */}
-        <View style={styles.card}>
-          <Text style={[styles.cardTitle, { color: '#EF4444' }]}>Zona de Risco</Text>
-
-          <TouchableOpacity style={styles.dangerBtn} onPress={handleResetProgress}>
-            <Ionicons name="refresh" size={18} color="#EF4444" />
-            <Text style={styles.dangerBtnText}>Redefinir Perfil Profissional</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
-            <Ionicons name="log-out-outline" size={18} color="#FFFFFF" />
-            <Text style={styles.logoutBtnText}>Sair da Conta</Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
+      <KeyboardScreenWrapper
+        contentContainerStyle={styles.scrollContent}
+        extraScrollPadding={80}
+      >
+        <ConfiguracoesFormContent
+          user={user}
+          username={username}
+          setUsername={setUsername}
+          cursoTecnico={cursoTecnico}
+          setCursoTecnico={setCursoTecnico}
+          objetivoCarreira={objetivoCarreira}
+          setObjetivoCarreira={setObjetivoCarreira}
+          showCursoPicker={showCursoPicker}
+          setShowCursoPicker={setShowCursoPicker}
+          saving={saving}
+          handleSave={handleSave}
+          modoOffline={modoOffline}
+          setModoOffline={setModoOffline}
+          handleResetProgress={handleResetProgress}
+          handleLogout={handleLogout}
+        />
+      </KeyboardScreenWrapper>
 
       {/* CURSO TÉCNICO PICKER MODAL */}
       <Modal
@@ -348,8 +423,8 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontFamily: 'System',
   },
-  content: {
-    flex: 1,
+  formWrapper: {
+    width: '100%',
   },
   scrollContent: {
     padding: 16,

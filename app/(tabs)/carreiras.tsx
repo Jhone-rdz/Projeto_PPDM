@@ -333,7 +333,7 @@ export default function CarreirasScreen() {
     if (!openCursoId) return;
 
     router.push({
-      pathname: '/(tabs)/curso-detalhes',
+      pathname: '/(tabs)/curso-detalhes' as any,
       params: { id: openCursoId }
     });
     router.setParams({ openCursoId: undefined } as any);
@@ -345,7 +345,7 @@ export default function CarreirasScreen() {
 
   const handleSaibaMais = (curso: any) => {
     router.push({
-      pathname: '/(tabs)/curso-detalhes',
+      pathname: '/(tabs)/curso-detalhes' as any,
       params: { id: curso.id }
     });
   };
@@ -429,6 +429,8 @@ export default function CarreirasScreen() {
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
         bounces={false}
       >
         {/* SEÇÃO 1 — BANNER INFO */}

@@ -4,9 +4,7 @@ import {
   View,
   Text,
   TouchableOpacity,
-  KeyboardAvoidingView,
   Platform,
-  ScrollView,
   Alert,
   Image,
   useWindowDimensions,
@@ -16,6 +14,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import CustomInput from '../_components/CustomInput';
 import BotaoCustom from '../_components/BotaoCustom';
+import KeyboardScreenWrapper from '../_components/KeyboardScreenWrapper';
 import { apiService } from '../_services/api';
 
 export default function LoginScreen() {
@@ -100,89 +99,83 @@ export default function LoginScreen() {
         resizeMode="cover"
       />
 
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={styles.keyboardView}
+      <KeyboardScreenWrapper
+        contentContainerStyle={[
+          styles.scrollContainer,
+          { paddingTop: Math.max(insets.top, 20) }
+        ]}
+        extraScrollPadding={100}
       >
-        <ScrollView
-          contentContainerStyle={[
-            styles.scrollContainer,
-            { paddingTop: Math.max(insets.top, 20) }
-          ]}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-        >
-          {/* Spacer to push card below the image's critical content */}
-          <View style={{ height: screenWidth * (1550 / 1080) - Math.max(insets.top, 20) - 80 }} />
+        {/* Spacer to push card below the image's critical content */}
+        <View style={{ height: screenWidth * (1550 / 1080) - Math.max(insets.top, 20) - 80 }} />
 
-          {/* Form Card wrapper */}
-          <View style={[styles.formCard, { paddingBottom: 40 + insets.bottom }]}>
-            {/* Form Section */}
-            <View style={styles.formContainer}>
-              <CustomInput
-                placeholder="Digite seu e-mail"
-                value={email}
-                onChangeText={setEmail}
-                iconName="mail-outline"
-                keyboardType="email-address"
-                autoComplete="email"
-                error={errors.email}
-              />
+        {/* Form Card wrapper */}
+        <View style={[styles.formCard, { paddingBottom: 40 + insets.bottom }]}>
+          {/* Form Section */}
+          <View style={styles.formContainer}>
+            <CustomInput
+              placeholder="Digite seu e-mail"
+              value={email}
+              onChangeText={setEmail}
+              iconName="mail-outline"
+              keyboardType="email-address"
+              autoComplete="email"
+              error={errors.email}
+            />
 
-              <CustomInput
-                placeholder="Digite sua senha"
-                value={password}
-                onChangeText={setPassword}
-                iconName="lock-closed-outline"
-                secureTextEntry
-                isPassword
-                error={errors.password}
-              />
+            <CustomInput
+              placeholder="Digite sua senha"
+              value={password}
+              onChangeText={setPassword}
+              iconName="lock-closed-outline"
+              secureTextEntry
+              isPassword
+              error={errors.password}
+            />
 
-              <TouchableOpacity
-                onPress={() => Alert.alert('Recuperar Senha', 'Funcionalidade de recuperação de senha (simulada).')}
-                style={styles.forgotPasswordContainer}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.forgotPasswordText}>Esqueci minha senha</Text>
-              </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => Alert.alert('Recuperar Senha', 'Funcionalidade de recuperação de senha (simulada).')}
+              style={styles.forgotPasswordContainer}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.forgotPasswordText}>Esqueci minha senha</Text>
+            </TouchableOpacity>
 
-              <BotaoCustom
-                title="Entrar"
-                onPress={handleLogin}
-                iconName="arrow-forward-outline"
-                iconPosition="right"
-                loading={isLoading}
-              />
+            <BotaoCustom
+              title="Entrar"
+              onPress={handleLogin}
+              iconName="arrow-forward-outline"
+              iconPosition="right"
+              loading={isLoading}
+            />
 
-              {/* Divider */}
-              <View style={styles.dividerContainer}>
-                <View style={styles.dividerLine} />
-                <Text style={styles.dividerText}>ou</Text>
-                <View style={styles.dividerLine} />
-              </View>
-
-              {/* Google Button */}
-              <BotaoCustom
-                title="Entrar com Google"
-                onPress={handleGoogleLogin}
-                type="secondary"
-                iconName="logo-google"
-                iconPosition="left"
-                disabled={isLoading}
-              />
+            {/* Divider */}
+            <View style={styles.dividerContainer}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>ou</Text>
+              <View style={styles.dividerLine} />
             </View>
 
-            {/* Footer Section */}
-            <View style={styles.footerContainer}>
-              <Text style={styles.footerText}>Ainda não tem uma conta? </Text>
-              <TouchableOpacity onPress={() => router.push('/auth/cadastro')} activeOpacity={0.7}>
-                <Text style={styles.footerLinkText}>Criar conta</Text>
-              </TouchableOpacity>
-            </View>
+            {/* Google Button */}
+            <BotaoCustom
+              title="Entrar com Google"
+              onPress={handleGoogleLogin}
+              type="secondary"
+              iconName="logo-google"
+              iconPosition="left"
+              disabled={isLoading}
+            />
           </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+
+          {/* Footer Section */}
+          <View style={styles.footerContainer}>
+            <Text style={styles.footerText}>Ainda não tem uma conta? </Text>
+            <TouchableOpacity onPress={() => router.push('/auth/cadastro')} activeOpacity={0.7}>
+              <Text style={styles.footerLinkText}>Criar conta</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </KeyboardScreenWrapper>
     </View>
   );
 }
@@ -196,9 +189,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 0,
     left: 0,
-  },
-  keyboardView: {
-    flex: 1,
   },
   scrollContainer: {
     flexGrow: 1,

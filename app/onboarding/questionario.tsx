@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   StyleSheet,
   View,
   Text,
   TouchableOpacity,
-  ScrollView,
   Platform,
   Alert,
   TextInput,
@@ -14,6 +13,7 @@ import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import KeyboardScreenWrapper, { useKeyboardScroll } from '../_components/KeyboardScreenWrapper';
 import { apiService } from '../_services/api';
 
 import { perguntas as PERGUNTAS_ESTATICAS } from '../_constants/perguntas';
@@ -33,6 +33,43 @@ interface Question {
   pergunta: string;
   instrucao: string;
   opcoes: Option[];
+}
+
+function FreeTextCard({
+  label,
+  placeholder,
+  value,
+  onChangeText,
+}: {
+  label: string;
+  placeholder: string;
+  value: string;
+  onChangeText: (text: string) => void;
+}) {
+  const cardRef = useRef<View>(null);
+  const { registerFocusedInput, unregisterFocusedInput } = useKeyboardScroll();
+
+  return (
+    <View ref={cardRef} style={styles.questionCard}>
+      <Text style={styles.freeTextLabel}>{label}</Text>
+      <TextInput
+        style={styles.freeTextInput}
+        placeholder={placeholder}
+        placeholderTextColor="#6B7280"
+        multiline
+        maxLength={500}
+        value={value}
+        onChangeText={onChangeText}
+        onFocus={() => {
+          if (cardRef.current) registerFocusedInput(cardRef.current);
+        }}
+        onBlur={() => {
+          if (cardRef.current) unregisterFocusedInput(cardRef.current);
+        }}
+      />
+      <Text style={styles.charCounter}>{value.length}/500</Text>
+    </View>
+  );
 }
 
 export default function QuestionarioScreen() {
@@ -155,11 +192,11 @@ export default function QuestionarioScreen() {
     <SafeAreaView style={styles.safeArea} edges={['top', 'bottom', 'left', 'right']}>
       <StatusBar style="light" />
 
-      {/* Main content container */}
-      <ScrollView
-        style={styles.scrollView}
+      {/* Main content wrapped with KeyboardScreenWrapper */}
+      <KeyboardScreenWrapper
         contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
+        extraScrollPadding={140}
+        keyboardVerticalOffset={Platform.select({ ios: 0, android: 0 })}
       >
         {step === 'perguntas' ? (
           <>
@@ -285,52 +322,31 @@ export default function QuestionarioScreen() {
             </View>
 
             {/* Campo 1 */}
-            <View style={styles.questionCard}>
-              <Text style={styles.freeTextLabel}>O que mais te motiva na hora de pensar numa futura profissão?</Text>
-              <TextInput
-                style={styles.freeTextInput}
-                placeholder="Ex: Ajudar as pessoas, criar tecnologias inovadoras, trabalhar com animais..."
-                placeholderTextColor="#6B7280"
-                multiline
-                maxLength={500}
-                value={freeTextMotivation}
-                onChangeText={setFreeTextMotivation}
-              />
-              <Text style={styles.charCounter}>{freeTextMotivation.length}/500</Text>
-            </View>
+            <FreeTextCard
+              label="O que mais te motiva na hora de pensar numa futura profissão?"
+              placeholder="Ex: Ajudar as pessoas, criar tecnologias inovadoras, trabalhar com animais..."
+              value={freeTextMotivation}
+              onChangeText={setFreeTextMotivation}
+            />
 
             {/* Campo 2 */}
-            <View style={styles.questionCard}>
-              <Text style={styles.freeTextLabel}>Descreva como seria um dia de trabalho ideal para você.</Text>
-              <TextInput
-                style={styles.freeTextInput}
-                placeholder="Ex: Desenvolvendo soluções em equipe, gerindo projetos ou realizando pesquisas no campo..."
-                placeholderTextColor="#6B7280"
-                multiline
-                maxLength={500}
-                value={freeTextDailyLife}
-                onChangeText={setFreeTextDailyLife}
-              />
-              <Text style={styles.charCounter}>{freeTextDailyLife.length}/500</Text>
-            </View>
+            <FreeTextCard
+              label="Descreva como seria um dia de trabalho ideal para você."
+              placeholder="Ex: Desenvolvendo soluções em equipe, gerindo projetos ou realizando pesquisas no campo..."
+              value={freeTextDailyLife}
+              onChangeText={setFreeTextDailyLife}
+            />
 
             {/* Campo 3 */}
-            <View style={styles.questionCard}>
-              <Text style={styles.freeTextLabel}>Tem algo que você definitivamente NÃO quer no seu futuro trabalho?</Text>
-              <TextInput
-                style={styles.freeTextInput}
-                placeholder="Ex: Ambientes fechados sem contato com a natureza ou rotinas altamente repetitivas..."
-                placeholderTextColor="#6B7280"
-                multiline
-                maxLength={500}
-                value={freeTextDislikes}
-                onChangeText={setFreeTextDislikes}
-              />
-              <Text style={styles.charCounter}>{freeTextDislikes.length}/500</Text>
-            </View>
+            <FreeTextCard
+              label="Tem algo que você definitivamente NÃO quer no seu futuro trabalho?"
+              placeholder="Ex: Ambientes fechados sem contato com a natureza ou rotinas altamente repetitivas..."
+              value={freeTextDislikes}
+              onChangeText={setFreeTextDislikes}
+            />
           </>
         )}
-      </ScrollView>
+      </KeyboardScreenWrapper>
 
       {/* Fixed Bottom Navigation Buttons */}
       <View style={styles.bottomBar}>
@@ -430,13 +446,10 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#0A0F1E',
   },
-  scrollView: {
-    flex: 1,
-  },
   scrollContent: {
     paddingHorizontal: 20,
     paddingTop: 20,
-    paddingBottom: 120, // ample space for the fixed bottom buttons
+    paddingBottom: 140, // ample space for the fixed bottom buttons
   },
   headerRow: {
     flexDirection: 'row',
@@ -459,59 +472,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#9CA3AF',
     lineHeight: 18,
-    fontFamily: 'System',
-  },
-  levelCard: {
-    backgroundColor: '#111827',
-    borderRadius: 12,
-    padding: 10,
-    width: 125,
-    borderWidth: 1,
-    borderColor: '#1F2937',
-  },
-  avatarRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 6,
-  },
-  avatar: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    marginRight: 6,
-  },
-  levelTexts: {
-    flex: 1,
-  },
-  levelLabel: {
-    fontSize: 8,
-    color: '#9CA3AF',
-    fontWeight: 'bold',
-    fontFamily: 'System',
-  },
-  levelName: {
-    fontSize: 10,
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-    fontFamily: 'System',
-  },
-  progressBarBackground: {
-    height: 4,
-    backgroundColor: '#1F2937',
-    borderRadius: 2,
-    overflow: 'hidden',
-    marginBottom: 2,
-  },
-  progressBarFill: {
-    width: '40%',
-    height: '100%',
-    backgroundColor: '#6B21A8',
-  },
-  progressPercentage: {
-    fontSize: 8,
-    color: '#9CA3AF',
-    textAlign: 'right',
-    fontWeight: 'bold',
     fontFamily: 'System',
   },
   progressContainer: {
